@@ -38,7 +38,7 @@ export function InvitePage() {
     if (joining) return
 
     handleJoin()
-  }, [user, userProfile, householdLoading, invite])
+  }, [user, userProfile, householdLoading, invite, inviteId])
 
   const handleJoin = async () => {
     if (!inviteId || joining) return

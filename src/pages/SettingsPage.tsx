@@ -24,13 +24,16 @@ export function SettingsPage() {
   const [editingHouse, setEditingHouse] = useState(false)
   const [newHouseName, setNewHouseName] = useState(house?.name ?? '')
 
+  const [inviteError, setInviteError] = useState('')
+
   const handleGenerateInvite = async () => {
     setInviteLoading(true)
+    setInviteError('')
     try {
       const link = await generateInvite()
       setInviteLink(link)
     } catch {
-      // ignore
+      setInviteError('Failed to generate invite link. Please try again.')
     } finally {
       setInviteLoading(false)
     }
@@ -176,6 +179,7 @@ export function SettingsPage() {
                 {inviteLoading ? 'Generating...' : 'Generate Invite Link'}
               </Button>
             )}
+            {inviteError && <p className="text-xs text-destructive mt-2">{inviteError}</p>}
             <p className="text-xs text-muted-foreground mt-2">
               The link expires in 7 days. Share it with anyone you want to join your household.
             </p>

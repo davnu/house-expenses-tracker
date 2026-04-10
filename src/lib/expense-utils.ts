@@ -1,14 +1,4 @@
-import { CATEGORY_COST_PHASE } from './constants'
-import type { Expense, CostPhase, ExpenseCategory } from '@/types/expense'
-
-export function getCostPhase(expense: Expense): CostPhase {
-  if (expense.costPhase) return expense.costPhase
-  return CATEGORY_COST_PHASE[expense.category] ?? 'one-time'
-}
-
-export function filterByPhase(expenses: Expense[], phase: CostPhase): Expense[] {
-  return expenses.filter((e) => getCostPhase(e) === phase)
-}
+import type { Expense, ExpenseCategory } from '@/types/expense'
 
 export function filterByPayer(expenses: Expense[], uid: string): Expense[] {
   return expenses.filter((e) => e.payer === uid)

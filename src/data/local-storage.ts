@@ -1,4 +1,5 @@
 import type { Expense, AppSettings } from '@/types/expense'
+import type { MortgageConfig } from '@/types/mortgage'
 import type { ExpenseRepository } from './repository'
 import { deleteAttachmentBlobs } from './attachment-store'
 
@@ -67,5 +68,18 @@ export class LocalStorageRepository implements ExpenseRepository {
     const updated = { ...settings, ...updates }
     write(KEYS.settings, updated)
     return updated
+  }
+
+  async getMortgage(): Promise<MortgageConfig | null> {
+    return read<MortgageConfig | null>('house-expenses:mortgage', null)
+  }
+
+  async saveMortgage(config: MortgageConfig): Promise<MortgageConfig> {
+    write('house-expenses:mortgage', config)
+    return config
+  }
+
+  async deleteMortgage(): Promise<void> {
+    localStorage.removeItem('house-expenses:mortgage')
   }
 }

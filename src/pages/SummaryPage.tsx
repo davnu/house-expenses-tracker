@@ -1,5 +1,8 @@
+import { useMemo } from 'react'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useMortgage } from '@/context/MortgageContext'
+import { getMortgageStats } from '@/lib/mortgage-utils'
 import { CostOverview } from '@/components/summary/CostOverview'
 import { CategoryTable } from '@/components/summary/CategoryTable'
 import { MonthlyTable } from '@/components/summary/MonthlyTable'
@@ -12,12 +15,22 @@ import { format } from 'date-fns'
 export function SummaryPage() {
   const { expenses } = useExpenses()
   const { house } = useHousehold()
+  const { mortgage } = useMortgage()
 
-  const total = expenses.reduce((s, e) => s + e.amount, 0)
+  const mortgagePaid = useMemo(() => {
+    if (!mortgage) return 0
+    const stats = getMortgageStats(mortgage)
+    return stats.principalPaidSoFar + stats.interestPaidSoFar
+  }, [mortgage])
+
+  const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0)
+  const total = expenseTotal + mortgagePaid
   const dates = expenses.map((e) => e.date).sort()
   const dateRange = dates.length > 0
     ? `${format(new Date(dates[0]), 'MMM yyyy')} — ${format(new Date(dates[dates.length - 1]), 'MMM yyyy')}`
     : ''
+
+  const hasData = expenses.length > 0 || mortgage
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 print:space-y-6">
@@ -29,7 +42,9 @@ export function SummaryPage() {
             <p className="text-sm text-muted-foreground mt-1">{dateRange}</p>
           )}
           <p className="text-3xl font-bold mt-2">{formatCurrency(total)}</p>
-          <p className="text-sm text-muted-foreground">{expenses.length} expenses total</p>
+          <p className="text-sm text-muted-foreground">
+            {expenses.length} expenses{mortgagePaid > 0 ? ` + mortgage (${formatCurrency(mortgagePaid)})` : ''}
+          </p>
         </div>
         <Button
           variant="outline"
@@ -42,15 +57,15 @@ export function SummaryPage() {
         </Button>
       </div>
 
-      {expenses.length === 0 ? (
+      {!hasData ? (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg">No expenses yet</p>
           <p className="text-sm">Add expenses to see your summary report</p>
         </div>
       ) : (
         <>
-          <CostOverview expenses={expenses} />
-          <CategoryTable expenses={expenses} />
+          <CostOverview expenses={expenses} mortgagePaid={mortgagePaid} />
+          <CategoryTable expenses={expenses} mortgagePaid={mortgagePaid} />
           <MonthlyTable expenses={expenses} />
           <PersonSummary expenses={expenses} />
         </>

@@ -11,13 +11,22 @@ import {
   type Firestore,
 } from 'firebase/firestore'
 import type { Expense, AppSettings } from '@/types/expense'
+import type { MortgageConfig } from '@/types/mortgage'
 import type { ExpenseRepository } from './repository'
 
-// Firestore rejects undefined values — strip them before writing
-function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, v]) => v !== undefined)
-  ) as T
+// Firestore rejects undefined values — deep strip them before writing
+function stripUndefined<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => stripUndefined(item)) as T
+  }
+  if (obj !== null && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, stripUndefined(v)])
+    ) as T
+  }
+  return obj
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -78,5 +87,23 @@ export class FirestoreRepository implements ExpenseRepository {
     const ref = this.docRef('meta', 'settings')
     await setDoc(ref, updated)
     return updated
+  }
+
+  async getMortgage(): Promise<MortgageConfig | null> {
+    const ref = this.docRef('meta', 'mortgage')
+    const snap = await getDoc(ref)
+    if (!snap.exists()) return null
+    return snap.data() as MortgageConfig
+  }
+
+  async saveMortgage(config: MortgageConfig): Promise<MortgageConfig> {
+    const ref = this.docRef('meta', 'mortgage')
+    const data = stripUndefined({ ...config, updatedAt: new Date().toISOString() })
+    await setDoc(ref, data)
+    return data as MortgageConfig
+  }
+
+  async deleteMortgage(): Promise<void> {
+    await deleteDoc(this.docRef('meta', 'mortgage'))
   }
 }

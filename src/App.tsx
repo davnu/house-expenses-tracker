@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
+import { MortgageProvider } from '@/context/MortgageContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
@@ -11,6 +12,7 @@ import { OnboardingPage } from '@/pages/OnboardingPage'
 import { InvitePage } from '@/pages/InvitePage'
 import { InviteLandingPage } from '@/pages/InviteLandingPage'
 import { SummaryPage } from '@/pages/SummaryPage'
+import { MortgagePage } from '@/pages/MortgagePage'
 
 function AppRoutes() {
   const { house, loading } = useHousehold()
@@ -36,15 +38,18 @@ function AppRoutes() {
   // User has a house — show the app
   return (
     <ExpenseProvider>
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="expenses" element={<ExpensesPage />} />
-          <Route path="summary" element={<SummaryPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
-        <Route path="/invite/:inviteId" element={<InvitePage />} />
-      </Routes>
+      <MortgageProvider>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="mortgage" element={<MortgagePage />} />
+            <Route path="expenses" element={<ExpensesPage />} />
+            <Route path="summary" element={<SummaryPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="/invite/:inviteId" element={<InvitePage />} />
+        </Routes>
+      </MortgageProvider>
     </ExpenseProvider>
   )
 }

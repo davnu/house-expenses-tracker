@@ -1,13 +1,19 @@
 import { useState, useMemo } from 'react'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
-import { CostPhaseTabs } from '@/components/dashboard/CostPhaseTabs'
+import { TotalCostCard } from '@/components/dashboard/TotalCostCard'
+import { HorizontalBarChart } from '@/components/dashboard/HorizontalBarChart'
+import { MonthlyTrend } from '@/components/dashboard/MonthlyTrend'
+import { MortgageSummaryCard } from '@/components/mortgage/MortgageSummaryCard'
+import { PersonSplitCard } from '@/components/dashboard/PersonSplitCard'
 import { useExpenses } from '@/context/ExpenseContext'
+import { useMortgage } from '@/context/MortgageContext'
+import { getMortgageStats } from '@/lib/mortgage-utils'
 import { applyFilters, type DashboardFilters as Filters } from '@/lib/expense-utils'
-import { formatCurrency } from '@/lib/utils'
 import type { ExpenseCategory } from '@/types/expense'
 
 export function DashboardPage() {
   const { expenses } = useExpenses()
+  const { mortgage } = useMortgage()
   const [filters, setFilters] = useState<Filters>({})
 
   const filteredExpenses = useMemo(() => applyFilters(expenses, filters), [expenses, filters])
@@ -17,23 +23,17 @@ export function DashboardPage() {
     [expenses]
   )
 
-  const total = filteredExpenses.reduce((s, e) => s + e.amount, 0)
+  const mortgagePaid = useMemo(() => {
+    if (!mortgage) return 0
+    const stats = getMortgageStats(mortgage)
+    return stats.principalPaidSoFar + stats.interestPaidSoFar
+  }, [mortgage])
+
+  const hasData = expenses.length > 0 || mortgage
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          {expenses.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Total: {formatCurrency(total)}
-              {filteredExpenses.length !== expenses.length && (
-                <span> ({filteredExpenses.length} of {expenses.length} expenses)</span>
-              )}
-            </p>
-          )}
-        </div>
-      </div>
+      <h1 className="text-2xl font-bold">Dashboard</h1>
 
       {expenses.length > 0 && (
         <DashboardFilters
@@ -43,13 +43,27 @@ export function DashboardPage() {
         />
       )}
 
-      {expenses.length === 0 ? (
+      {!hasData ? (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-lg">No data yet</p>
-          <p className="text-sm">Add some expenses to see your charts here</p>
+          <p className="text-sm">Add expenses or set up your mortgage to get started</p>
         </div>
       ) : (
-        <CostPhaseTabs expenses={filteredExpenses} />
+        <>
+          <TotalCostCard expenses={filteredExpenses} mortgagePaid={mortgagePaid} />
+
+          {filteredExpenses.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <HorizontalBarChart expenses={filteredExpenses} title="Expenses by Category" />
+              <MonthlyTrend expenses={filteredExpenses} title="Expense Timeline" />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MortgageSummaryCard />
+            <PersonSplitCard expenses={filteredExpenses} />
+          </div>
+        </>
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,12 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { FileDropZone } from './FileDropZone'
-import { EXPENSE_CATEGORIES, CATEGORY_COST_PHASE } from '@/lib/constants'
+import { EXPENSE_CATEGORIES } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useAuth } from '@/context/AuthContext'
-import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
-import type { Expense, CostPhase } from '@/types/expense'
+import type { Expense } from '@/types/expense'
 
 const expenseSchema = z.object({
   amount: z.string().min(1, 'Required').refine((v) => parseFloat(v) > 0, 'Must be positive'),
@@ -32,28 +31,20 @@ interface ExpenseFormProps {
 
 export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expense' }: ExpenseFormProps) {
   const [files, setFiles] = useState<File[]>([])
-  const [costPhase, setCostPhase] = useState<CostPhase>('one-time')
   const { members } = useHousehold()
   const { user } = useAuth()
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       amount: '',
-      category: 'mortgage',
+      category: 'other',
       payer: user?.uid ?? '',
       description: '',
       date: format(new Date(), 'yyyy-MM-dd'),
       ...defaultValues,
     },
   })
-
-  // Auto-set costPhase when category changes
-  const watchedCategory = watch('category')
-  useEffect(() => {
-    const phase = CATEGORY_COST_PHASE[watchedCategory] ?? 'one-time'
-    setCostPhase(phase)
-  }, [watchedCategory])
 
   const onFormSubmit = async (data: ExpenseFormData) => {
     await onSubmit(
@@ -63,13 +54,11 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
         payer: data.payer,
         description: data.description ?? '',
         date: data.date,
-        costPhase,
       },
       files
     )
     reset()
     setFiles([])
-    setCostPhase('one-time')
   }
 
   return (
@@ -115,41 +104,9 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
         </div>
       </div>
 
-      {/* Cost phase toggle */}
-      <div className="space-y-2">
-        <Label>Cost type</Label>
-        <div className="flex rounded-lg border bg-muted p-0.5 gap-0.5">
-          <button
-            type="button"
-            onClick={() => setCostPhase('one-time')}
-            className={cn(
-              'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all cursor-pointer',
-              costPhase === 'one-time'
-                ? 'bg-background shadow-sm text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            One-time (Purchase)
-          </button>
-          <button
-            type="button"
-            onClick={() => setCostPhase('ongoing')}
-            className={cn(
-              'flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all cursor-pointer',
-              costPhase === 'ongoing'
-                ? 'bg-background shadow-sm text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Ongoing (Monthly)
-          </button>
-        </div>
-      </div>
-
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <Input id="description" placeholder="What was this for?" {...register('description')} />
-        {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
       </div>
 
       <div className="space-y-2">

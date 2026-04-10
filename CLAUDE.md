@@ -1,18 +1,31 @@
 # House Expenses Tracker
 
+## Purpose
+Track everything you spend buying a house: down payment, notary, taxes, renovations, furniture, etc. Plus mortgage tracking. This is NOT a monthly budget app — it's specifically for the house purchase.
+
 ## Stack
 React 18 + TypeScript + Vite, Tailwind CSS v4, shadcn/ui (hand-rolled in src/components/ui/), Recharts, React Router v7, React Hook Form + Zod, date-fns, lucide-react, Firebase (Auth + Firestore + Storage + Hosting).
 
 ## Architecture
 - **Multi-user households**: users create a house, invite others via shareable link. All members share expenses.
-- **Firestore structure**: `houses/{houseId}/expenses`, `houses/{houseId}/recurring`, `houses/{houseId}/members/{uid}`, `users/{uid}` (profile), `invites/{inviteId}`
+- **Firestore structure**: `houses/{houseId}/expenses`, `houses/{houseId}/members/{uid}`, `houses/{houseId}/meta/mortgage`, `users/{uid}` (profile), `invites/{inviteId}`
 - **Repository pattern**: `src/data/repository.ts` (interface) → `src/data/firestore-repository.ts` (implementation, takes `houseId`)
-- **Contexts**: `AuthContext` (Firebase Auth) → `HouseholdContext` (user profile, house, members, invites) → `ExpenseContext` (expenses, recurring)
-- **Auth**: Firebase Auth (email/password + Google) with display name on registration
-- **Attachments**: blobs in Firebase Storage (`houses/{houseId}/attachments/{id}/{filename}`), metadata on Expense docs
-- **Payers are dynamic**: `Expense.payer` is a uid string, resolved to name via `HouseholdContext.getMemberName()`
+- **Contexts**: `AuthContext` → `HouseholdContext` → `ExpenseContext` + `MortgageContext`
+- **Mortgage**: separate feature with its own page, amortization calculator, rate periods, extra repayments
+- **Attachments**: blobs in Firebase Storage (`houses/{houseId}/attachments/{id}/{filename}`)
+- **Payers are dynamic**: `Expense.payer` is a uid string, resolved via `HouseholdContext.getMemberName()`
 - **Amounts stored as integer cents** (1500 = €15.00)
-- **Member colors**: assigned from `MEMBER_COLOR_PALETTE` on join, stored on member doc
+- **No "recurring" or "ongoing" concept** — every expense is a house-buying cost, logged when paid. Mortgage is tracked separately.
+
+## Categories
+down_payment, notary, taxes, financial_advisor, renovations, furniture, moving, home_inspection, insurance_setup, fees_commissions, other
+
+## Pages
+- Dashboard: total house cost hero card, category bar chart, timeline, mortgage summary, person split
+- Mortgage: config, progress, amortization schedule/chart, rate periods, extra repayments
+- Expenses: CRUD list with filters, sort, attachments
+- Summary: print-friendly report with category table, monthly table, per-person breakdown
+- Settings: profile, household, invite links
 
 ## Firebase
 - Project ID: `house-expenses-tracker-812cf`
@@ -25,11 +38,13 @@ React 18 + TypeScript + Vite, Tailwind CSS v4, shadcn/ui (hand-rolled in src/com
 - `npm run build` — type-checks then builds to `dist/`
 
 ## Quality Standards
-Always prioritize best UI design, best UX, best coding patterns, and maximum user value. Don't settle for "good enough" — aim for polished, well-designed solutions. Proper spacing, transitions, empty states, loading states, responsive behavior. Optimize for ease of use.
+Always prioritize best UI design, best UX, best coding patterns, and maximum user value. Don't settle for "good enough."
 
 ## Gotchas
-- Firestore rejects `undefined` — use `stripUndefined()` in `firestore-repository.ts` before all writes
+- Firestore rejects `undefined` — `stripUndefined()` in firestore-repository.ts deep-strips before all writes
 - TypeScript 6 — no `baseUrl` in tsconfig, only `paths`
-- shadcn/ui components are hand-written (not from CLI), live in `src/components/ui/`
-- Payer is a uid string, never hardcode names — always resolve via `getMemberName(uid)` from HouseholdContext
-- Invite flow: top-level `invites` collection so unauthenticated users can read before joining
+- shadcn/ui components are hand-written, live in `src/components/ui/`
+- Payer is a uid string — resolve via `getMemberName(uid)` from HouseholdContext
+- `calculateMonthlyPayment()` takes termMonths not termYears — always multiply by 12
+- Mortgage is NOT an expense category — it has its own feature. Don't duplicate.
+- Invite reads need `allow read: if true` in Firestore rules (unauthenticated users)

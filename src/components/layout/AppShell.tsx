@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router'
-import { LayoutDashboard, Receipt, Settings, LogOut, FileText } from 'lucide-react'
+import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/mortgage', icon: Landmark, label: 'Mortgage' },
   { to: '/expenses', icon: Receipt, label: 'Expenses' },
   { to: '/summary', icon: FileText, label: 'Summary' },
   { to: '/settings', icon: Settings, label: 'Settings' },

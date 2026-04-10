@@ -1,14 +1,14 @@
 export type ExpenseCategory =
-  | 'mortgage'
+  | 'down_payment'
   | 'notary'
   | 'taxes'
   | 'financial_advisor'
-  | 'insurance'
   | 'renovations'
   | 'furniture'
   | 'moving'
-  | 'utilities'
-  | 'maintenance'
+  | 'home_inspection'
+  | 'insurance_setup'
+  | 'fees_commissions'
   | 'other'
 
 export interface Attachment {
@@ -19,8 +19,6 @@ export interface Attachment {
   url?: string // Firebase Storage download URL
 }
 
-export type CostPhase = 'one-time' | 'ongoing'
-
 export interface Expense {
   id: string
   amount: number // cents
@@ -28,7 +26,6 @@ export interface Expense {
   payer: string // uid of household member
   description: string
   date: string // YYYY-MM-DD
-  costPhase?: CostPhase // optional override; derived from category if absent
   attachments?: Attachment[]
   createdAt: string
   updatedAt: string

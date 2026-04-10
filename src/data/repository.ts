@@ -1,4 +1,5 @@
 import type { Expense, AppSettings } from '@/types/expense'
+import type { MortgageConfig } from '@/types/mortgage'
 
 export interface ExpenseRepository {
   getExpenses(): Promise<Expense[]>
@@ -8,4 +9,8 @@ export interface ExpenseRepository {
 
   getSettings(): Promise<AppSettings>
   updateSettings(settings: Partial<AppSettings>): Promise<AppSettings>
+
+  getMortgage(): Promise<MortgageConfig | null>
+  saveMortgage(config: MortgageConfig): Promise<MortgageConfig>
+  deleteMortgage(): Promise<void>
 }
