@@ -3,14 +3,19 @@ import { useHousehold } from '@/context/HouseholdContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Home } from 'lucide-react'
+import { SUPPORTED_COUNTRIES } from '@/lib/mortgage-country'
 
 export function OnboardingPage() {
   const { userProfile, createHouse } = useHousehold()
   const [houseName, setHouseName] = useState('')
+  const [country, setCountry] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const selectedCountry = SUPPORTED_COUNTRIES.find((c) => c.code === country)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,7 +23,11 @@ export function OnboardingPage() {
     setError('')
     setLoading(true)
     try {
-      await createHouse(houseName.trim())
+      await createHouse(
+        houseName.trim(),
+        country || undefined,
+        selectedCountry?.currency
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create house')
     } finally {
@@ -37,7 +46,7 @@ export function OnboardingPage() {
             Welcome{userProfile?.displayName ? `, ${userProfile.displayName}` : ''}!
           </CardTitle>
           <CardDescription>
-            Give your house a name to get started. It can be the address, a nickname, anything you like.
+            Set up your house to start tracking expenses.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -53,6 +62,25 @@ export function OnboardingPage() {
                 autoFocus
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Select
+                id="country"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="">Select country...</option>
+                {SUPPORTED_COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name}</option>
+                ))}
+              </Select>
+              {selectedCountry && (
+                <p className="text-xs text-muted-foreground">
+                  Currency: {selectedCountry.currency}
+                </p>
+              )}
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

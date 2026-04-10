@@ -34,7 +34,7 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
   const { members } = useHousehold()
   const { user } = useAuth()
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       amount: '',
@@ -91,6 +91,9 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
               <option key={cat.value} value={cat.value}>{cat.label}</option>
             ))}
           </Select>
+          <p className="text-xs text-muted-foreground">
+            {EXPENSE_CATEGORIES.find((c) => c.value === watch('category'))?.hint}
+          </p>
           {errors.category && <p className="text-xs text-destructive">{errors.category.message}</p>}
         </div>
         <div className="space-y-2">
@@ -110,7 +113,8 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
       </div>
 
       <div className="space-y-2">
-        <Label>Attachments</Label>
+        <Label>Attachments <span className="text-muted-foreground font-normal">(optional)</span></Label>
+        <p className="text-xs text-muted-foreground -mt-1">Receipts, contracts, invoices, photos — keep everything in one place</p>
         <FileDropZone files={files} onChange={setFiles} />
       </div>
 

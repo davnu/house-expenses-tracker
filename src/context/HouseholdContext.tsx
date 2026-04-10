@@ -19,7 +19,7 @@ interface HouseholdContextValue {
   house: House | null
   members: HouseMember[]
   loading: boolean
-  createHouse: (name: string) => Promise<void>
+  createHouse: (name: string, country?: string, currency?: string) => Promise<void>
   joinHouse: (inviteId: string) => Promise<void>
   generateInvite: () => Promise<string>
   updateDisplayName: (name: string) => Promise<void>
@@ -85,7 +85,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     }
   }, [userProfile?.houseId])
 
-  const createHouse = useCallback(async (name: string) => {
+  const createHouse = useCallback(async (name: string, country?: string, currency?: string) => {
     if (!user || !userProfile) return
 
     const houseRef = doc(collection(db, 'houses'))
@@ -94,12 +94,15 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     const color = MEMBER_COLOR_PALETTE[0]
 
     // Create house doc
-    await setDoc(houseRef, {
+    const houseData: Record<string, unknown> = {
       name,
       ownerId: user.uid,
       memberIds: [user.uid],
       createdAt: now,
-    })
+    }
+    if (country) houseData.country = country
+    if (currency) houseData.currency = currency
+    await setDoc(houseRef, houseData)
 
     // Create member doc
     await setDoc(doc(db, 'houses', houseId, 'members', user.uid), {

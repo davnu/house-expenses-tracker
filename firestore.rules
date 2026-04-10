@@ -48,6 +48,12 @@ service cloud.firestore {
       }
     }
 
+    // Reference rates — public data, written by Cloud Functions only
+    match /reference_rates/{rateId} {
+      allow read: if true;
+      allow write: if false; // only Cloud Functions (admin SDK) can write
+    }
+
     // Invites — readable by anyone (so unauthenticated users can see invite details)
     match /invites/{inviteId} {
       allow read: if true;

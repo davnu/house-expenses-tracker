@@ -1,14 +1,17 @@
 export type ExpenseCategory =
   | 'down_payment'
-  | 'notary'
   | 'taxes'
+  | 'notary_legal'
+  | 'real_estate_agent'
   | 'financial_advisor'
+  | 'valuation'
+  | 'home_inspection'
+  | 'title_registry'
+  | 'mortgage_fees'
+  | 'insurance'
   | 'renovations'
   | 'furniture'
   | 'moving'
-  | 'home_inspection'
-  | 'insurance_setup'
-  | 'fees_commissions'
   | 'other'
 
 export interface Attachment {
@@ -48,6 +51,8 @@ export interface House {
   name: string
   ownerId: string
   memberIds: string[]
+  country?: string // ISO 3166-1 alpha-2 (e.g. 'ES', 'GB', 'US')
+  currency?: string // ISO 4217 (e.g. 'EUR', 'GBP', 'USD')
   createdAt: string
 }
 
