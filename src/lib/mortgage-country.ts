@@ -74,6 +74,7 @@ export function computeEffectiveRate(
     periodicAdjustmentCap?: number
   }
 ): number {
+  if (isNaN(referenceRate) || isNaN(spread)) return 0
   let rate = referenceRate + spread
 
   // Apply floor

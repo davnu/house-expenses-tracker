@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,7 +7,7 @@ import { Select } from '@/components/ui/select'
 import { AttachmentViewer } from './AttachmentViewer'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, friendlyError } from '@/lib/utils'
 import { EXPENSE_CATEGORIES } from '@/lib/constants'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
@@ -34,6 +34,12 @@ export function ExpenseList() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attachTargetId, setAttachTargetId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
+
+  const withErrorHandling = useCallback(async (fn: () => Promise<void>) => {
+    setActionError('')
+    try { await fn() } catch (err) { setActionError(friendlyError(err)) }
+  }, [])
 
   const filtered = expenses
     .filter((e) => !filterCategory || e.category === filterCategory)
@@ -64,8 +70,10 @@ export function ExpenseList() {
 
   const saveEdit = async () => {
     if (!editingId) return
-    await updateExpense(editingId, editData)
-    setEditingId(null)
+    await withErrorHandling(async () => {
+      await updateExpense(editingId!, editData)
+      setEditingId(null)
+    })
   }
 
   const openViewer = (expense: Expense, index: number) => {
@@ -82,9 +90,13 @@ export function ExpenseList() {
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!attachTargetId || !e.target.files?.length) return
-    await addAttachmentsToExpense(attachTargetId, Array.from(e.target.files))
-    setAttachTargetId(null)
+    const targetId = attachTargetId
+    const files = Array.from(e.target.files)
     e.target.value = ''
+    await withErrorHandling(async () => {
+      await addAttachmentsToExpense(targetId, files)
+      setAttachTargetId(null)
+    })
   }
 
   return (
@@ -143,6 +155,10 @@ export function ExpenseList() {
           </Button>
         </div>
       </div>
+
+      {actionError && (
+        <p className="text-sm text-destructive p-3 rounded-lg bg-destructive/5 border border-destructive/20">{actionError}</p>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">

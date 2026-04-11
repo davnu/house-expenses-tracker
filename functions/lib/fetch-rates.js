@@ -17,10 +17,10 @@ async function fetchEuribor(tenor, startDate, endDate) {
     const seriesKey = tenor === "12m"
         ? "FM/M.U2.EUR.RT.MM.EURIBOR1YD_.HSTA"
         : "FM/M.U2.EUR.RT.MM.EURIBOR6MD_.HSTA";
-    // ECB rejects future dates — cap endPeriod to previous month
+    // ECB rejects future dates — cap endPeriod to current month
     const now = new Date();
-    const maxEnd = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, "0")}`; // previous month
-    const requestEnd = endDate.substring(0, 7) < maxEnd ? endDate.substring(0, 7) : maxEnd;
+    const maxEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const requestEnd = endDate.substring(0, 7) <= maxEnd ? endDate.substring(0, 7) : maxEnd;
     const url = `https://data-api.ecb.europa.eu/service/data/${seriesKey}?startPeriod=${startDate.substring(0, 7)}&endPeriod=${requestEnd}&format=csvdata`;
     const res = await (0, node_fetch_1.default)(url);
     if (!res.ok)
@@ -62,19 +62,18 @@ async function fetchSOFR(startDate, endDate) {
         throw new Error(`NY Fed API error: ${res.status}`);
     const data = (await res.json());
     const rates = data.refRates ?? [];
-    // Aggregate to monthly averages
-    const monthly = {};
+    // Use end-of-month rate (last business day) — this is what mortgage products typically use
+    const byMonth = {};
     for (const rate of rates) {
         const month = rate.effectiveDate.substring(0, 7);
-        if (!monthly[month])
-            monthly[month] = { sum: 0, count: 0 };
-        monthly[month].sum += rate.percentRate;
-        monthly[month].count++;
+        if (!byMonth[month] || rate.effectiveDate > byMonth[month].date) {
+            byMonth[month] = { date: rate.effectiveDate, rate: rate.percentRate };
+        }
     }
-    return Object.entries(monthly)
-        .map(([month, { sum, count }]) => ({
+    return Object.entries(byMonth)
+        .map(([month, { rate }]) => ({
         date: `${month}-01`,
-        value: Math.round((sum / count) * 1000) / 1000,
+        value: Math.round(rate * 1000) / 1000,
     }))
         .sort((a, b) => a.date.localeCompare(b.date));
 }

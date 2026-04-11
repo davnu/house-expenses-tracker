@@ -37,6 +37,18 @@ down_payment, notary, taxes, financial_advisor, renovations, furniture, moving, 
 - `npm run dev` — localhost:5173, connects to real Firebase
 - `npm run build` — type-checks then builds to `dist/`
 
+## Tests
+- `npm test` — runs all tests (unit + integration). Integration tests auto-start/stop Firebase emulators.
+- `npm run test:unit` — unit tests only (fast, no emulators)
+- `npm run test:integration` — integration tests only (starts Firebase emulators on ports 5180/5199/5299/5400)
+- `npm run test:watch` — watch mode
+
+**Unit tests** (`src/lib/*.test.ts`): mortgage calculations, amortization schedules (French/Italian), rate changes, extra repayments, balance corrections, mixed/variable/fixed configs, country/reference rate logic.
+
+**Integration tests** (`tests/integration/*.test.ts`): Firestore security rules validation (user profiles, houses, members, expenses, invites, reference rates) and multi-user flows (create house → invite → join → shared expenses) running against Firebase emulators.
+
+Prerequisite: Firebase CLI (`firebase`) must be installed for integration tests.
+
 ## Quality Standards
 Always prioritize best UI design, best UX, best coding patterns, and maximum user value. Don't settle for "good enough."
 

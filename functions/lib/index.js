@@ -106,9 +106,18 @@ exports.updateReferenceRates = (0, scheduler_1.onSchedule)({
  * Call once after first deploy to populate the database
  */
 exports.backfillReferenceRates = (0, https_1.onCall)({ region: "europe-west1" }, async (request) => {
-    const startDate = request.data?.startDate ?? "2005-01-01";
-    const endDate = request.data?.endDate ??
-        new Date().toISOString().substring(0, 10);
+    // Require authentication
+    if (!request.auth) {
+        throw new Error("Authentication required");
+    }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const rawStart = request.data?.startDate ?? "2005-01-01";
+    const rawEnd = request.data?.endDate ?? new Date().toISOString().substring(0, 10);
+    if (!dateRegex.test(rawStart) || !dateRegex.test(rawEnd)) {
+        throw new Error("Invalid date format. Use YYYY-MM-DD.");
+    }
+    const startDate = rawStart;
+    const endDate = rawEnd;
     console.log(`Backfilling reference rates: ${startDate} to ${endDate}`);
     const results = await fetchAndStoreAll(startDate, endDate);
     console.log("Results:", JSON.stringify(results));

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { LoginPage } from './LoginPage'
 import { Home, UserPlus, AlertCircle } from 'lucide-react'
+import { friendlyError } from '@/lib/utils'
 import type { Invite } from '@/types/expense'
 
 export function InvitePage() {
@@ -48,7 +49,7 @@ export function InvitePage() {
       await joinHouse(inviteId)
       navigate('/', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to join')
+      setError(friendlyError(err, 'Failed to join household. Please try again.'))
       setJoining(false)
     }
   }

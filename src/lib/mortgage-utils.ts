@@ -116,8 +116,9 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
     if (correction) {
       remaining = correction.balance
       correctionMonths.delete(monthDate) // only apply once
-      // Recalculate payment unless user chose to keep current payment
-      if (!correction.keepCurrentPayment && !config.monthlyPaymentOverride) {
+      // Recalculate payment — only for French (Italian recalculates naturally)
+      const amortCheck = config.amortizationType ?? 'french'
+      if (amortCheck !== 'italian' && !correction.keepCurrentPayment && !config.monthlyPaymentOverride) {
         const remainingMonths = Math.max(1, originalTermMonths - i)
         currentPayment = calculateMonthlyPayment(remaining, prevRate, remainingMonths)
       }
@@ -126,10 +127,10 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
     const { rate, isChange } = getRateForMonth(monthDate, config, sortedPeriods)
     const monthlyRate = rate / 100 / 12
 
-    // Recalculate payment at rate boundaries (unless user overrode)
-    if (isChange && !config.monthlyPaymentOverride && rate !== prevRate) {
-      // Use remaining balance and remaining months from ORIGINAL term
-      // This is how real banks recalculate: same remaining term, new rate, current balance
+    const amortType = config.amortizationType ?? 'french'
+
+    // Recalculate payment at rate boundaries — only for French (Italian recalculates every month naturally)
+    if (amortType !== 'italian' && isChange && !config.monthlyPaymentOverride && rate !== prevRate) {
       const remainingMonths = Math.max(1, originalTermMonths - i)
       currentPayment = calculateMonthlyPayment(remaining, rate, remainingMonths)
     }
@@ -137,9 +138,17 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
 
     // Calculate interest for this month
     const interestCents = Math.round((remaining / 100) * monthlyRate * 100)
+    let basePrincipal: number
 
-    // Principal portion from regular payment (floor at 0 — if interest > payment, no principal reduction)
-    let basePrincipal = Math.max(0, currentPayment - interestCents)
+    if (amortType === 'italian') {
+      // Italian: constant principal portion each month
+      const remainingMonths = Math.max(1, originalTermMonths - i)
+      basePrincipal = Math.round(remaining / remainingMonths)
+      currentPayment = basePrincipal + interestCents
+    } else {
+      // French (default): constant payment, variable P/I split
+      basePrincipal = Math.max(0, currentPayment - interestCents)
+    }
 
     // Extra payments this month
     const { amount: extraThisMonth, hasReducePayment } = getExtraPaymentsForMonth(monthDate, config)
@@ -171,8 +180,8 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
     remaining -= totalPrincipalReduction
 
     // If extra payment is "reduce payment" mode, recalculate monthly payment
-    // for the remaining contractual term (lower payment, same end date)
-    if (hasReducePayment && extraThisMonth > 0 && !config.monthlyPaymentOverride) {
+    // Only for French — Italian recalculates naturally each iteration
+    if (amortType !== 'italian' && hasReducePayment && extraThisMonth > 0 && !config.monthlyPaymentOverride) {
       const remainingMonths = Math.max(1, originalTermMonths - i - 1)
       currentPayment = calculateMonthlyPayment(remaining, rate, remainingMonths)
     }

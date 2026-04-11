@@ -4,7 +4,7 @@ import { generateAmortizationSchedule, getMortgageStats } from '@/lib/mortgage-u
 import { MortgageSetupDialog } from '@/components/mortgage/MortgageSetupDialog'
 import { MortgageHero } from '@/components/mortgage/MortgageHero'
 import { MortgageOverviewCard } from '@/components/mortgage/MortgageOverviewCard'
-import { PrincipalInterestChart } from '@/components/mortgage/PrincipalInterestChart'
+import { PaymentBreakdownChart } from '@/components/mortgage/PaymentBreakdownChart'
 import { AmortizationChart } from '@/components/mortgage/AmortizationChart'
 import { AmortizationTable } from '@/components/mortgage/AmortizationTable'
 import { RatePeriodsCard } from '@/components/mortgage/RatePeriodsCard'
@@ -112,8 +112,8 @@ export function MortgagePage() {
         </div>
       )}
 
-      {/* Section 4: Analysis — chart + table */}
-      <PrincipalInterestChart stats={stats} variant="total" />
+      {/* Section 4: Analysis — charts + table */}
+      <PaymentBreakdownChart schedule={schedule} currentMonth={stats.monthsElapsed} />
       <AmortizationChart schedule={schedule} currentMonth={stats.monthsElapsed} />
       <AmortizationTable schedule={schedule} currentMonth={stats.monthsElapsed} showRateColumn={showRateColumn} />
 

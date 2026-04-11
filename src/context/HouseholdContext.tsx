@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import {
   doc,
-  getDoc,
   setDoc,
   updateDoc,
   collection,
   addDoc,
   onSnapshot,
   arrayUnion,
+  runTransaction,
 } from 'firebase/firestore'
 import { db } from '@/data/firebase'
 import { useAuth } from './AuthContext'
@@ -121,45 +121,42 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     if (!user || !userProfile) return
 
     const inviteRef = doc(db, 'invites', inviteId)
-    const inviteSnap = await getDoc(inviteRef)
-    if (!inviteSnap.exists()) throw new Error('Invite not found')
 
-    const invite = inviteSnap.data() as Omit<Invite, 'id'>
+    // Use a transaction to prevent race conditions (two users joining with same invite)
+    await runTransaction(db, async (transaction) => {
+      const inviteSnap = await transaction.get(inviteRef)
+      if (!inviteSnap.exists()) throw new Error('Invite not found')
 
-    // Check if expired or already used
-    if (invite.usedBy) throw new Error('Invite already used')
-    if (new Date(invite.expiresAt) < new Date()) throw new Error('Invite expired')
+      const invite = inviteSnap.data() as Omit<Invite, 'id'>
+      if (invite.usedBy) throw new Error('Invite already used')
+      if (new Date(invite.expiresAt) < new Date()) throw new Error('Invite expired')
 
-    const houseId = invite.houseId
-    const now = new Date().toISOString()
+      const houseId = invite.houseId
+      const now = new Date().toISOString()
 
-    // Read house doc to determine member count for color assignment
-    // (we can't read the members subcollection since we're not a member yet)
-    const houseSnap = await getDoc(doc(db, 'houses', houseId))
-    const memberCount = houseSnap.exists()
-      ? (houseSnap.data().memberIds?.length ?? 0)
-      : 0
-    const color = MEMBER_COLOR_PALETTE[memberCount % MEMBER_COLOR_PALETTE.length]
+      // Read house doc for member count (color assignment)
+      const houseSnap = await transaction.get(doc(db, 'houses', houseId))
+      const memberCount = houseSnap.exists() ? (houseSnap.data().memberIds?.length ?? 0) : 0
+      const color = MEMBER_COLOR_PALETTE[memberCount % MEMBER_COLOR_PALETTE.length]
 
-    // Add self as member first (rules allow: request.auth.uid == memberId)
-    await setDoc(doc(db, 'houses', houseId, 'members', user.uid), {
-      displayName: userProfile.displayName,
-      email: userProfile.email,
-      color,
-      role: 'member',
-      joinedAt: now,
+      // Mark invite as used FIRST (prevents race condition)
+      transaction.update(inviteRef, { usedBy: user.uid, usedAt: now })
+
+      // Add member
+      transaction.set(doc(db, 'houses', houseId, 'members', user.uid), {
+        displayName: userProfile.displayName,
+        email: userProfile.email,
+        color,
+        role: 'member',
+        joinedAt: now,
+      })
+
+      // Update house memberIds
+      transaction.update(doc(db, 'houses', houseId), { memberIds: arrayUnion(user.uid) })
+
+      // Update user profile
+      transaction.update(doc(db, 'users', user.uid), { houseId })
     })
-
-    // Now we're a member — update house memberIds
-    await updateDoc(doc(db, 'houses', houseId), {
-      memberIds: arrayUnion(user.uid),
-    })
-
-    // Update user profile
-    await updateDoc(doc(db, 'users', user.uid), { houseId })
-
-    // Mark invite as used
-    await updateDoc(inviteRef, { usedBy: user.uid, usedAt: now })
   }, [user, userProfile])
 
   const generateInvite = useCallback(async (): Promise<string> => {

@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Home } from 'lucide-react'
+import { friendlyError } from '@/lib/utils'
 
 interface LoginPageProps {
   subtitle?: string
@@ -16,6 +18,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,8 +33,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
         await signInEmail(email, password)
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Authentication failed'
-      setError(message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
+      setError(friendlyError(err, 'Authentication failed. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -43,12 +45,13 @@ export function LoginPage({ subtitle }: LoginPageProps) {
     try {
       await signInGoogle()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Google sign-in failed'
-      setError(message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
+      setError(friendlyError(err, 'Authentication failed. Please try again.'))
     } finally {
       setLoading(false)
     }
   }
+
+  const canSubmit = !loading && (!isSignUp || consent)
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
@@ -94,7 +97,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
                 <Input
                   id="displayName"
                   type="text"
-                  placeholder="e.g. David"
+                  placeholder="e.g. Alex"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required={isSignUp}
@@ -125,9 +128,26 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               />
             </div>
 
+            {isSignUp && (
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
+                />
+                <span className="text-sm text-muted-foreground">
+                  I agree to the{' '}
+                  <Link to="/privacy" target="_blank" className="text-primary hover:underline font-medium">
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+            )}
+
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={!canSubmit}>
               {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
           </form>
@@ -138,12 +158,17 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               type="button"
               onClick={() => {
                 setIsSignUp(!isSignUp)
+                setConsent(false)
                 setError('')
               }}
               className="text-primary font-medium hover:underline cursor-pointer"
             >
               {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
+          </p>
+
+          <p className="text-center text-xs text-muted-foreground">
+            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
           </p>
         </CardContent>
       </Card>

@@ -1,14 +1,16 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react'
 import type { Expense, Attachment } from '@/types/expense'
 import type { ExpenseRepository } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
 import { uploadAttachment, deleteAttachment, deleteAttachments } from '@/data/firebase-attachment-store'
 import { db } from '@/data/firebase'
 import { useHousehold } from './HouseholdContext'
+import { MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 
 interface ExpenseContextValue {
   expenses: Expense[]
   loading: boolean
+  storageUsed: number
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   addExpenseWithFiles: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
   updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>
@@ -27,6 +29,12 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const houseId = house?.id
+
+  const storageUsed = useMemo(() => {
+    return expenses.reduce((total, exp) => {
+      return total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0)
+    }, 0)
+  }, [expenses])
 
   useEffect(() => {
     if (houseId) {
@@ -70,10 +78,17 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
 
   const addExpenseWithFiles = useCallback(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => {
     if (!repo) return
+    if (files.length > MAX_FILES_PER_EXPENSE) {
+      throw new Error(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
+    }
+    const newSize = files.reduce((s, f) => s + f.size, 0)
+    if (storageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
+      throw new Error('Household storage limit reached')
+    }
     const attachments = files.length > 0 ? await filesToAttachments(files) : undefined
     await repo.addExpense({ ...input, attachments })
     await refresh()
-  }, [repo, refresh, filesToAttachments])
+  }, [repo, refresh, filesToAttachments, storageUsed])
 
   const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
     if (!repo) return
@@ -95,11 +110,19 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     if (!repo) return
     const expense = expenses.find((e) => e.id === expenseId)
     if (!expense) return
+    const existingCount = expense.attachments?.length ?? 0
+    if (existingCount + files.length > MAX_FILES_PER_EXPENSE) {
+      throw new Error(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
+    }
+    const newSize = files.reduce((s, f) => s + f.size, 0)
+    if (storageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
+      throw new Error('Household storage limit reached')
+    }
     const newAttachments = await filesToAttachments(files)
     const all = [...(expense.attachments ?? []), ...newAttachments]
     await repo.updateExpense(expenseId, { attachments: all })
     await refresh()
-  }, [repo, expenses, refresh, filesToAttachments])
+  }, [repo, expenses, refresh, filesToAttachments, storageUsed])
 
   const removeAttachment = useCallback(async (expenseId: string, attachmentId: string) => {
     if (!repo || !houseId) return
@@ -119,6 +142,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       value={{
         expenses,
         loading,
+        storageUsed,
         addExpense,
         addExpenseWithFiles,
         updateExpense,

@@ -69,10 +69,13 @@ export function RatePeriodsCard() {
     if (hasVariableConfig && editRefRate) {
       const ref = parseFloat(editRefRate)
       const sp = parseFloat(editSpread)
+      if (isNaN(ref) || isNaN(sp)) return
       const effective = computeEffectiveRate(ref, sp, { rateFloor: vr?.rateFloor ?? mr?.rateFloor })
       updatedPeriod = { ...period, startDate: editDate, annualRate: effective, referenceRate: ref, spread: sp }
     } else {
-      updatedPeriod = { ...period, startDate: editDate, annualRate: parseFloat(editRate) }
+      const rate = parseFloat(editRate)
+      if (isNaN(rate) || rate <= 0) return
+      updatedPeriod = { ...period, startDate: editDate, annualRate: rate }
     }
 
     const updated: MortgageConfig = {

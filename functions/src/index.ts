@@ -128,10 +128,21 @@ export const updateReferenceRates = onSchedule(
 export const backfillReferenceRates = onCall(
   { region: "europe-west1" },
   async (request) => {
-    const startDate = (request.data?.startDate as string) ?? "2005-01-01";
-    const endDate =
-      (request.data?.endDate as string) ??
-      new Date().toISOString().substring(0, 10);
+    // Require authentication
+    if (!request.auth) {
+      throw new Error("Authentication required");
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const rawStart = (request.data?.startDate as string) ?? "2005-01-01";
+    const rawEnd = (request.data?.endDate as string) ?? new Date().toISOString().substring(0, 10);
+
+    if (!dateRegex.test(rawStart) || !dateRegex.test(rawEnd)) {
+      throw new Error("Invalid date format. Use YYYY-MM-DD.");
+    }
+
+    const startDate = rawStart;
+    const endDate = rawEnd;
 
     console.log(`Backfilling reference rates: ${startDate} to ${endDate}`);
     const results = await fetchAndStoreAll(startDate, endDate);

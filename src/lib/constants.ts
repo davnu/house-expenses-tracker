@@ -32,6 +32,25 @@ export const CATEGORY_COLORS: Record<string, string> = {
   other: '#6b7280',
 }
 
+// Attachment limits
+export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB per file
+export const MAX_FILES_PER_EXPENSE = 10
+export const MAX_HOUSEHOLD_STORAGE = 500 * 1024 * 1024 // 500 MB total per household
+
+export const ACCEPTED_FILE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]
+
 export const MEMBER_COLOR_PALETTE = [
   '#2a9d90',
   '#e76e50',

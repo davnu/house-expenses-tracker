@@ -29,7 +29,7 @@ service cloud.firestore {
         allow create: if request.auth != null
                       && (isMember() || request.auth.uid == memberId);
         allow update: if request.auth != null && request.auth.uid == memberId;
-        allow delete: if false;
+        allow delete: if request.auth != null && request.auth.uid == memberId;
       }
 
       // Expenses
@@ -54,11 +54,15 @@ service cloud.firestore {
       allow write: if false; // only Cloud Functions (admin SDK) can write
     }
 
-    // Invites — readable by anyone (so unauthenticated users can see invite details)
+    // Invites — readable by anyone (unauthenticated users need to see house name on landing page)
+    // Creates restricted to authenticated users
+    // Updates restricted: only usedBy/usedAt fields can be changed (marking invite as used)
     match /invites/{inviteId} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['usedBy', 'usedAt']);
     }
   }
 }

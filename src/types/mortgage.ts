@@ -1,4 +1,5 @@
 export type RateType = 'fixed' | 'variable' | 'mixed'
+export type AmortizationType = 'french' | 'italian'
 
 export interface MixedRateConfig {
   fixedRate: number // the rate during the fixed period (e.g. 2.5)
@@ -64,6 +65,7 @@ export interface MortgageConfig {
   startDate: string // YYYY-MM-DD
   monthlyPayment: number // cents
   monthlyPaymentOverride: boolean
+  amortizationType?: AmortizationType // defaults to 'french' if not set
   propertyValue?: number // cents, optional — used for LTV and equity
   balanceCorrections?: BalanceCorrection[] // actual balances from bank statements
   variableRate?: VariableRateConfig // present when rateType is 'variable'

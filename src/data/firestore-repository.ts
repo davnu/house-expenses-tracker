@@ -14,16 +14,16 @@ import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
 import type { ExpenseRepository } from './repository'
 
-// Firestore rejects undefined values — deep strip them before writing
-function stripUndefined<T>(obj: T): T {
+// Firestore rejects undefined values and NaN corrupts data — deep strip both before writing
+function stripInvalid<T>(obj: T): T {
   if (Array.isArray(obj)) {
-    return obj.map((item) => stripUndefined(item)) as T
+    return obj.map((item) => stripInvalid(item)) as T
   }
   if (obj !== null && typeof obj === 'object') {
     return Object.fromEntries(
       Object.entries(obj)
-        .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, stripUndefined(v)])
+        .filter(([, v]) => v !== undefined && !(typeof v === 'number' && isNaN(v)))
+        .map(([k, v]) => [k, stripInvalid(v)])
     ) as T
   }
   return obj
@@ -57,14 +57,14 @@ export class FirestoreRepository implements ExpenseRepository {
 
   async addExpense(input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>): Promise<Expense> {
     const now = new Date().toISOString()
-    const data = stripUndefined({ ...input, createdAt: now, updatedAt: now })
+    const data = stripInvalid({ ...input, createdAt: now, updatedAt: now })
     const ref = await addDoc(this.col('expenses'), data)
     return { id: ref.id, ...data } as Expense
   }
 
   async updateExpense(id: string, updates: Partial<Expense>): Promise<Expense> {
     const ref = this.docRef('expenses', id)
-    const toUpdate = stripUndefined({ ...updates, updatedAt: new Date().toISOString() })
+    const toUpdate = stripInvalid({ ...updates, updatedAt: new Date().toISOString() })
     await updateDoc(ref, toUpdate)
     const snap = await getDoc(ref)
     return { id: snap.id, ...snap.data() } as Expense
@@ -98,7 +98,7 @@ export class FirestoreRepository implements ExpenseRepository {
 
   async saveMortgage(config: MortgageConfig): Promise<MortgageConfig> {
     const ref = this.docRef('meta', 'mortgage')
-    const data = stripUndefined({ ...config, updatedAt: new Date().toISOString() })
+    const data = stripInvalid({ ...config, updatedAt: new Date().toISOString() })
     await setDoc(ref, data)
     return data as MortgageConfig
   }

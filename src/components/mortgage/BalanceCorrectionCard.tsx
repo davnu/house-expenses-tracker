@@ -143,7 +143,12 @@ export function BalanceCorrectionCard() {
         </div>
       )}
 
-      {/* Keep payment or recalculate */}
+      {/* Keep payment or recalculate — only for fixed installment */}
+      {mortgage.amortizationType === 'italian' ? (
+        <p className="text-xs text-muted-foreground">
+          The principal portion adjusts automatically based on the corrected balance.
+        </p>
+      ) : (
       <div className="space-y-1">
         <Label className="text-xs">After correction</Label>
         <div className="flex rounded-lg border bg-muted p-0.5 gap-0.5">
@@ -174,6 +179,7 @@ export function BalanceCorrectionCard() {
             : 'Monthly payment is recalculated for the corrected balance.'}
         </p>
       </div>
+      )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex gap-2">

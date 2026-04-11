@@ -1,5 +1,5 @@
-import { NavLink, Outlet } from 'react-router'
-import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FileText } from 'lucide-react'
+import { NavLink, Link, Outlet } from 'react-router'
+import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FileText, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -59,6 +59,13 @@ export function AppShell() {
             <LogOut className="h-4 w-4 mr-2" />
             Sign out
           </Button>
+          <Link
+            to="/privacy"
+            className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Shield className="h-3 w-3" />
+            Privacy Policy
+          </Link>
         </div>
       </aside>
 

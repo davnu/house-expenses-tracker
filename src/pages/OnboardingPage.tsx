@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Home } from 'lucide-react'
+import { friendlyError } from '@/lib/utils'
 import { SUPPORTED_COUNTRIES } from '@/lib/mortgage-country'
 
 export function OnboardingPage() {
@@ -29,7 +30,7 @@ export function OnboardingPage() {
         selectedCountry?.currency
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create house')
+      setError(friendlyError(err, 'Failed to create house. Please try again.'))
     } finally {
       setLoading(false)
     }

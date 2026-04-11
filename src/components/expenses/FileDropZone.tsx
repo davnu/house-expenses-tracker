@@ -2,22 +2,14 @@ import { useState, useRef, useCallback, type DragEvent } from 'react'
 import { Upload, X, FileText, Image, FileSpreadsheet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import {
+  ACCEPTED_FILE_TYPES,
+  MAX_FILE_SIZE,
+  MAX_FILES_PER_EXPENSE,
+  MAX_HOUSEHOLD_STORAGE,
+} from '@/lib/constants'
 
-const ACCEPTED_TYPES = [
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'image/gif',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-]
-
-const ACCEPT_STRING = ACCEPTED_TYPES.join(',')
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
 
 function fileIcon(type: string) {
   if (type.startsWith('image/')) return Image
@@ -34,32 +26,54 @@ function formatSize(bytes: number): string {
 interface FileDropZoneProps {
   files: File[]
   onChange: (files: File[]) => void
+  existingCount?: number
+  householdStorageUsed?: number
 }
 
-export function FileDropZone({ files, onChange }: FileDropZoneProps) {
+export function FileDropZone({ files, onChange, existingCount = 0, householdStorageUsed = 0 }: FileDropZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const totalCount = existingCount + files.length
+  const remainingSlots = MAX_FILES_PER_EXPENSE - totalCount
+  const newFilesSize = files.reduce((sum, f) => sum + f.size, 0)
+  const storageAfterNew = householdStorageUsed + newFilesSize
+  const storageRemaining = MAX_HOUSEHOLD_STORAGE - storageAfterNew
 
   const addFiles = useCallback(
     (newFiles: FileList | File[]) => {
       setError('')
       const valid: File[] = []
       for (const file of Array.from(newFiles)) {
-        if (!ACCEPTED_TYPES.includes(file.type)) {
+        // File type check
+        if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
           setError(`"${file.name}" is not a supported file type`)
           continue
         }
+        // Per-file size check
         if (file.size > MAX_FILE_SIZE) {
-          setError(`"${file.name}" exceeds 10MB limit`)
+          setError(`"${file.name}" exceeds 10 MB limit`)
           continue
         }
+        // Duplicate check
         if (files.some((f) => f.name === file.name && f.size === file.size)) continue
+        // Per-expense file count
+        if (totalCount + valid.length >= MAX_FILES_PER_EXPENSE) {
+          setError(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
+          break
+        }
+        // Household storage quota
+        const pendingSize = valid.reduce((s, f) => s + f.size, 0)
+        if (storageAfterNew + pendingSize + file.size > MAX_HOUSEHOLD_STORAGE) {
+          setError(`Household storage limit reached (${formatSize(MAX_HOUSEHOLD_STORAGE)})`)
+          break
+        }
         valid.push(file)
       }
       if (valid.length > 0) onChange([...files, ...valid])
     },
-    [files, onChange]
+    [files, onChange, totalCount, storageAfterNew]
   )
 
   const handleDragOver = (e: DragEvent) => {
@@ -84,26 +98,38 @@ export function FileDropZone({ files, onChange }: FileDropZoneProps) {
     onChange(files.filter((_, i) => i !== index))
   }
 
+  const atFileLimit = remainingSlots <= 0
+  const atStorageLimit = storageRemaining <= 0
+  const disabled = atFileLimit || atStorageLimit
+
   return (
     <div className="space-y-2">
       <div
-        onDragOver={handleDragOver}
+        onDragOver={disabled ? undefined : handleDragOver}
         onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onDrop={disabled ? undefined : handleDrop}
+        onClick={disabled ? undefined : () => inputRef.current?.click()}
         className={cn(
-          'border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors',
-          isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-input hover:border-primary/50 hover:bg-accent/50'
+          'border-2 border-dashed rounded-lg p-4 text-center transition-colors',
+          disabled
+            ? 'border-muted bg-muted/30 cursor-not-allowed opacity-60'
+            : isDragging
+              ? 'border-primary bg-primary/5 cursor-pointer'
+              : 'border-input hover:border-primary/50 hover:bg-accent/50 cursor-pointer'
         )}
       >
         <Upload className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          Drop files here or <span className="text-primary font-medium">browse</span>
+          {disabled
+            ? atFileLimit ? 'File limit reached' : 'Storage limit reached'
+            : <>Drop files here or <span className="text-primary font-medium">browse</span></>
+          }
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Images, PDF, Word, Excel &middot; Max 10MB each
+          Images, PDF, Word, Excel &middot; Max 10 MB each &middot; {totalCount}/{MAX_FILES_PER_EXPENSE} files
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {formatSize(storageAfterNew)} / {formatSize(MAX_HOUSEHOLD_STORAGE)} used
         </p>
         <input
           ref={inputRef}
@@ -111,6 +137,7 @@ export function FileDropZone({ files, onChange }: FileDropZoneProps) {
           multiple
           accept={ACCEPT_STRING}
           className="hidden"
+          disabled={disabled}
           onChange={(e) => {
             if (e.target.files) addFiles(e.target.files)
             e.target.value = ''

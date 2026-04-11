@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Download, LogOut, Link, Copy, Check, Edit2, Users } from 'lucide-react'
+import { Link as RouterLink } from 'react-router'
+import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield } from 'lucide-react'
+import { friendlyError } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,11 +10,13 @@ import { Badge } from '@/components/ui/badge'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useMortgage } from '@/context/MortgageContext'
 
 export function SettingsPage() {
   const { expenses } = useExpenses()
-  const { logout } = useAuth()
+  const { logout, deleteAccount } = useAuth()
   const { userProfile, house, members, generateInvite, updateDisplayName, updateHouseName } = useHousehold()
+  const { mortgage } = useMortgage()
 
   const [inviteLink, setInviteLink] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
@@ -25,6 +29,9 @@ export function SettingsPage() {
   const [newHouseName, setNewHouseName] = useState(house?.name ?? '')
 
   const [inviteError, setInviteError] = useState('')
+
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'deleting'>('idle')
+  const [deleteError, setDeleteError] = useState('')
 
   const handleGenerateInvite = async () => {
     setInviteLoading(true)
@@ -59,10 +66,46 @@ export function SettingsPage() {
     setEditingHouse(false)
   }
 
+  const handleDeleteAccount = async () => {
+    setDeleteStep('deleting')
+    setDeleteError('')
+    try {
+      await deleteAccount()
+      // Auth state change will redirect to login
+    } catch (err) {
+      setDeleteError(friendlyError(err, 'Failed to delete account. Please try again.'))
+      setDeleteStep('idle')
+    }
+  }
+
   const handleExport = () => {
     const data = {
-      expenses,
       exportedAt: new Date().toISOString(),
+      profile: userProfile ? {
+        displayName: userProfile.displayName,
+        email: userProfile.email,
+        createdAt: userProfile.createdAt,
+      } : null,
+      household: house ? {
+        name: house.name,
+        country: house.country,
+        currency: house.currency,
+        members: members.map((m) => ({
+          displayName: m.displayName,
+          role: m.role,
+          joinedAt: m.joinedAt,
+        })),
+      } : null,
+      expenses: expenses.map((e) => ({
+        ...e,
+        attachments: e.attachments?.map((a) => ({
+          name: a.name,
+          type: a.type,
+          size: a.size,
+        })),
+      })),
+      mortgage: mortgage ?? null,
+      _note: 'File attachments are not included in this export due to size. Download them individually from the app.',
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -190,14 +233,25 @@ export function SettingsPage() {
       {/* Data */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Management</CardTitle>
-          <CardDescription>Export your expense data as JSON</CardDescription>
+          <CardTitle>Data & Privacy</CardTitle>
+          <CardDescription>Your data belongs to you</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Data
-          </Button>
+        <CardContent className="space-y-3">
+          <div>
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export All My Data
+            </Button>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Download your profile, expenses, mortgage, and household data as JSON.
+            </p>
+          </div>
+          <div className="pt-2 border-t">
+            <RouterLink to="/privacy" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+              <Shield className="h-3.5 w-3.5" />
+              Privacy Policy
+            </RouterLink>
+          </div>
         </CardContent>
       </Card>
 
@@ -217,6 +271,60 @@ export function SettingsPage() {
               <p className="text-xl font-semibold">{members.length}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <CardTitle className="text-destructive">Delete Account</CardTitle>
+          </div>
+          <CardDescription>
+            Permanently delete your account and all associated data. This cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {deleteStep === 'idle' && (
+            <>
+              <p className="text-sm text-muted-foreground">This will delete:</p>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                <li>Your user profile and authentication</li>
+                <li>Your expenses and their attachments</li>
+                <li>Your membership from the household</li>
+              </ul>
+              <p className="text-sm text-muted-foreground">
+                Shared household data (other members' expenses, mortgage settings) will not be affected.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteStep('confirm')}
+              >
+                Delete my account
+              </Button>
+            </>
+          )}
+          {deleteStep === 'confirm' && (
+            <div className="space-y-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
+              <p className="text-sm font-medium">Are you sure? This action is permanent and cannot be reversed.</p>
+              <p className="text-sm text-muted-foreground">
+                We recommend exporting your data first using the button above.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="destructive" onClick={handleDeleteAccount}>
+                  Yes, permanently delete my account
+                </Button>
+                <Button variant="outline" onClick={() => setDeleteStep('idle')}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+          {deleteStep === 'deleting' && (
+            <p className="text-sm text-muted-foreground">Deleting your account...</p>
+          )}
+          {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
         </CardContent>
       </Card>
     </div>

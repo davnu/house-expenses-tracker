@@ -15,6 +15,7 @@ interface MortgageHeroProps {
 export function MortgageHero({ config, stats }: MortgageHeroProps) {
   const vr = config.variableRate
   const mr = config.mixedRate
+  const isItalian = (config.amortizationType ?? 'french') === 'italian'
   const inFixedPeriod = isMixedInFixedPeriod(config)
   const switchDate = mr ? getMixedSwitchDate(config.startDate, mr.fixedPeriodYears) : null
 
@@ -60,8 +61,15 @@ export function MortgageHero({ config, stats }: MortgageHeroProps) {
         {/* Monthly payment — the hero number */}
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Monthly Payment</p>
-            <p className="text-4xl font-bold tracking-tight">{formatCurrency(config.monthlyPayment)}</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              {isItalian ? 'Current Payment' : 'Monthly Payment'}
+            </p>
+            <p className="text-4xl font-bold tracking-tight">
+              {formatCurrency(isItalian ? (stats.currentMonthPrincipal + stats.currentMonthInterest) : config.monthlyPayment)}
+            </p>
+            {isItalian && (
+              <p className="text-xs text-muted-foreground mt-1">Decreasing installment — changes monthly</p>
+            )}
           </div>
 
           {/* Current rate */}

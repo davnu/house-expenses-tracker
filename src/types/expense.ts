@@ -43,6 +43,7 @@ export interface UserProfile {
   displayName: string
   email: string
   houseId: string | null
+  consentedAt?: string
   createdAt: string
 }
 

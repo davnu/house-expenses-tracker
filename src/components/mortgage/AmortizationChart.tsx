@@ -11,9 +11,9 @@ interface AmortizationChartProps {
 
 export function AmortizationChart({ schedule, currentMonth }: AmortizationChartProps) {
   const data = useMemo(() => {
-    // Sample every 6 months for performance (30yr = 360 points → 60 points)
+    // Sample every 6 months, but always include rate changes and extra payments
     return schedule
-      .filter((_, i) => i % 6 === 0 || i === schedule.length - 1)
+      .filter((row, i) => i % 6 === 0 || i === schedule.length - 1 || row.isRateChange || row.extraPayment)
       .map((row) => ({
         date: row.date,
         balance: Math.round(row.remainingBalance / 100),

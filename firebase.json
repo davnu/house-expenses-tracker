@@ -17,5 +17,19 @@
   },
   "functions": {
     "source": "functions"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 5180
+    },
+    "auth": {
+      "port": 5199
+    },
+    "storage": {
+      "port": 5299
+    },
+    "hub": {
+      "port": 5400
+    }
   }
 }

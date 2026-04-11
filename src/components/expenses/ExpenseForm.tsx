@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/select'
 import { FileDropZone } from './FileDropZone'
 import { EXPENSE_CATEGORIES } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useExpenses } from '@/context/ExpenseContext'
 import { useAuth } from '@/context/AuthContext'
 import { format } from 'date-fns'
 import type { Expense } from '@/types/expense'
@@ -32,6 +33,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expense' }: ExpenseFormProps) {
   const [files, setFiles] = useState<File[]>([])
   const { members } = useHousehold()
+  const { storageUsed } = useExpenses()
   const { user } = useAuth()
 
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
@@ -115,7 +117,7 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
       <div className="space-y-2">
         <Label>Attachments <span className="text-muted-foreground font-normal">(optional)</span></Label>
         <p className="text-xs text-muted-foreground -mt-1">Receipts, contracts, invoices, photos — keep everything in one place</p>
-        <FileDropZone files={files} onChange={setFiles} />
+        <FileDropZone files={files} onChange={setFiles} householdStorageUsed={storageUsed} />
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
