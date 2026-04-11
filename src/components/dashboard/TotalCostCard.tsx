@@ -15,17 +15,19 @@ export function TotalCostCard({ expenses, mortgagePaid }: TotalCostCardProps) {
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Home className="h-5 w-5 text-primary" />
           </div>
-          <p className="text-sm font-medium text-muted-foreground">Total House Cost</p>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Total House Cost</p>
+            <p className="text-3xl font-bold tracking-tight">{formatCurrency(total)}</p>
+          </div>
         </div>
-        <p className="text-4xl font-bold tracking-tight">{formatCurrency(total)}</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          {expenses.length} expense{expenses.length !== 1 ? 's' : ''} ({formatCurrency(expenseTotal)})
-          {mortgagePaid > 0 && <span> + mortgage ({formatCurrency(mortgagePaid)})</span>}
-        </p>
+        <div className="flex gap-4 mt-3 text-sm text-muted-foreground">
+          <span>{expenses.length} expense{expenses.length !== 1 ? 's' : ''} ({formatCurrency(expenseTotal)})</span>
+          {mortgagePaid > 0 && <span>Mortgage ({formatCurrency(mortgagePaid)})</span>}
+        </div>
       </CardContent>
     </Card>
   )

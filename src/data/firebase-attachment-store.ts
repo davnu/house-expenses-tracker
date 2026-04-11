@@ -11,7 +11,7 @@ export async function uploadAttachment(
   file: File
 ): Promise<string> {
   const storageRef = attachmentRef(houseId, attachmentId, file.name)
-  await uploadBytes(storageRef, file)
+  await uploadBytes(storageRef, file, { cacheControl: 'private, max-age=86400' })
   return getDownloadURL(storageRef)
 }
 

@@ -1,27 +1,9 @@
-import { useState, useEffect } from 'react'
-import { Download, FileText, FileSpreadsheet, Image, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect, useCallback } from 'react'
+import { Download, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import type { Attachment } from '@/types/expense'
 
-function fileIcon(type: string) {
-  if (type.startsWith('image/')) return Image
-  if (type.includes('spreadsheet') || type.includes('excel')) return FileSpreadsheet
-  return FileText
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function isPreviewable(type: string) {
-  return type.startsWith('image/') || type === 'application/pdf'
-}
-
 interface AttachmentViewerProps {
-  attachments: Attachment[]
+  attachments: Attachment[] // only images
   initialIndex?: number
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -31,12 +13,23 @@ export function AttachmentViewer({ attachments, initialIndex = 0, open, onOpenCh
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
 
   const attachment = attachments[currentIndex]
+  const hasMultiple = attachments.length > 1
 
   useEffect(() => {
     setCurrentIndex(initialIndex)
   }, [initialIndex])
 
-  const download = () => {
+  const close = useCallback(() => onOpenChange(false), [onOpenChange])
+
+  const prev = useCallback(() => {
+    setCurrentIndex((i) => (i > 0 ? i - 1 : attachments.length - 1))
+  }, [attachments.length])
+
+  const next = useCallback(() => {
+    setCurrentIndex((i) => (i < attachments.length - 1 ? i + 1 : 0))
+  }, [attachments.length])
+
+  const download = useCallback(() => {
     if (!attachment?.url) return
     const a = document.createElement('a')
     a.href = attachment.url
@@ -44,85 +37,76 @@ export function AttachmentViewer({ attachments, initialIndex = 0, open, onOpenCh
     a.target = '_blank'
     a.rel = 'noopener noreferrer'
     a.click()
-  }
+  }, [attachment])
 
-  const prev = () => setCurrentIndex((i) => (i > 0 ? i - 1 : attachments.length - 1))
-  const next = () => setCurrentIndex((i) => (i < attachments.length - 1 ? i + 1 : 0))
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+      if (e.key === 'ArrowLeft' && hasMultiple) prev()
+      if (e.key === 'ArrowRight' && hasMultiple) next()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [open, close, prev, next, hasMultiple])
 
-  if (!attachment) return null
-
-  const Icon = fileIcon(attachment.type)
-  const canPreview = isPreviewable(attachment.type) && attachment.url
+  if (!open || !attachment?.url) return null
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        onClose={() => onOpenChange(false)}
-        className="max-w-2xl max-h-[90vh] flex flex-col"
-      >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 pr-8">
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{attachment.name}</span>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {formatSize(attachment.size)}
-            </span>
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Preview area */}
-        <div className="flex-1 min-h-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden relative">
-          {canPreview ? (
-            attachment.type.startsWith('image/') ? (
-              <img
-                src={attachment.url}
-                alt={attachment.name}
-                className="max-w-full max-h-[60vh] object-contain"
-              />
-            ) : (
-              <iframe
-                src={attachment.url}
-                title={attachment.name}
-                className="w-full h-[60vh] border-0"
-              />
-            )
-          ) : (
-            <div className="text-center py-16 space-y-3">
-              <Icon className="h-12 w-12 mx-auto text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Preview not available for this file type
-              </p>
-              <Button onClick={download} variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Download to view
-              </Button>
-            </div>
-          )}
+    <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 text-white/80">
+        <span className="text-sm truncate">{attachment.name}</span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={download}
+            className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+            title="Download"
+          >
+            <Download className="h-5 w-5" />
+          </button>
+          <button
+            onClick={close}
+            className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
+      </div>
 
-        {/* Footer with navigation and download */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-1">
-            {attachments.length > 1 && (
-              <>
-                <Button size="icon" variant="ghost" onClick={prev}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground px-2">
-                  {currentIndex + 1} / {attachments.length}
-                </span>
-                <Button size="icon" variant="ghost" onClick={next}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </div>
-          <Button onClick={download} size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </Button>
+      {/* Image */}
+      <div className="flex-1 flex items-center justify-center relative min-h-0 px-14">
+        {hasMultiple && (
+          <button
+            onClick={prev}
+            className="absolute left-2 p-2 rounded-full bg-black/40 text-white/70 hover:text-white hover:bg-black/60 transition-colors cursor-pointer z-10"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
+
+        <img
+          src={attachment.url}
+          alt={attachment.name}
+          className="max-w-[90vw] max-h-[85vh] object-contain"
+        />
+
+        {hasMultiple && (
+          <button
+            onClick={next}
+            className="absolute right-2 p-2 rounded-full bg-black/40 text-white/70 hover:text-white hover:bg-black/60 transition-colors cursor-pointer z-10"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        )}
+      </div>
+
+      {/* Counter */}
+      {hasMultiple && (
+        <div className="flex items-center justify-center py-3 text-white/50 text-sm">
+          {currentIndex + 1} / {attachments.length}
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   )
 }

@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
 import { TotalCostCard } from '@/components/dashboard/TotalCostCard'
-import { HorizontalBarChart } from '@/components/dashboard/HorizontalBarChart'
+import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown'
 import { MonthlyTrend } from '@/components/dashboard/MonthlyTrend'
 import { MortgageSummaryCard } from '@/components/mortgage/MortgageSummaryCard'
 import { PersonSplitCard } from '@/components/dashboard/PersonSplitCard'
+import { RecentExpenses } from '@/components/dashboard/RecentExpenses'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { getMortgageStats } from '@/lib/mortgage-utils'
@@ -54,8 +55,8 @@ export function DashboardPage() {
 
           {filteredExpenses.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <HorizontalBarChart expenses={filteredExpenses} title="Expenses by Category" />
-              <MonthlyTrend expenses={filteredExpenses} title="Expense Timeline" />
+              <CategoryBreakdown expenses={filteredExpenses} />
+              <MonthlyTrend expenses={filteredExpenses} />
             </div>
           )}
 
@@ -63,6 +64,8 @@ export function DashboardPage() {
             <MortgageSummaryCard />
             <PersonSplitCard expenses={filteredExpenses} />
           </div>
+
+          <RecentExpenses expenses={expenses} />
         </>
       )}
     </div>
