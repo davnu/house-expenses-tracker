@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
-import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -26,12 +26,12 @@ export function ExpenseList() {
   const [filterFrom, setFilterFrom] = useState('')
   const [filterTo, setFilterTo] = useState('')
   const [search, setSearch] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category' | 'payer'>('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
 
-  // Attachment viewer state
   const [viewerOpen, setViewerOpen] = useState(false)
   const [viewerAttachments, setViewerAttachments] = useState<Attachment[]>([])
   const [viewerIndex, setViewerIndex] = useState(0)
@@ -56,29 +56,25 @@ export function ExpenseList() {
       .sort((a, b) => {
         const dir = sortDir === 'asc' ? 1 : -1
         switch (sortBy) {
-          case 'amount':
-            return (a.amount - b.amount) * dir
-          case 'category':
-            return a.category.localeCompare(b.category) * dir
-          case 'payer':
-            return getMemberName(a.payer).localeCompare(getMemberName(b.payer)) * dir
-          default:
-            return a.date.localeCompare(b.date) * dir
+          case 'amount': return (a.amount - b.amount) * dir
+          case 'category': return a.category.localeCompare(b.category) * dir
+          case 'payer': return getMemberName(a.payer).localeCompare(getMemberName(b.payer)) * dir
+          default: return a.date.localeCompare(b.date) * dir
         }
       })
   }, [expenses, filterCategory, filterPayer, filterFrom, filterTo, search, sortBy, sortDir, getMemberName])
 
   const filteredTotal = useMemo(() => filtered.reduce((s, e) => s + e.amount, 0), [filtered])
+  const hasFilters = filterCategory || filterPayer || filterFrom || filterTo
+  const activeFilterCount = [filterCategory, filterPayer, filterFrom, filterTo].filter(Boolean).length
 
   const handleAttachmentClick = (expense: Expense, index: number) => {
     const att = expense.attachments?.[index]
     if (!att?.url) return
-
     if (att.type.startsWith('image/')) {
       const images = expense.attachments!.filter((a) => a.type.startsWith('image/'))
-      const imageIndex = images.indexOf(att)
       setViewerAttachments(images)
-      setViewerIndex(Math.max(0, imageIndex))
+      setViewerIndex(Math.max(0, images.indexOf(att)))
       setViewerOpen(true)
     } else if (att.type === 'application/pdf') {
       window.open(att.url, '_blank', 'noopener,noreferrer')
@@ -116,97 +112,108 @@ export function ExpenseList() {
     setSearch('')
   }
 
-  const hasFilters = filterCategory || filterPayer || filterFrom || filterTo || search
-
   return (
-    <div className="space-y-4">
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept={ACCEPTED_TYPES}
-        className="hidden"
-        onChange={handleFileSelected}
-      />
+    <div className="space-y-3">
+      <input ref={fileInputRef} type="file" multiple accept={ACCEPTED_TYPES} className="hidden" onChange={handleFileSelected} />
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search expenses..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {/* Filters & Sort */}
-      <div className="flex gap-2 flex-wrap items-center">
-        <Select
-          className="w-40"
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-        >
-          <option value="">All categories</option>
-          {EXPENSE_CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </Select>
-        <Select
-          className="w-36"
-          value={filterPayer}
-          onChange={(e) => setFilterPayer(e.target.value)}
-        >
-          <option value="">All members</option>
-          {members.map((m) => (
-            <option key={m.uid} value={m.uid}>{m.displayName}</option>
-          ))}
-        </Select>
-        <Input
-          type="date"
-          className="w-36"
-          value={filterFrom}
-          onChange={(e) => setFilterFrom(e.target.value)}
-          placeholder="From"
-          title="From date"
-        />
-        <Input
-          type="date"
-          className="w-36"
-          value={filterTo}
-          onChange={(e) => setFilterTo(e.target.value)}
-          placeholder="To"
-          title="To date"
-        />
-
-        <div className="ml-auto flex gap-1.5 items-center">
-          <Select
-            className="w-32"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          >
-            <option value="date">Date</option>
-            <option value="amount">Amount</option>
-            <option value="category">Category</option>
-            <option value="payer">Member</option>
-          </Select>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 shrink-0"
-            onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-            title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
-          >
-            <ArrowUpDown className="h-3.5 w-3.5" />
-          </Button>
+      {/* Search + filter toggle + sort */}
+      <div className="flex gap-2 items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search expenses..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
         </div>
+        <Button
+          variant={hasFilters ? 'default' : 'outline'}
+          size="sm"
+          className="shrink-0 h-9"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="ml-1.5 h-5 w-5 rounded-full bg-primary-foreground text-primary text-xs flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+        <Select
+          className="w-28 shrink-0"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+        >
+          <option value="date">Date</option>
+          <option value="amount">Amount</option>
+          <option value="category">Category</option>
+          <option value="payer">Member</option>
+        </Select>
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-9 w-9 shrink-0"
+          onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+          title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+        >
+          <ArrowUpDown className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
-      {/* Summary bar */}
+      {/* Collapsible filters */}
+      {showFilters && (
+        <div className="flex gap-2 flex-wrap items-center p-3 rounded-lg border bg-muted/30">
+          <Select
+            className="w-[calc(50%-4px)] sm:w-40"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </Select>
+          <Select
+            className="w-[calc(50%-4px)] sm:w-36"
+            value={filterPayer}
+            onChange={(e) => setFilterPayer(e.target.value)}
+          >
+            <option value="">All members</option>
+            {members.map((m) => (
+              <option key={m.uid} value={m.uid}>{m.displayName}</option>
+            ))}
+          </Select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs text-muted-foreground shrink-0">From</span>
+            <Input
+              type="date"
+              className="flex-1 sm:flex-none sm:w-36"
+              value={filterFrom}
+              onChange={(e) => setFilterFrom(e.target.value)}
+            />
+            <span className="text-xs text-muted-foreground shrink-0">to</span>
+            <Input
+              type="date"
+              className="flex-1 sm:flex-none sm:w-36"
+              value={filterTo}
+              onChange={(e) => setFilterTo(e.target.value)}
+            />
+          </div>
+          {hasFilters && (
+            <button onClick={clearFilters} className="text-xs text-primary hover:underline cursor-pointer ml-auto">
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Summary */}
       {filtered.length > 0 && (
         <p className="text-sm text-muted-foreground">
           {filtered.length} expense{filtered.length !== 1 ? 's' : ''} &middot; {formatCurrency(filteredTotal)}
-          {hasFilters && (
+          {(hasFilters || search) && !showFilters && (
             <button onClick={clearFilters} className="ml-2 text-primary hover:underline cursor-pointer">
               Clear filters
             </button>
@@ -225,9 +232,7 @@ export function ExpenseList() {
               <p className="text-lg">No matching expenses</p>
               <p className="text-sm">
                 Try adjusting your filters or{' '}
-                <button onClick={clearFilters} className="text-primary hover:underline cursor-pointer">
-                  clear all filters
-                </button>
+                <button onClick={clearFilters} className="text-primary hover:underline cursor-pointer">clear all filters</button>
               </p>
             </>
           ) : (
@@ -238,11 +243,11 @@ export function ExpenseList() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {filtered.map((expense) => (
             <div
               key={expense.id}
-              className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors group/row"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors group/row"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -250,30 +255,33 @@ export function ExpenseList() {
                   <span className="text-sm text-muted-foreground">{format(new Date(expense.date), 'MMM d, yyyy')}</span>
                   <Badge variant="secondary">{categoryLabel(expense.category)}</Badge>
                   <Badge variant="outline">{getMemberName(expense.payer)}</Badge>
+                  {(expense.attachments?.length ?? 0) > 0 && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+                      <Paperclip className="h-3 w-3" />
+                      {expense.attachments!.length}
+                    </span>
+                  )}
                 </div>
                 {expense.description && (
-                  <p className="text-sm text-muted-foreground mt-1 truncate">{expense.description}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5 truncate">{expense.description}</p>
                 )}
 
-                {/* Attachments row */}
+                {/* Attachments */}
                 {(expense.attachments?.length ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                     {expense.attachments!.map((att, i) => (
                       <button
                         key={att.id}
                         onClick={() => handleAttachmentClick(expense, i)}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted-foreground/10 transition-colors cursor-pointer group"
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted-foreground/10 transition-colors cursor-pointer group"
                         title={att.name}
                       >
                         <Paperclip className="h-3 w-3 text-muted-foreground" />
-                        <span className="truncate max-w-[120px]">{att.name}</span>
+                        <span className="truncate max-w-[100px]">{att.name}</span>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeAttachment(expense.id, att.id)
-                          }}
+                          onClick={(e) => { e.stopPropagation(); removeAttachment(expense.id, att.id) }}
                           className="ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          title="Remove attachment"
+                          title="Remove"
                         >
                           <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                         </button>
@@ -281,7 +289,7 @@ export function ExpenseList() {
                     ))}
                     <button
                       onClick={() => handleAddAttachment(expense.id)}
-                      className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                      className="inline-flex items-center text-xs px-1.5 py-0.5 rounded border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"
                       title="Add attachment"
                     >
                       <Plus className="h-3 w-3" />
@@ -289,59 +297,46 @@ export function ExpenseList() {
                   </div>
                 )}
 
-                {/* Attach file — only visible on hover */}
                 {(!expense.attachments || expense.attachments.length === 0) && (
                   <button
                     onClick={() => handleAddAttachment(expense.id)}
-                    className="inline-flex items-center gap-1 text-xs mt-2 px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer opacity-0 group-hover/row:opacity-100"
-                    title="Add attachment"
+                    className="inline-flex items-center gap-1 text-xs mt-1.5 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer opacity-0 group-hover/row:opacity-100"
                   >
                     <Paperclip className="h-3 w-3" />
-                    <span>Attach file</span>
+                    <span>Attach</span>
                   </button>
                 )}
               </div>
-              <Button size="icon" variant="ghost" onClick={() => setEditingExpense(expense)}>
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              {deletingId === expense.id ? (
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    title="Confirm delete"
-                    onClick={() => {
-                      withErrorHandling(async () => { await deleteExpense(expense.id) })
-                      setDeletingId(null)
-                    }}
-                  >
-                    <Check className="h-4 w-4 text-destructive" />
-                  </Button>
-                  <Button size="icon" variant="ghost" title="Cancel" onClick={() => setDeletingId(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button size="icon" variant="ghost" onClick={() => setDeletingId(expense.id)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              )}
+
+              {/* Actions — visible on hover on desktop, always on mobile */}
+              <div className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover/row:opacity-100 transition-opacity">
+                {deletingId === expense.id ? (
+                  <>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" title="Confirm" onClick={() => { withErrorHandling(async () => { await deleteExpense(expense.id) }); setDeletingId(null) }}>
+                      <Check className="h-4 w-4 text-destructive" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" title="Cancel" onClick={() => setDeletingId(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingExpense(expense)}>
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeletingId(expense.id)}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      <AttachmentViewer
-        attachments={viewerAttachments}
-        initialIndex={viewerIndex}
-        open={viewerOpen}
-        onOpenChange={setViewerOpen}
-      />
-
-      <EditExpenseDialog
-        expense={editingExpense}
-        onOpenChange={(open) => { if (!open) setEditingExpense(null) }}
-      />
+      <AttachmentViewer attachments={viewerAttachments} initialIndex={viewerIndex} open={viewerOpen} onOpenChange={setViewerOpen} />
+      <EditExpenseDialog expense={editingExpense} onOpenChange={(open) => { if (!open) setEditingExpense(null) }} />
     </div>
   )
 }

@@ -23,11 +23,11 @@ export function ExpensesPage() {
 
       {/* Mobile FAB */}
       <Button
-        size="lg"
-        className="sm:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg z-30"
+        className="sm:hidden fixed bottom-20 right-4 h-12 rounded-full shadow-lg z-30 px-5"
         onClick={() => setDialogOpen(true)}
       >
-        <Plus className="h-6 w-6" />
+        <Plus className="h-5 w-5 mr-1.5" />
+        Add Expense
       </Button>
     </div>
   )

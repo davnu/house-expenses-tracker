@@ -5,6 +5,7 @@ import { db } from '@/data/firebase'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { LoginPage } from './LoginPage'
 import { AlertCircle, UserPlus } from 'lucide-react'
+import { LoadingScreen } from '@/components/ui/loading'
 import type { Invite } from '@/types/expense'
 
 export function InviteLandingPage() {
@@ -26,13 +27,7 @@ export function InviteLandingPage() {
       .finally(() => setLoading(false))
   }, [inviteId])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
 
   if (!invite) {
     return (

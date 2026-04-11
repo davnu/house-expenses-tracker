@@ -4,9 +4,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // User profiles — each user can read any profile, write only their own
+    // Exception: house owner can clear a member's houseId when removing them
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null
+                    && request.resource.data.houseId == null
+                    && resource.data.houseId != null
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['houseId'])
+                    && get(/databases/$(database)/documents/houses/$(resource.data.houseId)).data.ownerId == request.auth.uid;
     }
 
     // Houses
@@ -15,12 +21,20 @@ service cloud.firestore {
         return exists(/databases/$(database)/documents/houses/$(houseId)/members/$(request.auth.uid));
       }
 
+      function isOwner() {
+        return get(/databases/$(database)/documents/houses/$(houseId)).data.ownerId == request.auth.uid;
+      }
+
       allow create: if request.auth != null
                     && request.resource.data.ownerId == request.auth.uid;
       // Any authenticated user can read house doc (needed for invite join flow)
       // House IDs are not guessable and data is not sensitive (just name + memberIds)
       allow read: if request.auth != null;
-      allow update: if request.auth != null && isMember();
+      allow update: if request.auth != null
+                    && (isMember()
+                        // Allow joining user to add themselves to memberIds (transaction race)
+                        || (request.auth.uid in request.resource.data.memberIds
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])));
       allow delete: if false;
 
       // Members
@@ -29,7 +43,8 @@ service cloud.firestore {
         allow create: if request.auth != null
                       && (isMember() || request.auth.uid == memberId);
         allow update: if request.auth != null && request.auth.uid == memberId;
-        allow delete: if request.auth != null && request.auth.uid == memberId;
+        allow delete: if request.auth != null
+                      && (request.auth.uid == memberId || isOwner());
       }
 
       // Expenses

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { LoadingInline } from '@/components/ui/loading'
 import { useMortgage } from '@/context/MortgageContext'
 import { generateAmortizationSchedule, getMortgageStats } from '@/lib/mortgage-utils'
 import { MortgageSetupDialog } from '@/components/mortgage/MortgageSetupDialog'
@@ -32,13 +33,7 @@ export function MortgagePage() {
   const showRateManagement = mortgage?.rateType === 'variable' || mortgage?.rateType === 'mixed'
 
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingInline />
 
   if (!mortgage || !stats) {
     return (

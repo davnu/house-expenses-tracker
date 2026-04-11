@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { LoginPage } from './LoginPage'
 import { Home, UserPlus, AlertCircle } from 'lucide-react'
 import { friendlyError } from '@/lib/utils'
+import { LoadingScreen } from '@/components/ui/loading'
 import type { Invite } from '@/types/expense'
 
 export function InvitePage() {
@@ -54,14 +55,7 @@ export function InvitePage() {
     }
   }
 
-  // Loading state
-  if (loadingInvite || householdLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
+  if (loadingInvite || householdLoading) return <LoadingScreen />
 
   // Invalid invite
   if (!invite) {

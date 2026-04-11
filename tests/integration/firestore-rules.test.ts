@@ -5,6 +5,8 @@ import {
   assertFails,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
+import firebase from 'firebase/compat/app'
+import 'firebase/compat/firestore'
 import fs from 'fs'
 import path from 'path'
 
@@ -102,6 +104,37 @@ describe('User profiles (/users/{userId})', () => {
     const alice = testEnv.authenticatedContext('alice')
     await assertFails(alice.firestore().doc('users/bob').delete())
   })
+
+  it('house owner can clear a removed member houseId', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: 'house1' })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('users/bob').update({ houseId: null }))
+  })
+
+  it('house owner cannot change other fields on another user', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: 'house1' })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(alice.firestore().doc('users/bob').update({ houseId: null, displayName: 'Hacked' }))
+  })
+
+  it('non-owner cannot clear another user houseId', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await ctx.firestore().doc('users/charlie').set({ displayName: 'Charlie', email: 'c@t.com', houseId: 'house1' })
+    })
+    // Bob is a member but not the owner — cannot clear Charlie's houseId
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(bob.firestore().doc('users/charlie').update({ houseId: null }))
+  })
 })
 
 // ── Houses ───────────────────────────────────────────────────────────
@@ -144,6 +177,33 @@ describe('Houses (/houses/{houseId})', () => {
   })
 
   it('non-member cannot update house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1').update({ name: 'Hacked' }))
+  })
+
+  it('joining user can add themselves to memberIds', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const bob = testEnv.authenticatedContext('bob')
+    await assertSucceeds(
+      bob.firestore().doc('houses/house1').update({
+        memberIds: firebase.firestore.FieldValue.arrayUnion('bob'),
+      })
+    )
+  })
+
+  it('joining user cannot change house name while adding to memberIds', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(
+      bob.firestore().doc('houses/house1').update({
+        memberIds: firebase.firestore.FieldValue.arrayUnion('bob'),
+        name: 'Hijacked',
+      })
+    )
+  })
+
+  it('non-member cannot update house name', async () => {
     await seedHouseWithMember('house1', 'alice')
     const outsider = testEnv.authenticatedContext('outsider')
     await assertFails(outsider.firestore().doc('houses/house1').update({ name: 'Hacked' }))
@@ -243,19 +303,30 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
     await assertSucceeds(alice.firestore().doc('houses/house1/members/alice').delete())
   })
 
-  it('user cannot delete another member doc', async () => {
+  it('non-owner member cannot delete another member doc', async () => {
     await seedHouseWithMember('house1', 'alice')
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('houses/house1/members/bob').set({
-        displayName: 'Bob',
-        email: 'b@t.com',
-        color: '#ef4444',
-        role: 'member',
-        joinedAt: new Date().toISOString(),
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await ctx.firestore().doc('houses/house1/members/charlie').set({
+        displayName: 'Charlie', email: 'c@t.com', color: '#22c55e', role: 'member', joinedAt: new Date().toISOString(),
+      })
+    })
+    // Bob (non-owner) cannot delete Charlie
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(bob.firestore().doc('houses/house1/members/charlie').delete())
+  })
+
+  it('owner can delete another member doc (remove member)', async () => {
+    await seedHouseWithMember('house1', 'alice') // alice is owner
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
       })
     })
     const alice = testEnv.authenticatedContext('alice')
-    await assertFails(alice.firestore().doc('houses/house1/members/bob').delete())
+    await assertSucceeds(alice.firestore().doc('houses/house1/members/bob').delete())
   })
 })
 

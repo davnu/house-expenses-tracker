@@ -15,7 +15,7 @@ import { useMortgage } from '@/context/MortgageContext'
 export function SettingsPage() {
   const { expenses } = useExpenses()
   const { logout, deleteAccount } = useAuth()
-  const { userProfile, house, members, generateInvite, updateDisplayName, updateHouseName } = useHousehold()
+  const { userProfile, house, members, generateInvite, updateDisplayName, updateHouseName, removeMember } = useHousehold()
   const { mortgage } = useMortgage()
 
   const [inviteLink, setInviteLink] = useState('')
@@ -29,6 +29,8 @@ export function SettingsPage() {
   const [newHouseName, setNewHouseName] = useState(house?.name ?? '')
 
   const [inviteError, setInviteError] = useState('')
+
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
 
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'deleting'>('idle')
   const [deleteError, setDeleteError] = useState('')
@@ -195,14 +197,52 @@ export function SettingsPage() {
           <div>
             <Label className="text-muted-foreground mb-2 block">Members</Label>
             <div className="space-y-2">
-              {members.map((m) => (
-                <div key={m.uid} className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
-                  <span className="text-sm font-medium">{m.displayName}</span>
-                  <span className="text-xs text-muted-foreground">{m.email}</span>
-                  {m.role === 'owner' && <Badge variant="secondary" className="text-xs">Owner</Badge>}
-                </div>
-              ))}
+              {members.map((m) => {
+                const isOwner = house?.ownerId === userProfile?.uid
+                const isSelf = m.uid === userProfile?.uid
+                const canRemove = isOwner && !isSelf
+
+                return (
+                  <div key={m.uid} className="flex items-center gap-2 group">
+                    <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
+                    <span className="text-sm font-medium">{m.displayName}</span>
+                    <span className="text-xs text-muted-foreground">{m.email}</span>
+                    {m.role === 'owner' && <Badge variant="secondary" className="text-xs">Owner</Badge>}
+                    {canRemove && (
+                      removingMemberId === m.uid ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-6 text-xs px-2"
+                            onClick={async () => {
+                              await removeMember(m.uid)
+                              setRemovingMemberId(null)
+                            }}
+                          >
+                            Confirm
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-xs px-2"
+                            onClick={() => setRemovingMemberId(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          className="text-xs text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                          onClick={() => setRemovingMemberId(m.uid)}
+                        >
+                          Remove
+                        </button>
+                      )
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
 

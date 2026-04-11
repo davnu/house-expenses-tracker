@@ -5,6 +5,7 @@ import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
 import { MortgageProvider } from '@/context/MortgageContext'
 import { AppShell } from '@/components/layout/AppShell'
+import { LoadingScreen } from '@/components/ui/loading'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -17,15 +18,12 @@ import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 
 function AppRoutes() {
-  const { house, loading } = useHousehold()
+  const { house, userProfile, loading } = useHousehold()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
+
+  // houseId is set but house doc hasn't loaded yet — wait for snapshot
+  if (!house && userProfile?.houseId) return <LoadingScreen />
 
   // User has no house — show onboarding (unless on invite or privacy route)
   if (!house) {
@@ -63,13 +61,7 @@ function AuthGate() {
   const location = useLocation()
   const wasLoggedOut = useRef(true)
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen />
 
   if (!user) {
     wasLoggedOut.current = true
@@ -82,7 +74,7 @@ function AuthGate() {
     )
   }
 
-  // Just logged in — redirect to dashboard if on a stale route (e.g. /settings from previous session)
+  // Just logged in — redirect to dashboard if on a stale route
   if (wasLoggedOut.current && location.pathname !== '/' && !location.pathname.startsWith('/invite') && location.pathname !== '/privacy') {
     wasLoggedOut.current = false
     return <Navigate to="/" replace />

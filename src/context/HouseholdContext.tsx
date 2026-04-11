@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import {
   doc,
-  setDoc,
   updateDoc,
   collection,
   addDoc,
   onSnapshot,
   arrayUnion,
+  arrayRemove,
   runTransaction,
+  writeBatch,
 } from 'firebase/firestore'
 import { db } from '@/data/firebase'
 import { useAuth } from './AuthContext'
@@ -24,6 +25,7 @@ interface HouseholdContextValue {
   generateInvite: () => Promise<string>
   updateDisplayName: (name: string) => Promise<void>
   updateHouseName: (name: string) => Promise<void>
+  removeMember: (uid: string) => Promise<void>
   getMemberName: (uid: string) => string
   getMemberColor: (uid: string) => string
 }
@@ -61,7 +63,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
   // Listen to house + members when houseId is set
   useEffect(() => {
-    if (!userProfile?.houseId) {
+    if (!user || !userProfile?.houseId) {
       setHouse(null)
       setMembers([])
       return
@@ -75,15 +77,26 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    const unsubMembers = onSnapshot(collection(db, 'houses', houseId, 'members'), (snap) => {
-      setMembers(snap.docs.map((d) => ({ uid: d.id, ...d.data() }) as HouseMember))
-    })
+    const unsubMembers = onSnapshot(
+      collection(db, 'houses', houseId, 'members'),
+      (snap) => {
+        setMembers(snap.docs.map((d) => ({ uid: d.id, ...d.data() }) as HouseMember))
+      },
+      (error) => {
+        // PERMISSION_DENIED means user was removed from this house
+        if (error.code === 'permission-denied') {
+          updateDoc(doc(db, 'users', user.uid), { houseId: null }).catch(() => {})
+          setHouse(null)
+          setMembers([])
+        }
+      }
+    )
 
     return () => {
       unsubHouse()
       unsubMembers()
     }
-  }, [userProfile?.houseId])
+  }, [user, userProfile?.houseId])
 
   const createHouse = useCallback(async (name: string, country?: string, currency?: string) => {
     if (!user || !userProfile) return
@@ -93,7 +106,6 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString()
     const color = MEMBER_COLOR_PALETTE[0]
 
-    // Create house doc
     const houseData: Record<string, unknown> = {
       name,
       ownerId: user.uid,
@@ -102,19 +114,18 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     }
     if (country) houseData.country = country
     if (currency) houseData.currency = currency
-    await setDoc(houseRef, houseData)
 
-    // Create member doc
-    await setDoc(doc(db, 'houses', houseId, 'members', user.uid), {
+    const batch = writeBatch(db)
+    batch.set(houseRef, houseData)
+    batch.set(doc(db, 'houses', houseId, 'members', user.uid), {
       displayName: userProfile.displayName,
       email: userProfile.email,
       color,
       role: 'owner',
       joinedAt: now,
     })
-
-    // Update user profile with houseId
-    await updateDoc(doc(db, 'users', user.uid), { houseId })
+    batch.update(doc(db, 'users', user.uid), { houseId })
+    await batch.commit()
   }, [user, userProfile])
 
   const joinHouse = useCallback(async (inviteId: string) => {
@@ -178,19 +189,29 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
   const updateDisplayName = useCallback(async (name: string) => {
     if (!user) return
-    await updateDoc(doc(db, 'users', user.uid), { displayName: name })
-
-    // Also update in house members if in a house
+    const batch = writeBatch(db)
+    batch.update(doc(db, 'users', user.uid), { displayName: name })
     if (userProfile?.houseId) {
-      await updateDoc(doc(db, 'houses', userProfile.houseId, 'members', user.uid), {
+      batch.update(doc(db, 'houses', userProfile.houseId, 'members', user.uid), {
         displayName: name,
       })
     }
+    await batch.commit()
   }, [user, userProfile])
 
   const updateHouseName = useCallback(async (name: string) => {
     if (!house) return
     await updateDoc(doc(db, 'houses', house.id), { name })
+  }, [house])
+
+  const removeMember = useCallback(async (uid: string) => {
+    if (!house) return
+    if (uid === house.ownerId) throw new Error('Cannot remove the house owner')
+    const batch = writeBatch(db)
+    batch.delete(doc(db, 'houses', house.id, 'members', uid))
+    batch.update(doc(db, 'houses', house.id), { memberIds: arrayRemove(uid) })
+    batch.update(doc(db, 'users', uid), { houseId: null })
+    await batch.commit()
   }, [house])
 
   const getMemberName = useCallback((uid: string) => {
@@ -213,6 +234,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         generateInvite,
         updateDisplayName,
         updateHouseName,
+        removeMember,
         getMemberName,
         getMemberColor,
       }}
