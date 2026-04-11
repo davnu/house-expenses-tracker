@@ -1,0 +1,469 @@
+import { describe, it, beforeAll, afterAll, beforeEach } from 'vitest'
+import {
+  initializeTestEnvironment,
+  assertSucceeds,
+  assertFails,
+  type RulesTestEnvironment,
+} from '@firebase/rules-unit-testing'
+import fs from 'fs'
+import path from 'path'
+
+let testEnv: RulesTestEnvironment
+
+beforeAll(async () => {
+  testEnv = await initializeTestEnvironment({
+    projectId: 'demo-test',
+    firestore: {
+      host: '127.0.0.1',
+      port: 5180,
+      rules: fs.readFileSync(path.resolve(__dirname, '../../firestore.rules'), 'utf8'),
+    },
+  })
+})
+
+afterAll(async () => {
+  await testEnv.cleanup()
+})
+
+beforeEach(async () => {
+  await testEnv.clearFirestore()
+})
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+/** Set up a house with one member using admin (rules-bypassed) context */
+async function seedHouseWithMember(houseId: string, memberId: string) {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore()
+    await db.doc(`houses/${houseId}`).set({
+      name: 'Test House',
+      ownerId: memberId,
+      memberIds: [memberId],
+      createdAt: new Date().toISOString(),
+    })
+    await db.doc(`houses/${houseId}/members/${memberId}`).set({
+      displayName: 'Owner',
+      email: 'owner@test.com',
+      color: '#3b82f6',
+      role: 'owner',
+      joinedAt: new Date().toISOString(),
+    })
+  })
+}
+
+// ── User Profiles ────────────────────────────────────────────────────
+
+describe('User profiles (/users/{userId})', () => {
+  it('authenticated user can read any profile', async () => {
+    // Seed a profile
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
+    })
+
+    const bob = testEnv.authenticatedContext('bob')
+    await assertSucceeds(bob.firestore().doc('users/alice').get())
+  })
+
+  it('user can write their own profile', async () => {
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
+    )
+  })
+
+  it('user cannot write another user profile', async () => {
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(
+      bob.firestore().doc('users/alice').set({ displayName: 'Hacked', email: 'h@t.com' })
+    )
+  })
+
+  it('unauthenticated user cannot read profiles', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertFails(unauthed.firestore().doc('users/alice').get())
+  })
+
+  it('user can delete their own profile (account deletion)', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('users/alice').delete())
+  })
+
+  it('user cannot delete another user profile', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com' })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(alice.firestore().doc('users/bob').delete())
+  })
+})
+
+// ── Houses ───────────────────────────────────────────────────────────
+
+describe('Houses (/houses/{houseId})', () => {
+  it('owner can create a house with their uid as ownerId', async () => {
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1').set({
+        name: 'Our House',
+        ownerId: 'alice',
+        memberIds: ['alice'],
+        createdAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('cannot create a house with someone else as ownerId', async () => {
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(
+      bob.firestore().doc('houses/house1').set({
+        name: 'Fake House',
+        ownerId: 'alice',
+        memberIds: ['alice'],
+        createdAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('any authenticated user can read a house (needed for invite flow)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertSucceeds(outsider.firestore().doc('houses/house1').get())
+  })
+
+  it('member can update house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('houses/house1').update({ name: 'Renamed' }))
+  })
+
+  it('non-member cannot update house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1').update({ name: 'Hacked' }))
+  })
+
+  it('nobody can delete a house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(alice.firestore().doc('houses/house1').delete())
+  })
+})
+
+// ── Members ──────────────────────────────────────────────────────────
+
+describe('Members (/houses/{houseId}/members/{memberId})', () => {
+  it('member can read other members', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    // Add bob as member too
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob',
+        email: 'b@t.com',
+        color: '#ef4444',
+        role: 'member',
+        joinedAt: new Date().toISOString(),
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('houses/house1/members/bob').get())
+  })
+
+  it('non-member cannot read members', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1/members/alice').get())
+  })
+
+  it('user can create their own member doc when joining', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const bob = testEnv.authenticatedContext('bob')
+    await assertSucceeds(
+      bob.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob',
+        email: 'b@t.com',
+        color: '#ef4444',
+        role: 'member',
+        joinedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('non-member cannot create a member doc for themselves in a house they are not in', async () => {
+    // Create a house but don't add outsider as member
+    await seedHouseWithMember('house1', 'alice')
+    // Outsider who is NOT a member and NOT creating their own doc
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(
+      outsider.firestore().doc('houses/house1/members/charlie').set({
+        displayName: 'Charlie',
+        email: 'c@t.com',
+        color: '#22c55e',
+        role: 'member',
+        joinedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('user can update only their own member doc', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/members/alice').update({ displayName: 'Alice Updated' })
+    )
+  })
+
+  it('user cannot update another member doc', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob',
+        email: 'b@t.com',
+        color: '#ef4444',
+        role: 'member',
+        joinedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(
+      alice.firestore().doc('houses/house1/members/bob').update({ displayName: 'Hacked' })
+    )
+  })
+
+  it('user can delete their own member doc (account deletion)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('houses/house1/members/alice').delete())
+  })
+
+  it('user cannot delete another member doc', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob',
+        email: 'b@t.com',
+        color: '#ef4444',
+        role: 'member',
+        joinedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(alice.firestore().doc('houses/house1/members/bob').delete())
+  })
+})
+
+// ── Expenses ─────────────────────────────────────────────────────────
+
+describe('Expenses (/houses/{houseId}/expenses/{expenseId})', () => {
+  it('member can create an expense', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().collection('houses/house1/expenses').add({
+        amount: 150000,
+        category: 'notary_legal',
+        payer: 'alice',
+        description: 'Notary fees',
+        date: '2025-07-15',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('member can read expenses', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    // Add expense via admin
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('houses/house1/expenses').add({
+        amount: 50000,
+        category: 'other',
+        payer: 'alice',
+        description: 'Test',
+        date: '2025-07-15',
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().collection('houses/house1/expenses').get())
+  })
+
+  it('non-member cannot read expenses', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().collection('houses/house1/expenses').get())
+  })
+
+  it('non-member cannot create an expense', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(
+      outsider.firestore().collection('houses/house1/expenses').add({
+        amount: 100,
+        category: 'other',
+        payer: 'outsider',
+        description: 'Sneaky',
+        date: '2025-07-15',
+      })
+    )
+  })
+})
+
+// ── Invites ──────────────────────────────────────────────────────────
+
+describe('Invites (/invites/{inviteId})', () => {
+  it('unauthenticated user can read invites', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('invites/invite1').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(unauthed.firestore().doc('invites/invite1').get())
+  })
+
+  it('authenticated user can create an invite', async () => {
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('invites/invite2').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    )
+  })
+
+  it('unauthenticated user cannot create an invite', async () => {
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertFails(
+      unauthed.firestore().doc('invites/invite3').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'nobody',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    )
+  })
+
+  it('can update only usedBy and usedAt fields', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('invites/invite1').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    })
+
+    const bob = testEnv.authenticatedContext('bob')
+    await assertSucceeds(
+      bob.firestore().doc('invites/invite1').update({
+        usedBy: 'bob',
+        usedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('cannot update houseId on invite (security fix)', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('invites/invite1').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    })
+
+    const attacker = testEnv.authenticatedContext('attacker')
+    await assertFails(
+      attacker.firestore().doc('invites/invite1').update({
+        houseId: 'attacker-house',
+        usedBy: 'attacker',
+        usedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('cannot update houseName on invite', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('invites/invite1').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    })
+
+    const attacker = testEnv.authenticatedContext('attacker')
+    await assertFails(
+      attacker.firestore().doc('invites/invite1').update({
+        houseName: 'Phishing House',
+      })
+    )
+  })
+})
+
+// ── Mortgage / Meta ──────────────────────────────────────────────────
+
+describe('Meta docs (/houses/{houseId}/meta/{docId})', () => {
+  it('member can read and write mortgage config', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/meta/mortgage').set({
+        principal: 30000000,
+        annualRate: 3.5,
+        termYears: 30,
+        startDate: '2025-07-01',
+      })
+    )
+    await assertSucceeds(alice.firestore().doc('houses/house1/meta/mortgage').get())
+  })
+
+  it('non-member cannot read mortgage config', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/meta/mortgage').set({ principal: 30000000 })
+    })
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1/meta/mortgage').get())
+  })
+})
+
+// ── Reference Rates ──────────────────────────────────────────────────
+
+describe('Reference rates (/reference_rates/{rateId})', () => {
+  it('anyone can read reference rates (public data)', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('reference_rates/euribor_12m').set({ values: {}, source: 'ECB' })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(unauthed.firestore().doc('reference_rates/euribor_12m').get())
+  })
+
+  it('nobody can write reference rates (admin SDK only)', async () => {
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(
+      alice.firestore().doc('reference_rates/euribor_12m').set({ values: {}, source: 'Hacked' })
+    )
+  })
+})
