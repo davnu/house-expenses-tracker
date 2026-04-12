@@ -51,6 +51,11 @@ export const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ]
 
+// Shared payer sentinel — used instead of a uid when an expense is paid jointly
+export const SHARED_PAYER = 'shared' as const
+export const SHARED_PAYER_COLOR = '#6366f1'
+export const SHARED_PAYER_LABEL = 'Shared'
+
 export const MEMBER_COLOR_PALETTE = [
   '#2a9d90',
   '#e76e50',

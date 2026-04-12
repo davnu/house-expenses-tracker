@@ -57,7 +57,7 @@ const DialogContent = React.forwardRef<
         <DrawerPrimitive.Content
           ref={ref}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[85dvh] flex-col rounded-t-2xl border-t bg-background shadow-lg',
+            'fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[96dvh] flex-col rounded-t-2xl border-t bg-background shadow-lg',
             className
           )}
           {...props}

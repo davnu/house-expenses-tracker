@@ -9,7 +9,7 @@ import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { formatCurrency, friendlyError } from '@/lib/utils'
-import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/lib/constants'
+import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SHARED_PAYER_LABEL } from '@/lib/constants'
 import { groupExpensesByMonth } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
@@ -27,6 +27,7 @@ function monthLabel(key: string): string {
 export function ExpenseList() {
   const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
+  const isMultiMember = members.length > 1
   const [filterCategory, setFilterCategory] = useState('')
   const [filterPayer, setFilterPayer] = useState('')
   const [filterFrom, setFilterFrom] = useState('')
@@ -141,13 +142,15 @@ export function ExpenseList() {
             <span className="font-semibold">{formatCurrency(expense.amount)}</span>
             <span className="text-sm text-muted-foreground">{format(new Date(expense.date), 'MMM d, yyyy')}</span>
             <Badge variant="secondary">{categoryLabel(expense.category)}</Badge>
-            <Badge variant="outline" className="gap-1">
-              <span
-                className="h-1.5 w-1.5 rounded-full shrink-0 inline-block"
-                style={{ backgroundColor: getMemberColor(expense.payer) }}
-              />
-              {getMemberName(expense.payer)}
-            </Badge>
+            {isMultiMember && (
+              <Badge variant="outline" className="gap-1">
+                <span
+                  className="h-1.5 w-1.5 rounded-full shrink-0 inline-block"
+                  style={{ backgroundColor: getMemberColor(expense.payer) }}
+                />
+                {getMemberName(expense.payer)}
+              </Badge>
+            )}
             {(expense.attachments?.length ?? 0) > 0 && (
               <span className="text-xs text-muted-foreground flex items-center gap-0.5">
                 <Paperclip className="h-3 w-3" />
@@ -286,7 +289,7 @@ export function ExpenseList() {
             <option value="date">Date</option>
             <option value="amount">Amount</option>
             <option value="category">Category</option>
-            <option value="payer">Member</option>
+            {isMultiMember && <option value="payer">Member</option>}
           </Select>
           <Button
             size="icon"
@@ -313,16 +316,19 @@ export function ExpenseList() {
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </Select>
-          <Select
-            className="w-[calc(50%-4px)] sm:w-36"
-            value={filterPayer}
-            onChange={(e) => setFilterPayer(e.target.value)}
-          >
-            <option value="">All members</option>
-            {members.map((m) => (
-              <option key={m.uid} value={m.uid}>{m.displayName}</option>
-            ))}
-          </Select>
+          {isMultiMember && (
+            <Select
+              className="w-[calc(50%-4px)] sm:w-36"
+              value={filterPayer}
+              onChange={(e) => setFilterPayer(e.target.value)}
+            >
+              <option value="">All members</option>
+              <option value={SHARED_PAYER}>{SHARED_PAYER_LABEL}</option>
+              {members.map((m) => (
+                <option key={m.uid} value={m.uid}>{m.displayName}</option>
+              ))}
+            </Select>
+          )}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-xs text-muted-foreground shrink-0">From</span>
             <Input

@@ -26,7 +26,7 @@ export interface Expense {
   id: string
   amount: number // cents
   category: ExpenseCategory
-  payer: string // uid of household member
+  payer: string // uid of household member, or 'shared' for jointly-paid expenses
   description: string
   date: string // YYYY-MM-DD
   attachments?: Attachment[]

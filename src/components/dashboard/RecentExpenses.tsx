@@ -17,7 +17,8 @@ const categoryLabel = (val: string) =>
   EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
 
 export function RecentExpenses({ expenses }: RecentExpensesProps) {
-  const { getMemberName, getMemberColor } = useHousehold()
+  const { members, getMemberName, getMemberColor } = useHousehold()
+  const isMultiMember = members.length > 1
 
   const recent = useMemo(
     () => [...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
@@ -44,11 +45,13 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
         <div className="divide-y">
           {recent.map((expense) => (
             <div key={expense.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-              <div
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: getMemberColor(expense.payer) }}
-                title={getMemberName(expense.payer)}
-              />
+              {isMultiMember && (
+                <div
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: getMemberColor(expense.payer) }}
+                  title={getMemberName(expense.payer)}
+                />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{formatCurrency(expense.amount)}</span>

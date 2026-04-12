@@ -18,7 +18,7 @@ import {
 import { db } from '@/data/firebase'
 import { deleteAttachments } from '@/data/firebase-attachment-store'
 import { useAuth } from './AuthContext'
-import { MEMBER_COLOR_PALETTE } from '@/lib/constants'
+import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
 import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
 import type { UserProfile, House, HouseMember, Invite } from '@/types/expense'
 
@@ -388,10 +388,12 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   }, [user, house])
 
   const getMemberName = useCallback((uid: string) => {
-    return members.find((m) => m.uid === uid)?.displayName ?? 'Unknown'
+    if (uid === SHARED_PAYER) return SHARED_PAYER_LABEL
+    return members.find((m) => m.uid === uid)?.displayName ?? 'Former member'
   }, [members])
 
   const getMemberColor = useCallback((uid: string) => {
+    if (uid === SHARED_PAYER) return SHARED_PAYER_COLOR
     return members.find((m) => m.uid === uid)?.color ?? '#6b7280'
   }, [members])
 

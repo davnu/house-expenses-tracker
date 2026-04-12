@@ -7,6 +7,7 @@ import {
   applyFilters,
   groupExpensesByMonth,
 } from './expense-utils'
+import { SHARED_PAYER } from './constants'
 import type { Expense } from '@/types/expense'
 
 // ── Test data ────────────────────────────────────────
@@ -271,5 +272,69 @@ describe('groupExpensesByMonth', () => {
     expect(result).toHaveLength(1)
     expect(result[0].expenses).toHaveLength(3)
     expect(result[0].total).toBe(60000)
+  })
+})
+
+// ── Shared payer ────────────────────────────────────
+
+describe('shared payer filtering', () => {
+  const mixedExpenses: Expense[] = [
+    expense({ id: 's1', amount: 500000, category: 'down_payment', payer: SHARED_PAYER, description: 'Down payment', date: '2025-06-01' }),
+    expense({ id: 's2', amount: 150000, category: 'notary_legal', payer: SHARED_PAYER, description: 'Notary', date: '2025-07-15' }),
+    expense({ id: 's3', amount: 30000, category: 'home_inspection', payer: 'alice', description: 'Inspection (personal)', date: '2025-07-20' }),
+    expense({ id: 's4', amount: 80000, category: 'taxes', payer: 'bob', description: 'Transfer tax', date: '2025-08-01' }),
+  ]
+
+  it('filterByPayer returns shared expenses', () => {
+    const result = filterByPayer(mixedExpenses, SHARED_PAYER)
+    expect(result).toHaveLength(2)
+    expect(result.every((e) => e.payer === SHARED_PAYER)).toBe(true)
+  })
+
+  it('filterByPayer returns individual expenses alongside shared', () => {
+    const alice = filterByPayer(mixedExpenses, 'alice')
+    expect(alice).toHaveLength(1)
+    expect(alice[0].id).toBe('s3')
+  })
+
+  it('applyFilters works with shared payer filter', () => {
+    const result = applyFilters(mixedExpenses, { payer: SHARED_PAYER })
+    expect(result).toHaveLength(2)
+    expect(result.every((e) => e.payer === SHARED_PAYER)).toBe(true)
+  })
+
+  it('applyFilters combines shared payer with date range', () => {
+    const result = applyFilters(mixedExpenses, {
+      payer: SHARED_PAYER,
+      dateStart: '2025-07-01',
+      dateEnd: '2025-07-31',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('s2')
+  })
+
+  it('shared + individual expenses together cover the full set', () => {
+    const shared = filterByPayer(mixedExpenses, SHARED_PAYER)
+    const alice = filterByPayer(mixedExpenses, 'alice')
+    const bob = filterByPayer(mixedExpenses, 'bob')
+    expect(shared.length + alice.length + bob.length).toBe(mixedExpenses.length)
+  })
+
+  it('groupExpensesByMonth includes shared expenses', () => {
+    const result = groupExpensesByMonth(mixedExpenses)
+    const jun = result.find(g => g.key === '2025-06')!
+    expect(jun.expenses).toHaveLength(1)
+    expect(jun.expenses[0].payer).toBe(SHARED_PAYER)
+    expect(jun.total).toBe(500000)
+  })
+
+  it('all-shared expenses list works with filters', () => {
+    const allShared: Expense[] = [
+      expense({ id: 'as1', amount: 100000, payer: SHARED_PAYER, date: '2025-06-01' }),
+      expense({ id: 'as2', amount: 200000, payer: SHARED_PAYER, date: '2025-07-01' }),
+    ]
+    expect(applyFilters(allShared, {})).toHaveLength(2)
+    expect(applyFilters(allShared, { payer: SHARED_PAYER })).toHaveLength(2)
+    expect(applyFilters(allShared, { payer: 'alice' })).toHaveLength(0)
   })
 })

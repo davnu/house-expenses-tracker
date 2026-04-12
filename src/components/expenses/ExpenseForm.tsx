@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { PayerSelect } from './PayerSelect'
 import { FileDropZone } from './FileDropZone'
-import { EXPENSE_CATEGORIES } from '@/lib/constants'
+import { EXPENSE_CATEGORIES, SHARED_PAYER } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useAuth } from '@/context/AuthContext'
@@ -37,12 +38,15 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
   const { storageUsed } = useExpenses()
   const { user } = useAuth()
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
+  const isMultiMember = members.length > 1
+  const defaultPayer = defaultValues?.payer ?? (isMultiMember ? SHARED_PAYER : (user?.uid ?? ''))
+
+  const { register, handleSubmit, reset, watch, control, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       amount: '',
       category: 'other',
-      payer: user?.uid ?? '',
+      payer: defaultPayer,
       description: '',
       date: format(new Date(), 'yyyy-MM-dd'),
       ...defaultValues,
@@ -85,7 +89,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className={`grid grid-cols-1 ${isMultiMember ? 'sm:grid-cols-2' : ''} gap-4`}>
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <Select id="category" {...register('category')}>
@@ -98,15 +102,32 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
           </p>
           {errors.category && <p className="text-xs text-destructive">{errors.category.message}</p>}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="payer">Paid by</Label>
-          <Select id="payer" {...register('payer')}>
-            {members.map((m) => (
-              <option key={m.uid} value={m.uid}>{m.displayName}</option>
-            ))}
-          </Select>
-          {errors.payer && <p className="text-xs text-destructive">{errors.payer.message}</p>}
-        </div>
+        {isMultiMember ? (
+          <Controller
+            name="payer"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-2">
+                <Label htmlFor="payer">Paid by</Label>
+                <PayerSelect
+                  id="payer"
+                  value={field.value}
+                  onChange={field.onChange}
+                  members={members}
+                  aria-invalid={!!errors.payer}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {field.value === SHARED_PAYER
+                    ? 'Paid from shared household funds'
+                    : `Paid personally by ${members.find((m) => m.uid === field.value)?.displayName ?? 'member'}`}
+                </p>
+                {errors.payer && <p className="text-xs text-destructive">{errors.payer.message}</p>}
+              </div>
+            )}
+          />
+        ) : (
+          <input type="hidden" {...register('payer')} />
+        )}
       </div>
 
       <div className="space-y-2">
