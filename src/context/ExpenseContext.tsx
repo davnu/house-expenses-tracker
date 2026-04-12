@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import type { Expense, Attachment } from '@/types/expense'
 import type { ExpenseRepository } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
@@ -11,6 +11,7 @@ interface ExpenseContextValue {
   expenses: Expense[]
   loading: boolean
   storageUsed: number
+  pendingAttachmentIds: Set<string>
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   addExpenseWithFiles: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
   updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>
@@ -27,8 +28,13 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const [repo, setRepo] = useState<ExpenseRepository | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
+  const [pendingAttachmentIds, setPendingAttachmentIds] = useState<Set<string>>(new Set())
 
   const houseId = house?.id
+
+  // Ref for latest expenses to avoid stale closures in optimistic update callbacks
+  const expensesRef = useRef(expenses)
+  expensesRef.current = expenses
 
   const storageUsed = useMemo(() => {
     return expenses.reduce((total, exp) => {
@@ -107,35 +113,95 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   }, [repo, houseId, expenses, refresh])
 
   const addAttachmentsToExpense = useCallback(async (expenseId: string, files: File[]) => {
-    if (!repo) return
-    const expense = expenses.find((e) => e.id === expenseId)
+    if (!repo || !houseId) return
+    const expense = expensesRef.current.find((e) => e.id === expenseId)
     if (!expense) return
     const existingCount = expense.attachments?.length ?? 0
     if (existingCount + files.length > MAX_FILES_PER_EXPENSE) {
       throw new Error(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
     }
+    const currentStorageUsed = expensesRef.current.reduce((total, exp) =>
+      total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
     const newSize = files.reduce((s, f) => s + f.size, 0)
-    if (storageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
+    if (currentStorageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
       throw new Error('Household storage limit reached')
     }
-    const newAttachments = await filesToAttachments(files)
-    const all = [...(expense.attachments ?? []), ...newAttachments]
-    await repo.updateExpense(expenseId, { attachments: all })
-    await refresh()
-  }, [repo, expenses, refresh, filesToAttachments, storageUsed])
+
+    // Create placeholder attachments shown immediately with a spinner
+    const placeholders: Attachment[] = files.map((f) => ({
+      id: crypto.randomUUID(),
+      name: f.name,
+      type: f.type,
+      size: f.size,
+    }))
+    const placeholderIdSet = new Set(placeholders.map((p) => p.id))
+
+    // Optimistic: show placeholders in UI
+    setExpenses((prev) => prev.map((e) =>
+      e.id === expenseId
+        ? { ...e, attachments: [...(e.attachments ?? []), ...placeholders] }
+        : e
+    ))
+    setPendingAttachmentIds((prev) => new Set([...prev, ...placeholderIdSet]))
+
+    try {
+      // Upload files, reusing placeholder IDs so the pills stay in place
+      const uploaded: Attachment[] = await Promise.all(
+        files.map(async (file, i) => {
+          const id = placeholders[i].id
+          const url = await uploadAttachment(houseId, id, file)
+          return { id, name: file.name, type: file.type, size: file.size, url }
+        })
+      )
+
+      // Replace placeholders with real attachments (now with URLs)
+      const allAttachments = [...(expense.attachments ?? []), ...uploaded]
+      setExpenses((prev) => prev.map((e) =>
+        e.id === expenseId ? { ...e, attachments: allAttachments } : e
+      ))
+
+      // Persist to Firestore
+      await repo.updateExpense(expenseId, { attachments: allAttachments })
+    } catch (err) {
+      // Rollback: restore original attachments
+      setExpenses((prev) => prev.map((e) =>
+        e.id === expenseId ? { ...e, attachments: expense.attachments } : e
+      ))
+      throw err
+    } finally {
+      setPendingAttachmentIds((prev) => {
+        const next = new Set(prev)
+        placeholderIdSet.forEach((id) => next.delete(id))
+        return next
+      })
+    }
+  }, [repo, houseId])
 
   const removeAttachment = useCallback(async (expenseId: string, attachmentId: string) => {
     if (!repo || !houseId) return
-    const expense = expenses.find((e) => e.id === expenseId)
+    const expense = expensesRef.current.find((e) => e.id === expenseId)
     if (!expense) return
     const att = expense.attachments?.find((a) => a.id === attachmentId)
-    if (att) {
-      await deleteAttachment(houseId, attachmentId, att.name)
+
+    // Optimistic: remove from UI immediately
+    setExpenses((prev) => prev.map((e) =>
+      e.id === expenseId
+        ? { ...e, attachments: (e.attachments ?? []).filter((a) => a.id !== attachmentId) }
+        : e
+    ))
+
+    try {
+      if (att) await deleteAttachment(houseId, attachmentId, att.name)
+      const updated = (expense.attachments ?? []).filter((a) => a.id !== attachmentId)
+      await repo.updateExpense(expenseId, { attachments: updated.length > 0 ? updated : undefined })
+    } catch (err) {
+      // Rollback: restore original attachments
+      setExpenses((prev) => prev.map((e) =>
+        e.id === expenseId ? { ...e, attachments: expense.attachments } : e
+      ))
+      throw err
     }
-    const updated = (expense.attachments ?? []).filter((a) => a.id !== attachmentId)
-    await repo.updateExpense(expenseId, { attachments: updated.length > 0 ? updated : undefined })
-    await refresh()
-  }, [repo, houseId, expenses, refresh])
+  }, [repo, houseId])
 
   return (
     <ExpenseContext.Provider
@@ -143,6 +209,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         expenses,
         loading,
         storageUsed,
+        pendingAttachmentIds,
         addExpense,
         addExpenseWithFiles,
         updateExpense,

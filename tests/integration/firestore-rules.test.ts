@@ -492,6 +492,52 @@ describe('Invites (/invites/{inviteId})', () => {
   })
 })
 
+// ── Recurring ───────────────────────────────────────────────────────
+
+describe('Recurring (/houses/{houseId}/recurring/{recurringId})', () => {
+  it('member can create and read recurring entries', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/recurring/rec1').set({
+        amount: 50000,
+        description: 'Monthly extra payment',
+        date: '2025-06-01',
+      })
+    )
+    await assertSucceeds(alice.firestore().doc('houses/house1/recurring/rec1').get())
+  })
+
+  it('member can update and delete recurring entries', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await alice.firestore().doc('houses/house1/recurring/rec1').set({ amount: 50000 })
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/recurring/rec1').update({ amount: 60000 })
+    )
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/recurring/rec1').delete()
+    )
+  })
+
+  it('non-member cannot read recurring entries', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/recurring/rec1').set({ amount: 50000 })
+    })
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1/recurring/rec1').get())
+  })
+
+  it('non-member cannot write recurring entries', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(
+      outsider.firestore().doc('houses/house1/recurring/rec1').set({ amount: 50000 })
+    )
+  })
+})
+
 // ── Mortgage / Meta ──────────────────────────────────────────────────
 
 describe('Meta docs (/houses/{houseId}/meta/{docId})', () => {

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
-import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,7 @@ const categoryLabel = (val: string) =>
   EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
 
 export function ExpenseList() {
-  const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment } = useExpenses()
+  const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingAttachmentIds } = useExpenses()
   const { members, getMemberName } = useHousehold()
   const [filterCategory, setFilterCategory] = useState('')
   const [filterPayer, setFilterPayer] = useState('')
@@ -273,24 +273,35 @@ export function ExpenseList() {
                 {/* Attachments */}
                 {(expense.attachments?.length ?? 0) > 0 && (
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    {expense.attachments!.map((att, i) => (
-                      <button
-                        key={att.id}
-                        onClick={() => handleAttachmentClick(expense, i)}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted-foreground/10 transition-colors cursor-pointer group"
-                        title={att.name}
-                      >
-                        <Paperclip className="h-3 w-3 text-muted-foreground" />
-                        <span className="truncate max-w-[100px]">{att.name}</span>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); removeAttachment(expense.id, att.id) }}
-                          className="ml-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
-                          title="Remove"
+                    {expense.attachments!.map((att, i) => {
+                      const isPending = pendingAttachmentIds.has(att.id)
+                      return (
+                        <div
+                          key={att.id}
+                          role="button"
+                          tabIndex={isPending ? undefined : 0}
+                          onClick={isPending ? undefined : () => handleAttachmentClick(expense, i)}
+                          onKeyDown={isPending ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAttachmentClick(expense, i); } }}
+                          className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-muted transition-colors group ${isPending ? 'opacity-60' : 'hover:bg-muted-foreground/10 cursor-pointer'}`}
+                          title={att.name}
                         >
-                          <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                        </button>
-                      </button>
-                    ))}
+                          {isPending
+                            ? <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
+                            : <Paperclip className="h-3 w-3 text-muted-foreground" />
+                          }
+                          <span className="truncate max-w-[100px]">{att.name}</span>
+                          {!isPending && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); withErrorHandling(async () => removeAttachment(expense.id, att.id)) }}
+                              className="ml-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
+                              title="Remove"
+                            >
+                              <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
                     <button
                       onClick={() => handleAddAttachment(expense.id)}
                       className="inline-flex items-center text-xs px-1.5 py-0.5 rounded border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"

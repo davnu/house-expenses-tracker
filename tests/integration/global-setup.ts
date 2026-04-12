@@ -7,7 +7,8 @@ async function waitForEmulator(port: number, timeoutMs = 30_000): Promise<void> 
   while (Date.now() - start < timeoutMs) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}/`)
-      if (res.ok) return
+      // Some emulators return 200, others return 501 — any response means it's running
+      if (res.status > 0) return
     } catch {
       // not ready yet
     }
@@ -47,10 +48,10 @@ export async function setup() {
     }
   })
 
-  // Wait for hub first, then for Firestore to actually be ready
+  // Wait for hub first, then for Firestore and Storage to be ready
   await waitForEmulator(5400)
-  console.log('Emulator hub ready, waiting for Firestore...')
-  await waitForEmulator(5180)
+  console.log('Emulator hub ready, waiting for Firestore + Storage...')
+  await Promise.all([waitForEmulator(5180), waitForEmulator(5299)])
   console.log('Firebase emulators ready')
 }
 
