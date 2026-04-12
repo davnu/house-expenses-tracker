@@ -209,10 +209,48 @@ describe('Houses (/houses/{houseId})', () => {
     await assertFails(outsider.firestore().doc('houses/house1').update({ name: 'Hacked' }))
   })
 
-  it('nobody can delete a house', async () => {
+  it('owner can delete a house', async () => {
     await seedHouseWithMember('house1', 'alice')
     const alice = testEnv.authenticatedContext('alice')
-    await assertFails(alice.firestore().doc('houses/house1').delete())
+    await assertSucceeds(alice.firestore().doc('houses/house1').delete())
+  })
+
+  it('non-owner member cannot delete a house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob', email: 'bob@test.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+    })
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(bob.firestore().doc('houses/house1').delete())
+  })
+
+  it('non-member cannot delete a house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1').delete())
+  })
+
+  it('owner can soft-delete a house (set deletedAt)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1').update({ deletedAt: new Date().toISOString() })
+    )
+  })
+
+  it('non-owner member cannot soft-delete a house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob', email: 'bob@test.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+    })
+    const bob = testEnv.authenticatedContext('bob')
+    await assertFails(
+      bob.firestore().doc('houses/house1').update({ deletedAt: new Date().toISOString() })
+    )
   })
 })
 

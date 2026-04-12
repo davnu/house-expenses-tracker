@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/data/firebase'
@@ -7,7 +7,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { LoginPage } from './LoginPage'
-import { Home, UserPlus, AlertCircle } from 'lucide-react'
+import { UserPlus, AlertCircle } from 'lucide-react'
 import { friendlyError } from '@/lib/utils'
 import { LoadingScreen } from '@/components/ui/loading'
 import type { Invite } from '@/types/expense'
@@ -21,6 +21,7 @@ export function InvitePage() {
   const [loadingInvite, setLoadingInvite] = useState(true)
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState('')
+  const joinAttempted = useRef(false)
 
   // Load invite details
   useEffect(() => {
@@ -33,12 +34,12 @@ export function InvitePage() {
     })
   }, [inviteId])
 
-  // Auto-join when user is logged in, has profile, but no house
+  // Auto-join when user is logged in with a valid invite
   useEffect(() => {
     if (!user || !userProfile || householdLoading || !invite) return
-    if (userProfile.houseId) return // already in a house
-    if (joining) return
+    if (joinAttempted.current) return
 
+    joinAttempted.current = true
     handleJoin()
   }, [user, userProfile, householdLoading, invite, inviteId])
 
@@ -105,28 +106,6 @@ export function InvitePage() {
   // Not logged in — show login form with invite context
   if (!user) {
     return <LoginPage subtitle={`Sign in or sign up to join "${invite.houseName}"`} />
-  }
-
-  // User already has a house
-  if (userProfile?.houseId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            <Home className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-            <CardTitle>Already in a Household</CardTitle>
-            <CardDescription>
-              You're already part of a household. You can only be in one at a time.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button onClick={() => navigate('/', { replace: true })}>
-              Go to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   // Joining state

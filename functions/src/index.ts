@@ -1,7 +1,9 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall } from "firebase-functions/v2/https";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 import {
   fetchEuribor,
   fetchSOFR,
@@ -149,5 +151,106 @@ export const backfillReferenceRates = onCall(
     console.log("Results:", JSON.stringify(results));
 
     return { success: true, results };
+  }
+);
+
+/**
+ * Safety-net cascade delete: triggered when a house document gets a `deletedAt` field.
+ *
+ * The client sets `deletedAt` first (soft-delete) then runs its own cascade for
+ * progress UI. This function is the server-side backstop — if the client finishes
+ * first, every operation here is a no-op (idempotent). If the client crashes
+ * mid-cascade, this function guarantees full cleanup.
+ *
+ * Steps:
+ *  1. Read expenses → collect attachment paths for Storage cleanup
+ *  2. Read members → update their user profiles (clear houseId)
+ *  3. Delete Storage attachments (best-effort)
+ *  4. recursiveDelete the house doc + all subcollections
+ */
+export const onHouseSoftDeleted = onDocumentUpdated(
+  {
+    document: "houses/{houseId}",
+    region: "europe-west1",
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    // Only fire when deletedAt transitions from falsy → truthy
+    if (before.deletedAt || !after.deletedAt) return;
+
+    const houseId = event.params.houseId;
+    console.log(`House ${houseId} soft-deleted, starting cascade cleanup`);
+
+    const storage = getStorage();
+    const bucket = storage.bucket();
+
+    // 1. Collect attachment paths from expenses
+    try {
+      const expensesSnap = await db
+        .collection(`houses/${houseId}/expenses`)
+        .get();
+      const deletePromises: Promise<void>[] = [];
+      for (const expDoc of expensesSnap.docs) {
+        const attachments = expDoc.data().attachments as
+          | Array<{ id: string; name: string }>
+          | undefined;
+        if (attachments?.length) {
+          for (const att of attachments) {
+            const filePath = `houses/${houseId}/attachments/${att.id}/${att.name}`;
+            deletePromises.push(
+              bucket
+                .file(filePath)
+                .delete()
+                .then(() => {})
+                .catch(() => {}) // best-effort — file may already be gone
+            );
+          }
+        }
+      }
+      await Promise.all(deletePromises);
+      console.log(
+        `Deleted ${deletePromises.length} attachment(s) for house ${houseId}`
+      );
+    } catch (err) {
+      console.warn(`Attachment cleanup failed for house ${houseId}:`, err);
+    }
+
+    // 2. Clear houseId on affected members' user profiles
+    try {
+      const membersSnap = await db
+        .collection(`houses/${houseId}/members`)
+        .get();
+      for (const memberDoc of membersSnap.docs) {
+        try {
+          const profileRef = db.doc(`users/${memberDoc.id}`);
+          const profileSnap = await profileRef.get();
+          if (
+            profileSnap.exists &&
+            profileSnap.data()?.houseId === houseId
+          ) {
+            await profileRef.update({ houseId: null });
+          }
+        } catch {
+          // best-effort per member
+        }
+      }
+      console.log(
+        `Cleaned ${membersSnap.size} member profile(s) for house ${houseId}`
+      );
+    } catch (err) {
+      console.warn(`Member cleanup failed for house ${houseId}:`, err);
+    }
+
+    // 3. Recursively delete house doc + all subcollections
+    try {
+      const houseRef = db.doc(`houses/${houseId}`);
+      await db.recursiveDelete(houseRef);
+      console.log(`Recursive delete completed for house ${houseId}`);
+    } catch (err) {
+      console.error(`Recursive delete failed for house ${houseId}:`, err);
+    }
   }
 );

@@ -239,6 +239,314 @@ describe('Full house creation and invite flow', () => {
     )
   })
 
+  it('user belongs to multiple houses simultaneously', async () => {
+    // Alice creates house 1
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    await assertSucceeds(
+      aliceDb.doc('houses/house-1').set({
+        name: 'House One', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+      })
+    )
+    await assertSucceeds(
+      aliceDb.doc('houses/house-1/members/alice').set({
+        displayName: 'Alice', email: 'alice@test.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+    )
+
+    // Alice creates house 2
+    await assertSucceeds(
+      aliceDb.doc('houses/house-2').set({
+        name: 'House Two', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+      })
+    )
+    await assertSucceeds(
+      aliceDb.doc('houses/house-2/members/alice').set({
+        displayName: 'Alice', email: 'alice@test.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+    )
+
+    // Verify Alice can access both houses' subcollections
+    await assertSucceeds(aliceDb.collection('houses/house-1/expenses').get())
+    await assertSucceeds(aliceDb.collection('houses/house-2/expenses').get())
+
+    // Alice can add expenses to both houses
+    await assertSucceeds(
+      aliceDb.collection('houses/house-1/expenses').add({
+        amount: 100000, category: 'other', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    )
+    await assertSucceeds(
+      aliceDb.collection('houses/house-2/expenses').add({
+        amount: 200000, category: 'furniture', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('user joins second house via invite while already in first', async () => {
+    // Setup: Alice owns house-1, Bob owns house-2
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('houses/house-1').set({
+        name: 'House One', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-1/members/alice').set({
+        displayName: 'Alice', email: 'alice@test.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-2').set({
+        name: 'House Two', ownerId: 'bob', memberIds: ['bob'], createdAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-2/members/bob').set({
+        displayName: 'Bob', email: 'bob@test.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('users/alice').set({ displayName: 'Alice', email: 'alice@test.com', houseId: 'house-1' })
+      // Create invite for house-2
+      await db.doc('invites/inv-h2').set({
+        houseId: 'house-2', houseName: 'House Two', createdBy: 'bob',
+        createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    // Alice marks invite as used and joins house-2
+    await assertSucceeds(aliceDb.doc('invites/inv-h2').update({ usedBy: 'alice', usedAt: new Date().toISOString() }))
+    await assertSucceeds(
+      aliceDb.doc('houses/house-2/members/alice').set({
+        displayName: 'Alice', email: 'alice@test.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+    )
+    await assertSucceeds(aliceDb.doc('houses/house-2').update({
+      memberIds: ['bob', 'alice'],
+    }))
+
+    // Alice can now access both houses
+    await assertSucceeds(aliceDb.collection('houses/house-1/expenses').get())
+    await assertSucceeds(aliceDb.collection('houses/house-2/expenses').get())
+  })
+
+  it('member leaves a household', async () => {
+    // Setup: Alice owns house with Bob as member
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: HOUSE_ID })
+      await db.doc(`houses/${HOUSE_ID}`).set({
+        name: 'Casa Bella', ownerId: 'alice', memberIds: ['alice', 'bob'], createdAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/alice`).set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/bob`).set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+    })
+
+    const bob = testEnv.authenticatedContext('bob')
+    const bobDb = bob.firestore()
+
+    // Bob leaves: removes self from memberIds, deletes own member doc, clears houseId
+    await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}`).update({
+      memberIds: ['alice'],
+    }))
+    await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}/members/bob`).delete())
+    await assertSucceeds(bobDb.doc('users/bob').update({ houseId: null }))
+
+    // Alice's data is intact
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+    const houseSnap = await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).get())
+    expect(houseSnap.data()?.memberIds).toEqual(['alice'])
+
+    // Bob has lost access to expenses (no longer a member)
+    await assertFails(bobDb.collection(`houses/${HOUSE_ID}/expenses`).get())
+
+    // Bob can still read the house doc (by design — needed for invite flow)
+    await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}`).get())
+  })
+
+  it('owner deletes household with cascading cleanup', async () => {
+    // Setup: Alice owns house with expenses and members
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc(`houses/${HOUSE_ID}`).set({
+        name: 'Casa Bella', ownerId: 'alice', memberIds: ['alice', 'bob'], createdAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/alice`).set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/bob`).set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/expenses/exp1`).set({
+        amount: 100000, category: 'other', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/meta/mortgage`).set({
+        principal: 30000000, annualRate: 3.5,
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    // Cascading delete: subcollections first, then house doc
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/expenses/exp1`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/meta/mortgage`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/bob`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/alice`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).delete())
+
+    // House is gone — outsider reads should still work for top-level (by-design)
+    // but subcollections will fail or return empty
+    const bob = testEnv.authenticatedContext('bob')
+    const bobDb = bob.firestore()
+    const houseSnap = await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}`).get())
+    expect(houseSnap.exists).toBe(false)
+  })
+
+  it('deletion of one house does not affect another', async () => {
+    // Setup: Alice owns two houses
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('houses/house-keep').set({
+        name: 'Keep This', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-keep/members/alice').set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-keep/expenses/exp1').set({
+        amount: 50000, category: 'furniture', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-delete').set({
+        name: 'Delete This', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-delete/members/alice').set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    // Delete one house
+    await assertSucceeds(aliceDb.doc('houses/house-delete/members/alice').delete())
+    await assertSucceeds(aliceDb.doc('houses/house-delete').delete())
+
+    // Other house is untouched
+    const keptHouse = await assertSucceeds(aliceDb.doc('houses/house-keep').get())
+    expect(keptHouse.data()?.name).toBe('Keep This')
+    const keptExpenses = await assertSucceeds(aliceDb.collection('houses/house-keep/expenses').get())
+    expect(keptExpenses.size).toBe(1)
+  })
+
+  it('owner account deletion cascades: owned house and all its data are deleted', async () => {
+    // Setup: Alice owns house with expenses, Bob is a member
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com', houseId: HOUSE_ID })
+      await db.doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: HOUSE_ID })
+      await db.doc(`houses/${HOUSE_ID}`).set({
+        name: 'Casa Bella', ownerId: 'alice', memberIds: ['alice', 'bob'], createdAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/alice`).set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/bob`).set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/expenses/exp1`).set({
+        amount: 100000, category: 'other', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/meta/mortgage`).set({ principal: 30000000 })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    // Simulate account deletion cascade: delete subcollections, members, then house
+    // (In the app, AuthContext.cascadeDeleteHouse does this after Firebase Auth deletion)
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/expenses/exp1`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/meta/mortgage`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/bob`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/alice`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).delete())
+
+    // Alice deletes her own profile
+    await assertSucceeds(aliceDb.doc('users/alice').delete())
+
+    // House is completely gone
+    const bob = testEnv.authenticatedContext('bob')
+    const bobDb = bob.firestore()
+    const houseSnap = await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}`).get())
+    expect(houseSnap.exists).toBe(false)
+
+    // Bob's profile is untouched (only houseId would be cleared by app code)
+    const bobProfile = await assertSucceeds(bobDb.doc('users/bob').get())
+    expect(bobProfile.data()?.displayName).toBe('Bob')
+  })
+
+  it('owner with multiple houses: deleting account cascades all owned houses', async () => {
+    // Setup: Alice owns house-1 and house-2, Bob is in house-1
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com', houseId: 'house-1' })
+      await db.doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: 'house-1' })
+      await db.doc('houses/house-1').set({
+        name: 'House One', ownerId: 'alice', memberIds: ['alice', 'bob'], createdAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-1/members/alice').set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-1/members/bob').set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-2').set({
+        name: 'House Two', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-2/members/alice').set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house-2/expenses/exp1').set({
+        amount: 50000, category: 'furniture', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    // Cascade delete house-1
+    await assertSucceeds(aliceDb.doc('houses/house-1/members/bob').delete())
+    await assertSucceeds(aliceDb.doc('houses/house-1/members/alice').delete())
+    await assertSucceeds(aliceDb.doc('houses/house-1').delete())
+
+    // Cascade delete house-2
+    await assertSucceeds(aliceDb.doc('houses/house-2/expenses/exp1').delete())
+    await assertSucceeds(aliceDb.doc('houses/house-2/members/alice').delete())
+    await assertSucceeds(aliceDb.doc('houses/house-2').delete())
+
+    // Delete profile
+    await assertSucceeds(aliceDb.doc('users/alice').delete())
+
+    // Both houses are gone
+    const bob = testEnv.authenticatedContext('bob')
+    const bobDb = bob.firestore()
+    const h1 = await assertSucceeds(bobDb.doc('houses/house-1').get())
+    expect(h1.exists).toBe(false)
+    const h2 = await assertSucceeds(bobDb.doc('houses/house-2').get())
+    expect(h2.exists).toBe(false)
+
+    // Bob's profile survives
+    const bobProfile = await assertSucceeds(bobDb.doc('users/bob').get())
+    expect(bobProfile.data()?.displayName).toBe('Bob')
+  })
+
   it('account deletion: user removes own data, other members unaffected', async () => {
     // Set up: Alice owns house, Bob is member, both have expenses
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
@@ -286,5 +594,49 @@ describe('Full house creation and invite flow', () => {
     // Alice can still read her own member doc
     const aliceMember = await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/alice`).get())
     expect(aliceMember.data()?.role).toBe('owner')
+  })
+
+  it('soft-delete: owner sets deletedAt, then cascade deletes subcollections', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com', houseId: HOUSE_ID })
+      await db.doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: HOUSE_ID })
+      await db.doc(`houses/${HOUSE_ID}`).set({
+        name: 'Casa Bella', ownerId: 'alice', memberIds: ['alice', 'bob'], createdAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/alice`).set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/bob`).set({
+        displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await db.doc(`houses/${HOUSE_ID}/expenses/exp1`).set({
+        amount: 100000, category: 'other', payer: 'alice', date: '2025-01-01',
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+
+    const alice = testEnv.authenticatedContext('alice')
+    const aliceDb = alice.firestore()
+
+    // Step 1: Owner soft-deletes (sets deletedAt)
+    await assertSucceeds(
+      aliceDb.doc(`houses/${HOUSE_ID}`).update({ deletedAt: new Date().toISOString() })
+    )
+
+    // House doc still exists but has deletedAt field
+    const houseSnap = await aliceDb.doc(`houses/${HOUSE_ID}`).get()
+    expect(houseSnap.data()?.deletedAt).toBeTruthy()
+
+    // Step 2: Client-side cascade — delete subcollections then house doc
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/expenses/exp1`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/bob`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/alice`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).delete())
+
+    // House is completely gone
+    const bob = testEnv.authenticatedContext('bob')
+    const afterSnap = await assertSucceeds(bob.firestore().doc(`houses/${HOUSE_ID}`).get())
+    expect(afterSnap.exists).toBe(false)
   })
 })

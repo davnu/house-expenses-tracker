@@ -1,44 +1,12 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ProgressRing } from '@/components/ui/progress-ring'
 import { useMortgage } from '@/context/MortgageContext'
 import { getMortgageStats } from '@/lib/mortgage-utils'
 import { formatCurrency } from '@/lib/utils'
 import { Landmark, ArrowRight, Calendar, TrendingDown, Percent, Clock } from 'lucide-react'
 import { format } from 'date-fns'
-
-function ProgressRing({ percent, size = 120, strokeWidth = 8 }: { percent: number; size?: number; strokeWidth?: number }) {
-  const radius = (size - strokeWidth) / 2
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (Math.min(percent, 100) / 100) * circumference
-
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      {/* Background ring */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="var(--color-muted)"
-        strokeWidth={strokeWidth}
-      />
-      {/* Progress ring */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="#2a9d90"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        className="transition-all duration-700 ease-out"
-      />
-    </svg>
-  )
-}
 
 export function MortgageSummaryCard() {
   const { mortgage, loading } = useMortgage()

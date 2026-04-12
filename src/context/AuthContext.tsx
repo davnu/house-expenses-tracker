@@ -10,9 +10,10 @@ import {
   deleteUser,
   type User,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, deleteDoc, updateDoc, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, arrayRemove, collection, query, where, getDocs, writeBatch } from 'firebase/firestore'
 import { auth, db } from '@/data/firebase'
 import { deleteAttachments } from '@/data/firebase-attachment-store'
+import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
 
 interface AuthContextValue {
   user: User | null
@@ -21,7 +22,7 @@ interface AuthContextValue {
   signUpEmail: (email: string, password: string, displayName: string) => Promise<void>
   signInGoogle: () => Promise<void>
   logout: () => Promise<void>
-  deleteAccount: () => Promise<void>
+  deleteAccount: (onProgress?: CascadeProgressCallback) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -78,60 +79,152 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth)
   }
 
-  const deleteAccount = async () => {
-    if (!user) throw new Error('Not signed in')
+  const BATCH_LIMIT = 500
 
-    deletingAccount = true
-    const uid = user.uid
+  /** Cascade-delete a single house: soft-delete first, then cleanup.
+   *  Cloud Function (onHouseSoftDeleted) runs the same cascade as a safety net. */
+  async function cascadeDeleteHouse(houseId: string) {
+    // Soft-delete: mark house as deleted immediately (hides from all members)
+    try {
+      await updateDoc(doc(db, 'houses', houseId), { deletedAt: new Date().toISOString() })
+    } catch {
+      // May fail if auth token expired — still try to clean up
+    }
 
-    // 1. Delete Firebase Auth account FIRST — if this fails (requires-recent-login),
-    //    we stop before touching any Firestore data. The auth token remains valid
-    //    briefly after deletion, so subsequent Firestore operations still work.
-    await deleteUser(user)
-
-    // 2. Read user profile to get houseId
-    const profileSnap = await getDoc(doc(db, 'users', uid))
-    const houseId = profileSnap.exists() ? profileSnap.data().houseId : null
-
-    if (houseId) {
-      // 3. Delete user's attachments from Storage
-      try {
-        const expensesSnap = await getDocs(
-          query(collection(db, 'houses', houseId, 'expenses'), where('payer', '==', uid))
-        )
-        for (const expDoc of expensesSnap.docs) {
-          const attachments = expDoc.data().attachments as Array<{ id: string; name: string }> | undefined
-          if (attachments?.length) {
-            await deleteAttachments(houseId, attachments)
-          }
+    // 1. Delete all attachments from Storage (best-effort)
+    try {
+      const expensesSnap = await getDocs(collection(db, 'houses', houseId, 'expenses'))
+      for (const expDoc of expensesSnap.docs) {
+        const attachments = expDoc.data().attachments as Array<{ id: string; name: string }> | undefined
+        if (attachments?.length) {
+          await deleteAttachments(houseId, attachments)
         }
-      } catch {
-        // Storage cleanup is best-effort — auth token may have expired
       }
+    } catch {
+      // Best-effort
+    }
 
-      // 4. Remove user from house memberIds
+    // 2. Delete all subcollection docs (must happen BEFORE house doc deletion)
+    for (const sub of ['expenses', 'recurring', 'meta']) {
       try {
-        await updateDoc(doc(db, 'houses', houseId), {
-          memberIds: arrayRemove(uid),
-        })
-      } catch {
-        // Best-effort — auth token may have expired
-      }
-
-      // 5. Delete member doc
-      try {
-        await deleteDoc(doc(db, 'houses', houseId, 'members', uid))
+        const snap = await getDocs(collection(db, 'houses', houseId, sub))
+        for (let i = 0; i < snap.docs.length; i += BATCH_LIMIT) {
+          const chunk = snap.docs.slice(i, i + BATCH_LIMIT)
+          const batch = writeBatch(db)
+          chunk.forEach((d) => batch.delete(d.ref))
+          await batch.commit()
+        }
       } catch {
         // Best-effort
       }
     }
 
-    // 6. Delete user profile doc
+    // 3. Clear houseId on affected members, then delete member docs
+    try {
+      const membersSnap = await getDocs(collection(db, 'houses', houseId, 'members'))
+      for (const memberDoc of membersSnap.docs) {
+        try {
+          const profileSnap = await getDoc(doc(db, 'users', memberDoc.id))
+          if (profileSnap.exists() && profileSnap.data().houseId === houseId) {
+            await updateDoc(doc(db, 'users', memberDoc.id), { houseId: null })
+          }
+        } catch {
+          // Best-effort
+        }
+      }
+      for (let i = 0; i < membersSnap.docs.length; i += BATCH_LIMIT) {
+        const chunk = membersSnap.docs.slice(i, i + BATCH_LIMIT)
+        const batch = writeBatch(db)
+        chunk.forEach((d) => batch.delete(d.ref))
+        await batch.commit()
+      }
+    } catch {
+      // Best-effort
+    }
+
+    // 4. Delete the house doc
+    try {
+      await deleteDoc(doc(db, 'houses', houseId))
+    } catch {
+      // Best-effort
+    }
+  }
+
+  const deleteAccount = async (onProgress?: CascadeProgressCallback) => {
+    if (!user) throw new Error('Not signed in')
+
+    const uid = user.uid
+
+    deletingAccount = true
+
+    // 1. Delete Firebase Auth account FIRST — if this fails (requires-recent-login),
+    //    we stop before touching any Firestore data. The auth token remains valid
+    //    briefly after deletion, so subsequent Firestore operations still work.
+    onProgress?.('auth', 'active')
+    await deleteUser(user)
+    onProgress?.('auth', 'completed')
+
+    // 2. Cascade-delete all houses the user owns
+    onProgress?.('houses', 'active')
+    try {
+      const ownedSnap = await getDocs(
+        query(collection(db, 'houses'), where('ownerId', '==', uid))
+      )
+      for (const houseDoc of ownedSnap.docs) {
+        await cascadeDeleteHouse(houseDoc.id)
+      }
+    } catch {
+      // Best-effort
+    }
+    onProgress?.('houses', 'completed')
+
+    // 3. Clean up memberships in houses the user doesn't own
+    onProgress?.('memberships', 'active')
+    try {
+      const memberSnap = await getDocs(
+        query(collection(db, 'houses'), where('memberIds', 'array-contains', uid))
+      )
+      for (const houseDoc of memberSnap.docs) {
+        try {
+          await updateDoc(houseDoc.ref, { memberIds: arrayRemove(uid) })
+        } catch { /* Best-effort */ }
+        try {
+          await deleteDoc(doc(db, 'houses', houseDoc.id, 'members', uid))
+        } catch { /* Best-effort */ }
+        // Delete user's attachments in this house
+        try {
+          const expensesSnap = await getDocs(
+            query(collection(db, 'houses', houseDoc.id, 'expenses'), where('payer', '==', uid))
+          )
+          for (const expDoc of expensesSnap.docs) {
+            const attachments = expDoc.data().attachments as Array<{ id: string; name: string }> | undefined
+            if (attachments?.length) {
+              await deleteAttachments(houseDoc.id, attachments)
+            }
+          }
+        } catch { /* Best-effort */ }
+      }
+    } catch {
+      // Best-effort — fall back to profile houseId
+      try {
+        const profileSnap = await getDoc(doc(db, 'users', uid))
+        const houseId = profileSnap.exists() ? profileSnap.data().houseId : null
+        if (houseId) {
+          await updateDoc(doc(db, 'houses', houseId), { memberIds: arrayRemove(uid) })
+          await deleteDoc(doc(db, 'houses', houseId, 'members', uid))
+        }
+      } catch { /* Best-effort */ }
+    }
+    onProgress?.('memberships', 'completed')
+
+    // 4. Delete user profile doc
+    onProgress?.('profile', 'active')
     try {
       await deleteDoc(doc(db, 'users', uid))
     } catch {
       // Best-effort
     }
+    onProgress?.('profile', 'completed')
   }
 
   return (

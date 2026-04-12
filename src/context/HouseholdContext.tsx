@@ -1,9 +1,14 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import {
   doc,
+  getDoc,
+  getDocs,
   updateDoc,
+  deleteDoc,
   collection,
   addDoc,
+  query,
+  where,
   onSnapshot,
   arrayUnion,
   arrayRemove,
@@ -11,13 +16,16 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { db } from '@/data/firebase'
+import { deleteAttachments } from '@/data/firebase-attachment-store'
 import { useAuth } from './AuthContext'
 import { MEMBER_COLOR_PALETTE } from '@/lib/constants'
+import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
 import type { UserProfile, House, HouseMember, Invite } from '@/types/expense'
 
 interface HouseholdContextValue {
   userProfile: UserProfile | null
   house: House | null
+  houses: House[]
   members: HouseMember[]
   loading: boolean
   createHouse: (name: string, country?: string, currency?: string) => Promise<void>
@@ -26,26 +34,45 @@ interface HouseholdContextValue {
   updateDisplayName: (name: string) => Promise<void>
   updateHouseName: (name: string) => Promise<void>
   removeMember: (uid: string) => Promise<void>
+  switchHouse: (houseId: string) => Promise<void>
+  leaveHouse: () => Promise<void>
+  deleteHouse: (onProgress?: CascadeProgressCallback) => Promise<void>
   getMemberName: (uid: string) => string
   getMemberColor: (uid: string) => string
 }
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
+/** Firestore batch limit is 500 operations */
+const BATCH_LIMIT = 500
+
 export function HouseholdProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [house, setHouse] = useState<House | null>(null)
+  const [houses, setHouses] = useState<House[]>([])
   const [members, setMembers] = useState<HouseMember[]>([])
-  const [loading, setLoading] = useState(true)
+  const [profileLoaded, setProfileLoaded] = useState(false)
+  const [housesLoaded, setHousesLoaded] = useState(false)
+
+  const loading = !profileLoaded || !housesLoaded
+
+  // Ref to avoid stale closures in callbacks
+  const housesRef = useRef(houses)
+  housesRef.current = houses
+
+  // Guard to prevent duplicate auto-select writes
+  const autoSelectingRef = useRef(false)
 
   // Listen to user profile
   useEffect(() => {
     if (!user) {
       setUserProfile(null)
       setHouse(null)
+      setHouses([])
       setMembers([])
-      setLoading(false)
+      setProfileLoaded(false)
+      setHousesLoaded(false)
       return
     }
 
@@ -55,13 +82,44 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       } else {
         setUserProfile(null)
       }
-      setLoading(false)
+      setProfileLoaded(true)
     })
 
     return unsubscribe
   }, [user])
 
-  // Listen to house + members when houseId is set
+  // Listen to all houses the user belongs to
+  useEffect(() => {
+    if (!user) {
+      setHouses([])
+      setHousesLoaded(false)
+      return
+    }
+
+    const q = query(collection(db, 'houses'), where('memberIds', 'array-contains', user.uid))
+    const unsubscribe = onSnapshot(q, (snap) => {
+      // Filter out soft-deleted houses (deletedAt set by owner, Cloud Function will clean up)
+      setHouses(snap.docs
+        .filter((d) => !d.data().deletedAt)
+        .map((d) => ({ id: d.id, ...d.data() }) as House))
+      setHousesLoaded(true)
+    })
+
+    return unsubscribe
+  }, [user])
+
+  // Auto-select first house if user has houses but no active house
+  useEffect(() => {
+    if (!user || !profileLoaded || !housesLoaded) return
+    if (userProfile && !userProfile.houseId && houses.length > 0 && !autoSelectingRef.current) {
+      autoSelectingRef.current = true
+      updateDoc(doc(db, 'users', user.uid), { houseId: houses[0].id })
+        .catch(() => {})
+        .finally(() => { autoSelectingRef.current = false })
+    }
+  }, [user, userProfile, houses, profileLoaded, housesLoaded])
+
+  // Listen to active house + members when houseId is set
   useEffect(() => {
     if (!user || !userProfile?.houseId) {
       setHouse(null)
@@ -74,6 +132,9 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     const unsubHouse = onSnapshot(doc(db, 'houses', houseId), (snap) => {
       if (snap.exists()) {
         setHouse({ id: snap.id, ...snap.data() } as House)
+      } else {
+        // House was deleted — clear active house
+        setHouse(null)
       }
     })
 
@@ -165,7 +226,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       // Update house memberIds
       transaction.update(doc(db, 'houses', houseId), { memberIds: arrayUnion(user.uid) })
 
-      // Update user profile
+      // Update user profile — switch active house to the newly joined one
       transaction.update(doc(db, 'users', user.uid), { houseId })
     })
   }, [user, userProfile])
@@ -191,13 +252,12 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     if (!user) return
     const batch = writeBatch(db)
     batch.update(doc(db, 'users', user.uid), { displayName: name })
-    if (userProfile?.houseId) {
-      batch.update(doc(db, 'houses', userProfile.houseId, 'members', user.uid), {
-        displayName: name,
-      })
+    // Update member doc in all houses the user belongs to
+    for (const h of housesRef.current) {
+      batch.update(doc(db, 'houses', h.id, 'members', user.uid), { displayName: name })
     }
     await batch.commit()
-  }, [user, userProfile])
+  }, [user])
 
   const updateHouseName = useCallback(async (name: string) => {
     if (!house) return
@@ -210,9 +270,122 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     const batch = writeBatch(db)
     batch.delete(doc(db, 'houses', house.id, 'members', uid))
     batch.update(doc(db, 'houses', house.id), { memberIds: arrayRemove(uid) })
-    batch.update(doc(db, 'users', uid), { houseId: null })
+    // Only clear the removed user's houseId if it points to this house
+    try {
+      const memberProfile = await getDoc(doc(db, 'users', uid))
+      if (memberProfile.exists() && memberProfile.data().houseId === house.id) {
+        batch.update(doc(db, 'users', uid), { houseId: null })
+      }
+    } catch {
+      // Best-effort — may not have permission to read their profile in edge cases
+    }
     await batch.commit()
   }, [house])
+
+  const switchHouse = useCallback(async (houseId: string) => {
+    if (!user) return
+    if (!housesRef.current.some((h) => h.id === houseId)) {
+      throw new Error('Not a member of this house')
+    }
+    await updateDoc(doc(db, 'users', user.uid), { houseId })
+  }, [user])
+
+  const leaveHouse = useCallback(async () => {
+    if (!user || !house) return
+    if (house.ownerId === user.uid) throw new Error('Owner cannot leave. Delete the house instead.')
+
+    const houseId = house.id
+    const remaining = housesRef.current.filter((h) => h.id !== houseId)
+    const nextHouseId = remaining.length > 0 ? remaining[0].id : null
+
+    const batch = writeBatch(db)
+    batch.delete(doc(db, 'houses', houseId, 'members', user.uid))
+    batch.update(doc(db, 'houses', houseId), { memberIds: arrayRemove(user.uid) })
+    batch.update(doc(db, 'users', user.uid), { houseId: nextHouseId })
+    await batch.commit()
+  }, [user, house])
+
+  // Soft-delete + client-side cascade with progress reporting.
+  // Setting deletedAt first hides the house from all members immediately.
+  // A Cloud Function (onHouseSoftDeleted) runs the same cascade server-side
+  // as a safety net — all operations are idempotent, so concurrent execution is safe.
+  const deleteHouse = useCallback(async (onProgress?: CascadeProgressCallback) => {
+    if (!user || !house) return
+    if (house.ownerId !== user.uid) throw new Error('Only the owner can delete a house')
+
+    const houseId = house.id
+
+    // Soft-delete: mark house as deleted immediately (hides from all members' UI)
+    await updateDoc(doc(db, 'houses', houseId), { deletedAt: new Date().toISOString() })
+
+    // 1. Delete attachments from Storage (best-effort)
+    onProgress?.('attachments', 'active')
+    try {
+      const expensesSnap = await getDocs(collection(db, 'houses', houseId, 'expenses'))
+      for (const expDoc of expensesSnap.docs) {
+        const attachments = expDoc.data().attachments as Array<{ id: string; name: string }> | undefined
+        if (attachments?.length) {
+          await deleteAttachments(houseId, attachments)
+        }
+      }
+    } catch {
+      // Best-effort
+    }
+    onProgress?.('attachments', 'completed')
+
+    // 2. Delete all subcollection docs in batches
+    onProgress?.('data', 'active')
+    const subcollections = ['expenses', 'recurring', 'meta']
+    for (const sub of subcollections) {
+      try {
+        const snap = await getDocs(collection(db, 'houses', houseId, sub))
+        for (let i = 0; i < snap.docs.length; i += BATCH_LIMIT) {
+          const chunk = snap.docs.slice(i, i + BATCH_LIMIT)
+          const batch = writeBatch(db)
+          chunk.forEach((d) => batch.delete(d.ref))
+          await batch.commit()
+        }
+      } catch {
+        // Best-effort
+      }
+    }
+    onProgress?.('data', 'completed')
+
+    // 3. Clear houseId on affected members and delete member docs
+    onProgress?.('members', 'active')
+    try {
+      const membersSnap = await getDocs(collection(db, 'houses', houseId, 'members'))
+      for (const memberDoc of membersSnap.docs) {
+        const memberUid = memberDoc.id
+        try {
+          const profileSnap = await getDoc(doc(db, 'users', memberUid))
+          if (profileSnap.exists() && profileSnap.data().houseId === houseId) {
+            await updateDoc(doc(db, 'users', memberUid), { houseId: null })
+          }
+        } catch {
+          // Best-effort
+        }
+      }
+      for (let i = 0; i < membersSnap.docs.length; i += BATCH_LIMIT) {
+        const chunk = membersSnap.docs.slice(i, i + BATCH_LIMIT)
+        const batch = writeBatch(db)
+        chunk.forEach((d) => batch.delete(d.ref))
+        await batch.commit()
+      }
+    } catch {
+      // Best-effort
+    }
+    onProgress?.('members', 'completed')
+
+    // 4. Delete the house doc + switch owner to next house
+    onProgress?.('finalize', 'active')
+    await deleteDoc(doc(db, 'houses', houseId))
+
+    const remaining = housesRef.current.filter((h) => h.id !== houseId)
+    const nextHouseId = remaining.length > 0 ? remaining[0].id : null
+    await updateDoc(doc(db, 'users', user.uid), { houseId: nextHouseId })
+    onProgress?.('finalize', 'completed')
+  }, [user, house])
 
   const getMemberName = useCallback((uid: string) => {
     return members.find((m) => m.uid === uid)?.displayName ?? 'Unknown'
@@ -227,6 +400,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       value={{
         userProfile,
         house,
+        houses,
         members,
         loading,
         createHouse,
@@ -235,6 +409,9 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         updateDisplayName,
         updateHouseName,
         removeMember,
+        switchHouse,
+        leaveHouse,
+        deleteHouse,
         getMemberName,
         getMemberColor,
       }}

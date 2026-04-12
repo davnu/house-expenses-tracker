@@ -34,8 +34,12 @@ service cloud.firestore {
                     && (isMember()
                         // Allow joining user to add themselves to memberIds (transaction race)
                         || (request.auth.uid in request.resource.data.memberIds
-                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])));
-      allow delete: if false;
+                            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])))
+                    // Only the owner can set deletedAt (soft-delete)
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['deletedAt'])
+                        || resource.data.ownerId == request.auth.uid);
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.ownerId;
 
       // Members
       match /members/{memberId} {

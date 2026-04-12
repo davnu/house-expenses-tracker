@@ -18,12 +18,12 @@ import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 
 function AppRoutes() {
-  const { house, userProfile, loading } = useHousehold()
+  const { house, houses, userProfile, loading } = useHousehold()
 
   if (loading) return <LoadingScreen />
 
-  // User has no house — show onboarding (unless on invite or privacy route)
-  if (!house && !userProfile?.houseId) {
+  // User has no houses at all — show onboarding (unless on invite or privacy route)
+  if (!house && !userProfile?.houseId && houses.length === 0) {
     return (
       <Routes>
         <Route path="/privacy" element={<PrivacyPage />} />
@@ -33,7 +33,7 @@ function AppRoutes() {
     )
   }
 
-  // houseId is set but house doc hasn't loaded yet — show nav shell with loading content
+  // houseId is set or houses exist but house doc hasn't loaded yet — show loading
   if (!house) {
     return (
       <Routes>
