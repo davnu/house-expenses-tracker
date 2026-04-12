@@ -5,6 +5,7 @@ import {
   filterByCategory,
   filterBySearch,
   applyFilters,
+  groupExpensesByMonth,
 } from './expense-utils'
 import type { Expense } from '@/types/expense'
 
@@ -197,5 +198,78 @@ describe('applyFilters', () => {
   it('applies only dateEnd (no dateStart)', () => {
     const result = applyFilters(expenses, { dateEnd: '2025-07-15' })
     expect(result).toHaveLength(2) // e1 and e2
+  })
+})
+
+// ── groupExpensesByMonth ────────────────────────────
+
+describe('groupExpensesByMonth', () => {
+  it('groups expenses by month, newest first by default', () => {
+    const result = groupExpensesByMonth(expenses)
+    expect(result).toHaveLength(4) // Jun, Jul, Aug, Sep 2025
+    expect(result.map(g => g.key)).toEqual(['2025-09', '2025-08', '2025-07', '2025-06'])
+  })
+
+  it('sorts oldest first with asc direction', () => {
+    const result = groupExpensesByMonth(expenses, 'asc')
+    expect(result.map(g => g.key)).toEqual(['2025-06', '2025-07', '2025-08', '2025-09'])
+  })
+
+  it('calculates correct total per group', () => {
+    const result = groupExpensesByMonth(expenses)
+    const sep = result.find(g => g.key === '2025-09')!
+    expect(sep.total).toBe(20000) // e5 moving only
+    const jul = result.find(g => g.key === '2025-07')!
+    expect(jul.total).toBe(180000) // e2 (150000) + e3 (30000)
+    const jun = result.find(g => g.key === '2025-06')!
+    expect(jun.total).toBe(500000) // e1 down payment
+    const aug = result.find(g => g.key === '2025-08')!
+    expect(aug.total).toBe(80000) // e4 taxes
+  })
+
+  it('preserves expense order within groups', () => {
+    const result = groupExpensesByMonth(expenses)
+    const jul = result.find(g => g.key === '2025-07')!
+    expect(jul.expenses).toHaveLength(2)
+    expect(jul.expenses.map(e => e.id)).toEqual(['e2', 'e3'])
+  })
+
+  it('returns empty array for empty input', () => {
+    expect(groupExpensesByMonth([])).toEqual([])
+  })
+
+  it('handles single expense', () => {
+    const single = [expenses[0]]
+    const result = groupExpensesByMonth(single)
+    expect(result).toHaveLength(1)
+    expect(result[0].key).toBe('2025-06')
+    expect(result[0].expenses).toHaveLength(1)
+    expect(result[0].total).toBe(500000)
+  })
+
+  it('marks the current calendar month as isCurrent', () => {
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const currentExpense = expense({ id: 'now', date: `${currentMonth}-15` })
+    const result = groupExpensesByMonth([currentExpense])
+    expect(result).toHaveLength(1)
+    expect(result[0].isCurrent).toBe(true)
+  })
+
+  it('does not mark old months as current', () => {
+    const result = groupExpensesByMonth(expenses)
+    expect(result.every(g => !g.isCurrent)).toBe(true)
+  })
+
+  it('groups multiple expenses on the same date together', () => {
+    const sameDay = [
+      expense({ id: 's1', amount: 10000, date: '2025-03-10' }),
+      expense({ id: 's2', amount: 20000, date: '2025-03-10' }),
+      expense({ id: 's3', amount: 30000, date: '2025-03-10' }),
+    ]
+    const result = groupExpensesByMonth(sameDay)
+    expect(result).toHaveLength(1)
+    expect(result[0].expenses).toHaveLength(3)
+    expect(result[0].total).toBe(60000)
   })
 })

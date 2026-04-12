@@ -1,5 +1,54 @@
 import type { Expense, ExpenseCategory } from '@/types/expense'
 
+// ── Month grouping ──────────────────────────────────
+
+export interface ExpenseGroup {
+  /** YYYY-MM key, e.g. "2026-04" */
+  key: string
+  /** Whether this group represents the current calendar month */
+  isCurrent: boolean
+  /** Expenses within this month, preserving input order */
+  expenses: Expense[]
+  /** Sum of expense amounts (cents) in this group */
+  total: number
+}
+
+/**
+ * Groups a pre-sorted expense array by calendar month.
+ * Returns groups ordered by month (newest-first for 'desc', oldest-first for 'asc').
+ * Expenses within each group keep their original order from the input array.
+ */
+export function groupExpensesByMonth(
+  expenses: Expense[],
+  sortDir: 'asc' | 'desc' = 'desc'
+): ExpenseGroup[] {
+  const map = new Map<string, Expense[]>()
+  for (const expense of expenses) {
+    const key = expense.date.slice(0, 7)
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(expense)
+  }
+
+  const sortedKeys = [...map.keys()].sort((a, b) =>
+    sortDir === 'desc' ? b.localeCompare(a) : a.localeCompare(b)
+  )
+
+  const now = new Date()
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+  return sortedKeys.map(key => {
+    const monthExpenses = map.get(key)!
+    return {
+      key,
+      isCurrent: key === currentMonth,
+      expenses: monthExpenses,
+      total: monthExpenses.reduce((s, e) => s + e.amount, 0),
+    }
+  })
+}
+
+// ── Filters ─────────────────────────────────────────
+
 export function filterByPayer(expenses: Expense[], uid: string): Expense[] {
   return expenses.filter((e) => e.payer === uid)
 }
