@@ -62,7 +62,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
           </div>
           <CardTitle className="text-xl">House Expenses</CardTitle>
           <CardDescription>
-            {subtitle ?? (isSignUp ? 'Create an account to get started' : 'Sign in to track your expenses')}
+            {subtitle ?? 'Every cost of buying your home, in one place'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

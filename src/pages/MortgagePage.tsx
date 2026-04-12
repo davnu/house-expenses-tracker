@@ -43,9 +43,9 @@ export function MortgagePage() {
           <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
             <Landmark className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold mb-2">Set Up Your Mortgage</h2>
+          <h2 className="text-lg font-semibold mb-2">Add Your Mortgage</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            Enter your mortgage details to see payment breakdowns, amortization schedule, and track your progress.
+            See how your mortgage fits into the total cost of your home — payment schedule, interest breakdown, and payoff progress.
           </p>
           <Button onClick={() => setDialogOpen(true)}>
             <Landmark className="h-4 w-4 mr-2" />

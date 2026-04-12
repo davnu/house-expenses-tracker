@@ -378,8 +378,8 @@ export function ExpenseList() {
             </>
           ) : (
             <>
-              <p className="text-lg">No expenses yet</p>
-              <p className="text-sm">Click the + button to add your first expense</p>
+              <p className="text-lg">No costs logged yet</p>
+              <p className="text-sm">Tap + to log your first house purchase cost</p>
             </>
           )}
         </div>

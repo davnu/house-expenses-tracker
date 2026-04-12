@@ -334,7 +334,7 @@ export function SettingsPage() {
                   <p className="text-sm text-muted-foreground">
                     You will lose access to all expenses and data in this household. This cannot be undone.
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button variant="destructive" onClick={handleLeaveHouse}>
                       Leave Household
                     </Button>
@@ -469,7 +469,7 @@ export function SettingsPage() {
                   placeholder={house?.name}
                   autoFocus
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant="destructive"
                     onClick={handleDeleteHouse}
@@ -537,7 +537,7 @@ export function SettingsPage() {
               <p className="text-sm text-muted-foreground">
                 We recommend exporting your data first using the button above.
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="destructive" onClick={handleDeleteAccount}>
                   Yes, permanently delete my account
                 </Button>

@@ -59,8 +59,8 @@ export function SummaryPage() {
 
       {!hasData ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">No expenses yet</p>
-          <p className="text-sm">Add expenses to see your summary report</p>
+          <p className="text-lg">Nothing to summarize yet</p>
+          <p className="text-sm">Start logging costs to see your full house purchase breakdown</p>
         </div>
       ) : (
         <>

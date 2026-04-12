@@ -111,7 +111,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Input id="description" placeholder="What was this for?" {...register('description')} />
+        <Input id="description" placeholder="e.g. Down payment deposit, notary fees, home inspection..." {...register('description')} />
       </div>
 
       {!hideAttachments && (

@@ -47,7 +47,7 @@ export function OnboardingPage() {
             Welcome{userProfile?.displayName ? `, ${userProfile.displayName}` : ''}!
           </CardTitle>
           <CardDescription>
-            Set up your house to start tracking expenses.
+            Name your house to start tracking every purchase cost.
           </CardDescription>
         </CardHeader>
         <CardContent>
