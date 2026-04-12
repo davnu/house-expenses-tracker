@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import type { MortgageConfig, RatePeriod } from '@/types/mortgage'
 import { FirestoreRepository } from '@/data/firestore-repository'
 import { generateHistoricalRatePeriods } from '@/data/reference-rates'
@@ -89,6 +89,10 @@ export function MortgageProvider({ children }: { children: ReactNode }) {
 
   const houseId = house?.id
 
+  // Ref for latest mortgage to avoid stale closures in optimistic callbacks
+  const mortgageRef = useRef(mortgage)
+  mortgageRef.current = mortgage
+
   useEffect(() => {
     if (!houseId) {
       setMortgage(null)
@@ -118,21 +122,37 @@ export function MortgageProvider({ children }: { children: ReactNode }) {
 
   const save = useCallback(async (config: MortgageConfig) => {
     if (!houseId) return
-    const repo = new FirestoreRepository(db, houseId)
+    const previous = mortgageRef.current
 
-    // Auto-populate rate periods for newly saved variable mortgages
-    const populated = await autoPopulateRatePeriods(config)
-    const toSave = populated ?? config
+    // Optimistic: show the user's config immediately
+    setMortgage(config)
 
-    const saved = await repo.saveMortgage(toSave)
-    setMortgage(saved)
+    try {
+      const repo = new FirestoreRepository(db, houseId)
+      const populated = await autoPopulateRatePeriods(config)
+      const toSave = populated ?? config
+      const saved = await repo.saveMortgage(toSave)
+      setMortgage(saved)
+    } catch (err) {
+      setMortgage(previous)
+      throw err
+    }
   }, [houseId])
 
   const remove = useCallback(async () => {
     if (!houseId) return
-    const repo = new FirestoreRepository(db, houseId)
-    await repo.deleteMortgage()
+    const previous = mortgageRef.current
+
+    // Optimistic: clear immediately
     setMortgage(null)
+
+    try {
+      const repo = new FirestoreRepository(db, houseId)
+      await repo.deleteMortgage()
+    } catch (err) {
+      setMortgage(previous)
+      throw err
+    }
   }, [houseId])
 
   return (

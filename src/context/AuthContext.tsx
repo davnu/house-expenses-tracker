@@ -51,10 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u)
-      if (u && !deletingAccount) await ensureUserProfile(u)
       setLoading(false)
+      // Ensure profile exists in the background — don't block the auth gate
+      if (u && !deletingAccount) ensureUserProfile(u).catch(() => {})
     })
     return unsubscribe
   }, [])

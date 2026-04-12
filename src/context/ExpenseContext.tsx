@@ -11,6 +11,7 @@ interface ExpenseContextValue {
   expenses: Expense[]
   loading: boolean
   storageUsed: number
+  pendingExpenseIds: Set<string>
   pendingAttachmentIds: Set<string>
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   addExpenseWithFiles: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
@@ -28,6 +29,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const [repo, setRepo] = useState<ExpenseRepository | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
+  const [pendingExpenseIds, setPendingExpenseIds] = useState<Set<string>>(new Set())
   const [pendingAttachmentIds, setPendingAttachmentIds] = useState<Set<string>>(new Set())
 
   const houseId = house?.id
@@ -65,52 +67,131 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     }
   }, [repo, refresh])
 
-  const filesToAttachments = useCallback(async (files: File[]): Promise<Attachment[]> => {
-    if (!houseId) throw new Error('No house')
-    return Promise.all(
-      files.map(async (file) => {
-        const id = crypto.randomUUID()
-        const url = await uploadAttachment(houseId, id, file)
-        return { id, name: file.name, type: file.type, size: file.size, url }
-      })
-    )
-  }, [houseId])
-
   const addExpense = useCallback(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!repo) return
-    await repo.addExpense(input)
-    await refresh()
-  }, [repo, refresh])
+    const tempId = `temp-${crypto.randomUUID()}`
+    const now = new Date().toISOString()
+    const tempExpense: Expense = { id: tempId, ...input, createdAt: now, updatedAt: now }
+
+    setPendingExpenseIds((prev) => new Set([...prev, tempId]))
+    setExpenses((prev) => [...prev, tempExpense])
+
+    try {
+      const real = await repo.addExpense(input)
+      setExpenses((prev) => prev.map((e) => e.id === tempId ? real : e))
+    } catch (err) {
+      setExpenses((prev) => prev.filter((e) => e.id !== tempId))
+      throw err
+    } finally {
+      setPendingExpenseIds((prev) => {
+        const next = new Set(prev)
+        next.delete(tempId)
+        return next
+      })
+    }
+  }, [repo])
 
   const addExpenseWithFiles = useCallback(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => {
-    if (!repo) return
+    if (!repo || !houseId) return
     if (files.length > MAX_FILES_PER_EXPENSE) {
       throw new Error(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
     }
+    const currentStorageUsed = expensesRef.current.reduce((total, exp) =>
+      total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
     const newSize = files.reduce((s, f) => s + f.size, 0)
-    if (storageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
+    if (currentStorageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
       throw new Error('Household storage limit reached')
     }
-    const attachments = files.length > 0 ? await filesToAttachments(files) : undefined
-    await repo.addExpense({ ...input, attachments })
-    await refresh()
-  }, [repo, refresh, filesToAttachments, storageUsed])
+
+    const tempId = `temp-${crypto.randomUUID()}`
+    const now = new Date().toISOString()
+    const placeholderAtts: Attachment[] = files.map((f) => ({
+      id: crypto.randomUUID(),
+      name: f.name,
+      type: f.type,
+      size: f.size,
+    }))
+    const placeholderAttIds = new Set(placeholderAtts.map((p) => p.id))
+    const tempExpense: Expense = {
+      id: tempId, ...input,
+      attachments: placeholderAtts.length > 0 ? placeholderAtts : undefined,
+      createdAt: now, updatedAt: now,
+    }
+
+    // Optimistic: show expense + pending attachment pills immediately
+    setPendingExpenseIds((prev) => new Set([...prev, tempId]))
+    if (placeholderAttIds.size > 0) {
+      setPendingAttachmentIds((prev) => new Set([...prev, ...placeholderAttIds]))
+    }
+    setExpenses((prev) => [...prev, tempExpense])
+
+    try {
+      // Upload files, reusing placeholder IDs
+      const uploaded: Attachment[] = await Promise.all(
+        files.map(async (file, i) => {
+          const id = placeholderAtts[i].id
+          const url = await uploadAttachment(houseId, id, file)
+          return { id, name: file.name, type: file.type, size: file.size, url }
+        })
+      )
+      const real = await repo.addExpense({ ...input, attachments: uploaded.length > 0 ? uploaded : undefined })
+      setExpenses((prev) => prev.map((e) => e.id === tempId ? real : e))
+    } catch (err) {
+      setExpenses((prev) => prev.filter((e) => e.id !== tempId))
+      throw err
+    } finally {
+      setPendingExpenseIds((prev) => {
+        const next = new Set(prev)
+        next.delete(tempId)
+        return next
+      })
+      if (placeholderAttIds.size > 0) {
+        setPendingAttachmentIds((prev) => {
+          const next = new Set(prev)
+          placeholderAttIds.forEach((id) => next.delete(id))
+          return next
+        })
+      }
+    }
+  }, [repo, houseId])
 
   const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
     if (!repo) return
-    await repo.updateExpense(id, updates)
-    await refresh()
-  }, [repo, refresh])
+    const previous = expensesRef.current.find((e) => e.id === id)
+    if (!previous) return
+
+    // Optimistic: apply updates immediately
+    setExpenses((prev) => prev.map((e) =>
+      e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e
+    ))
+
+    try {
+      const saved = await repo.updateExpense(id, updates)
+      setExpenses((prev) => prev.map((e) => e.id === id ? saved : e))
+    } catch (err) {
+      setExpenses((prev) => prev.map((e) => e.id === id ? previous : e))
+      throw err
+    }
+  }, [repo])
 
   const deleteExpense = useCallback(async (id: string) => {
     if (!repo || !houseId) return
-    const expense = expenses.find((e) => e.id === id)
-    if (expense?.attachments?.length) {
-      await deleteAttachments(houseId, expense.attachments)
+    const expense = expensesRef.current.find((e) => e.id === id)
+    if (!expense) return
+
+    // Optimistic: remove from list immediately
+    setExpenses((prev) => prev.filter((e) => e.id !== id))
+
+    try {
+      if (expense.attachments?.length) {
+        await deleteAttachments(houseId, expense.attachments)
+      }
+      await repo.deleteExpense(id)
+    } catch (err) {
+      setExpenses((prev) => [...prev, expense])
+      throw err
     }
-    await repo.deleteExpense(id)
-    await refresh()
-  }, [repo, houseId, expenses, refresh])
+  }, [repo, houseId])
 
   const addAttachmentsToExpense = useCallback(async (expenseId: string, files: File[]) => {
     if (!repo || !houseId) return
@@ -209,6 +290,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         expenses,
         loading,
         storageUsed,
+        pendingExpenseIds,
         pendingAttachmentIds,
         addExpense,
         addExpenseWithFiles,

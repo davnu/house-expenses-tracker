@@ -5,7 +5,7 @@ import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
 import { MortgageProvider } from '@/context/MortgageContext'
 import { AppShell } from '@/components/layout/AppShell'
-import { LoadingScreen } from '@/components/ui/loading'
+import { LoadingScreen, LoadingInline } from '@/components/ui/loading'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -22,16 +22,24 @@ function AppRoutes() {
 
   if (loading) return <LoadingScreen />
 
-  // houseId is set but house doc hasn't loaded yet — wait for snapshot
-  if (!house && userProfile?.houseId) return <LoadingScreen />
-
   // User has no house — show onboarding (unless on invite or privacy route)
-  if (!house) {
+  if (!house && !userProfile?.houseId) {
     return (
       <Routes>
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/invite/:inviteId" element={<InvitePage />} />
         <Route path="*" element={<OnboardingPage />} />
+      </Routes>
+    )
+  }
+
+  // houseId is set but house doc hasn't loaded yet — show nav shell with loading content
+  if (!house) {
+    return (
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="*" element={<LoadingInline />} />
+        </Route>
       </Routes>
     )
   }

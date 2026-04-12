@@ -19,7 +19,7 @@ const categoryLabel = (val: string) =>
   EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
 
 export function ExpenseList() {
-  const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingAttachmentIds } = useExpenses()
+  const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
   const { members, getMemberName } = useHousehold()
   const [filterCategory, setFilterCategory] = useState('')
   const [filterPayer, setFilterPayer] = useState('')
@@ -248,10 +248,12 @@ export function ExpenseList() {
         </div>
       ) : (
         <div className="space-y-1.5">
-          {filtered.map((expense) => (
+          {filtered.map((expense) => {
+            const isPendingExpense = pendingExpenseIds.has(expense.id)
+            return (
             <div
               key={expense.id}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors group/row"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card transition-colors group/row ${isPendingExpense ? 'opacity-60' : 'hover:bg-accent/50'}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -274,23 +276,23 @@ export function ExpenseList() {
                 {(expense.attachments?.length ?? 0) > 0 && (
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                     {expense.attachments!.map((att, i) => {
-                      const isPending = pendingAttachmentIds.has(att.id)
+                      const isPendingAtt = pendingAttachmentIds.has(att.id)
                       return (
                         <div
                           key={att.id}
                           role="button"
-                          tabIndex={isPending ? undefined : 0}
-                          onClick={isPending ? undefined : () => handleAttachmentClick(expense, i)}
-                          onKeyDown={isPending ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAttachmentClick(expense, i); } }}
-                          className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-muted transition-colors group ${isPending ? 'opacity-60' : 'hover:bg-muted-foreground/10 cursor-pointer'}`}
+                          tabIndex={isPendingAtt ? undefined : 0}
+                          onClick={isPendingAtt ? undefined : () => handleAttachmentClick(expense, i)}
+                          onKeyDown={isPendingAtt ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAttachmentClick(expense, i); } }}
+                          className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-muted transition-colors group ${isPendingAtt ? 'opacity-60' : 'hover:bg-muted-foreground/10 cursor-pointer'}`}
                           title={att.name}
                         >
-                          {isPending
+                          {isPendingAtt
                             ? <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
                             : <Paperclip className="h-3 w-3 text-muted-foreground" />
                           }
                           <span className="truncate max-w-[100px]">{att.name}</span>
-                          {!isPending && (
+                          {!isPendingAtt && (
                             <button
                               onClick={(e) => { e.stopPropagation(); withErrorHandling(async () => removeAttachment(expense.id, att.id)) }}
                               className="ml-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -302,17 +304,19 @@ export function ExpenseList() {
                         </div>
                       )
                     })}
-                    <button
-                      onClick={() => handleAddAttachment(expense.id)}
-                      className="inline-flex items-center text-xs px-1.5 py-0.5 rounded border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"
-                      title="Add attachment"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
+                    {!isPendingExpense && (
+                      <button
+                        onClick={() => handleAddAttachment(expense.id)}
+                        className="inline-flex items-center text-xs px-1.5 py-0.5 rounded border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"
+                        title="Add attachment"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                 )}
 
-                {(!expense.attachments || expense.attachments.length === 0) && (
+                {!isPendingExpense && (!expense.attachments || expense.attachments.length === 0) && (
                   <button
                     onClick={() => handleAddAttachment(expense.id)}
                     className="inline-flex items-center gap-1 text-xs mt-1.5 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer sm:opacity-0 sm:group-hover/row:opacity-100"
@@ -324,6 +328,11 @@ export function ExpenseList() {
               </div>
 
               {/* Actions — visible on hover on desktop, always on mobile */}
+              {isPendingExpense ? (
+                <div className="flex items-center shrink-0 px-1">
+                  <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                </div>
+              ) : (
               <div className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover/row:opacity-100 transition-opacity">
                 {deletingId === expense.id ? (
                   <>
@@ -345,8 +354,10 @@ export function ExpenseList() {
                   </>
                 )}
               </div>
+              )}
             </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
