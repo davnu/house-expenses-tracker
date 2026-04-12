@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Link, Outlet, useNavigate } from 'react-router'
-import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FileText, Shield, ChevronDown, Plus, Check } from 'lucide-react'
+import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FolderOpen, Shield, ChevronDown, Plus, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -12,7 +12,7 @@ const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/mortgage', icon: Landmark, label: 'Mortgage' },
   { to: '/expenses', icon: Receipt, label: 'Expenses' },
-  { to: '/summary', icon: FileText, label: 'Summary' },
+  { to: '/documents', icon: FolderOpen, label: 'Documents' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
@@ -45,7 +45,7 @@ function MobileHouseBar() {
   if (houses.length <= 1) return null
 
   return (
-    <div className="lg:hidden relative">
+    <div className="lg:hidden print:!hidden relative">
       <button
         type="button"
         aria-expanded={open}
@@ -123,7 +123,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-56 border-r bg-card p-4 gap-1">
+      <aside className="hidden lg:flex print:!hidden flex-col w-56 border-r bg-card p-4 gap-1">
         <HouseSwitcher />
         {navItems.map((item) => (
           <NavLink
@@ -179,7 +179,7 @@ export function AppShell() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-card border-t flex justify-around py-2 z-40" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <nav className="lg:hidden print:!hidden fixed bottom-0 inset-x-0 bg-card border-t flex justify-around py-2 z-40" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {navItems.map((item) => (
           <NavLink
             key={item.to}

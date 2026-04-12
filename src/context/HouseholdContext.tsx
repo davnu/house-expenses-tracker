@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/data/firebase'
 import { deleteAttachments } from '@/data/firebase-attachment-store'
+import { deleteDocumentFiles } from '@/data/firebase-document-store'
 import { useAuth } from './AuthContext'
 import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
 import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
@@ -318,7 +319,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     // Soft-delete: mark house as deleted immediately (hides from all members' UI)
     await updateDoc(doc(db, 'houses', houseId), { deletedAt: new Date().toISOString() })
 
-    // 1. Delete attachments from Storage (best-effort)
+    // 1. Delete attachments + document files from Storage (best-effort)
     onProgress?.('attachments', 'active')
     try {
       const expensesSnap = await getDocs(collection(db, 'houses', houseId, 'expenses'))
@@ -328,6 +329,15 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
           await deleteAttachments(houseId, attachments)
         }
       }
+      // Delete document files from Storage
+      const documentsSnap = await getDocs(collection(db, 'houses', houseId, 'documents'))
+      const docFiles = documentsSnap.docs.map((d) => ({
+        id: d.id,
+        name: d.data().name as string,
+      }))
+      if (docFiles.length > 0) {
+        await deleteDocumentFiles(houseId, docFiles)
+      }
     } catch {
       // Best-effort
     }
@@ -335,7 +345,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
     // 2. Delete all subcollection docs in batches
     onProgress?.('data', 'active')
-    const subcollections = ['expenses', 'recurring', 'meta']
+    const subcollections = ['expenses', 'recurring', 'meta', 'folders', 'documents']
     for (const sub of subcollections) {
       try {
         const snap = await getDocs(collection(db, 'houses', houseId, sub))

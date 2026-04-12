@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore'
 import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
+import type { DocFolder, HouseDocument } from '@/types/document'
 import type { ExpenseRepository } from './repository'
 import { stripInvalid } from '@/lib/utils'
 
@@ -91,5 +92,58 @@ export class FirestoreRepository implements ExpenseRepository {
 
   async deleteMortgage(): Promise<void> {
     await deleteDoc(this.docRef('meta', 'mortgage'))
+  }
+
+  // ── Folders ────────────────────────────────────────────────────────
+
+  async getFolders(): Promise<DocFolder[]> {
+    const snap = await getDocs(query(this.col('folders')))
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as DocFolder)
+  }
+
+  async addFolder(input: Omit<DocFolder, 'id' | 'createdAt'>): Promise<DocFolder> {
+    const now = new Date().toISOString()
+    const data = stripInvalid({ ...input, createdAt: now })
+    const ref = await addDoc(this.col('folders'), data)
+    return { id: ref.id, ...data } as DocFolder
+  }
+
+  async updateFolder(id: string, updates: Partial<DocFolder>): Promise<DocFolder> {
+    const ref = this.docRef('folders', id)
+    const toUpdate = stripInvalid(updates)
+    await updateDoc(ref, toUpdate)
+    const snap = await getDoc(ref)
+    return { id: snap.id, ...snap.data() } as DocFolder
+  }
+
+  async deleteFolder(id: string): Promise<void> {
+    await deleteDoc(this.docRef('folders', id))
+  }
+
+  // ── Documents ──────────────────────────────────────────────────────
+
+  async getDocuments(): Promise<HouseDocument[]> {
+    const snap = await getDocs(query(this.col('documents')))
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as HouseDocument)
+  }
+
+  async addDocument(id: string, input: Omit<HouseDocument, 'id' | 'uploadedAt' | 'updatedAt'>): Promise<HouseDocument> {
+    const now = new Date().toISOString()
+    const data = stripInvalid({ ...input, uploadedAt: now, updatedAt: now })
+    const ref = this.docRef('documents', id)
+    await setDoc(ref, data)
+    return { id, ...data } as HouseDocument
+  }
+
+  async updateDocument(id: string, updates: Partial<HouseDocument>): Promise<HouseDocument> {
+    const ref = this.docRef('documents', id)
+    const toUpdate = stripInvalid({ ...updates, updatedAt: new Date().toISOString() })
+    await updateDoc(ref, toUpdate)
+    const snap = await getDoc(ref)
+    return { id: snap.id, ...snap.data() } as HouseDocument
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await deleteDoc(this.docRef('documents', id))
   }
 }

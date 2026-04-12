@@ -1,5 +1,6 @@
 import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
+import type { DocFolder, HouseDocument } from '@/types/document'
 import type { ExpenseRepository } from './repository'
 import { deleteAttachmentBlobs } from './attachment-store'
 
@@ -82,4 +83,23 @@ export class LocalStorageRepository implements ExpenseRepository {
   async deleteMortgage(): Promise<void> {
     localStorage.removeItem('house-expenses:mortgage')
   }
+
+  // Document stubs — LocalStorage is not used in production (Firestore only)
+  async getFolders(): Promise<DocFolder[]> { return [] }
+  async addFolder(input: Omit<DocFolder, 'id' | 'createdAt'>): Promise<DocFolder> {
+    return { id: crypto.randomUUID(), ...input, createdAt: new Date().toISOString() } as DocFolder
+  }
+  async updateFolder(id: string, updates: Partial<DocFolder>): Promise<DocFolder> {
+    return { id, ...updates } as DocFolder
+  }
+  async deleteFolder(): Promise<void> {}
+  async getDocuments(): Promise<HouseDocument[]> { return [] }
+  async addDocument(id: string, input: Omit<HouseDocument, 'id' | 'uploadedAt' | 'updatedAt'>): Promise<HouseDocument> {
+    const now = new Date().toISOString()
+    return { id, ...input, uploadedAt: now, updatedAt: now } as HouseDocument
+  }
+  async updateDocument(id: string, updates: Partial<HouseDocument>): Promise<HouseDocument> {
+    return { id, ...updates } as HouseDocument
+  }
+  async deleteDocument(): Promise<void> {}
 }

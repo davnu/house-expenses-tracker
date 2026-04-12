@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
 import { MortgageProvider } from '@/context/MortgageContext'
+import { DocumentProvider } from '@/context/DocumentContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoadingScreen, LoadingInline } from '@/components/ui/loading'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -13,7 +14,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
 import { InvitePage } from '@/pages/InvitePage'
 import { InviteLandingPage } from '@/pages/InviteLandingPage'
-import { SummaryPage } from '@/pages/SummaryPage'
+import { DocumentsPage } from '@/pages/DocumentsPage'
 import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 
@@ -48,17 +49,19 @@ function AppRoutes() {
   return (
     <ExpenseProvider>
       <MortgageProvider>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="mortgage" element={<MortgagePage />} />
-            <Route path="expenses" element={<ExpensesPage />} />
-            <Route path="summary" element={<SummaryPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="/invite/:inviteId" element={<InvitePage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-        </Routes>
+        <DocumentProvider>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="mortgage" element={<MortgagePage />} />
+              <Route path="expenses" element={<ExpensesPage />} />
+              <Route path="documents" element={<DocumentsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
+            <Route path="/invite/:inviteId" element={<InvitePage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+          </Routes>
+        </DocumentProvider>
       </MortgageProvider>
     </ExpenseProvider>
   )

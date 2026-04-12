@@ -622,3 +622,202 @@ describe('Reference rates (/reference_rates/{rateId})', () => {
     )
   })
 })
+
+// ── Document Folders ────────────────────────────────────────────────
+
+describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
+  it('member can create a folder', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/folders/folder1').set({
+        name: 'Purchase & Legal',
+        icon: '📋',
+        order: 0,
+        createdAt: new Date().toISOString(),
+        createdBy: 'alice',
+      })
+    )
+  })
+
+  it('member can read folders', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/folders/folder1').set({
+        name: 'Insurance', icon: '🛡️', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().collection('houses/house1/folders').get())
+  })
+
+  it('member can update a folder', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/folders/folder1').set({
+        name: 'Old Name', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/folders/folder1').update({ name: 'New Name', icon: '📋' })
+    )
+  })
+
+  it('member can delete a folder', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/folders/folder1').set({
+        name: 'To Delete', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('houses/house1/folders/folder1').delete())
+  })
+
+  it('non-member cannot read folders', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/folders/folder1').set({
+        name: 'Secret', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+      })
+    })
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().collection('houses/house1/folders').get())
+  })
+
+  it('non-member cannot create a folder', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(
+      outsider.firestore().doc('houses/house1/folders/folder2').set({
+        name: 'Sneaky', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'outsider',
+      })
+    )
+  })
+
+  it('unauthenticated user cannot access folders', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertFails(unauthed.firestore().collection('houses/house1/folders').get())
+  })
+})
+
+// ── Documents ───────────────────────────────────────────────────────
+
+describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
+  it('member can create a document', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/documents/doc1').set({
+        folderId: 'folder1',
+        name: 'contract.pdf',
+        type: 'application/pdf',
+        size: 1024000,
+        url: 'https://storage.example.com/doc1',
+        uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('member can read documents', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc1').set({
+        folderId: 'folder1', name: 'test.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().collection('houses/house1/documents').get())
+  })
+
+  it('member can update a document (rename, move, add notes)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc1').set({
+        folderId: 'folder1', name: 'old-name.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/documents/doc1').update({
+        name: 'new-name.pdf',
+        folderId: 'folder2',
+        notes: 'Important document',
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('member can delete a document', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc1').set({
+        folderId: 'folder1', name: 'to-delete.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(alice.firestore().doc('houses/house1/documents/doc1').delete())
+  })
+
+  it('non-member cannot read documents', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc1').set({
+        folderId: 'folder1', name: 'secret.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().collection('houses/house1/documents').get())
+  })
+
+  it('non-member cannot create a document', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(
+      outsider.firestore().doc('houses/house1/documents/doc2').set({
+        folderId: 'folder1', name: 'hack.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'outsider',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('non-member cannot delete a document', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc1').set({
+        folderId: 'folder1', name: 'protected.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const outsider = testEnv.authenticatedContext('outsider')
+    await assertFails(outsider.firestore().doc('houses/house1/documents/doc1').delete())
+  })
+
+  it('cross-house isolation: member of house1 cannot access house2 documents', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await seedHouseWithMember('house2', 'bob')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house2/documents/doc1').set({
+        folderId: 'folder1', name: 'private.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'bob',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertFails(alice.firestore().doc('houses/house2/documents/doc1').get())
+  })
+})

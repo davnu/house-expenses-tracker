@@ -12,7 +12,7 @@ const members: HouseMember[] = [
   { uid: 'bob', displayName: 'Bob', email: 'b@b.com', color: '#e76e50', role: 'member', joinedAt: '' },
 ]
 
-function renderSelect(value = SHARED_PAYER, onChange = vi.fn()) {
+function renderSelect(value: string = SHARED_PAYER, onChange = vi.fn()) {
   return { onChange, ...render(
     <PayerSelect value={value} onChange={onChange} members={members} id="payer" />
   ) }
@@ -231,8 +231,7 @@ describe('PayerSelect', () => {
 
       const options = screen.getAllByRole('option')
       // Shared (not selected) — no check
-      const sharedSvgs = options[0].querySelectorAll('svg')
-      // Has Home icon but not Check (or 1 svg = Home only)
+      // Shared (not selected) — has Home icon but not Check
       // Bob (selected) — has Check icon
       const bobSvgs = options[2].querySelectorAll('svg')
       // Bob should have more svgs (color dot is a span, but Check is an svg)

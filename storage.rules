@@ -2,22 +2,33 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /houses/{houseId}/attachments/{allPaths=**} {
-      // Only household members can read attachments
-      allow read: if request.auth != null
+    // Shared helper: check household membership
+    function isHouseMember(houseId) {
+      return request.auth != null
         && firestore.exists(/databases/(default)/documents/houses/$(houseId)/members/$(request.auth.uid));
+    }
 
-      // Only household members can upload, with size and content type restrictions
-      allow create, update: if request.auth != null
-        && firestore.exists(/databases/(default)/documents/houses/$(houseId)/members/$(request.auth.uid))
+    // Shared helper: validate file upload constraints
+    function isValidUpload(houseId) {
+      return isHouseMember(houseId)
         && request.resource.size < 10 * 1024 * 1024
         && request.resource.contentType.matches(
           'image/(png|jpeg|webp|gif|heic|heif)|application/pdf|application/msword|application/vnd\\.openxmlformats-officedocument\\.(wordprocessingml\\.document|spreadsheetml\\.sheet)|application/vnd\\.ms-excel'
         );
+    }
 
-      // Only household members can delete (no request.resource on delete)
-      allow delete: if request.auth != null
-        && firestore.exists(/databases/(default)/documents/houses/$(houseId)/members/$(request.auth.uid));
+    // Expense attachments
+    match /houses/{houseId}/attachments/{allPaths=**} {
+      allow read: if isHouseMember(houseId);
+      allow create, update: if isValidUpload(houseId);
+      allow delete: if isHouseMember(houseId);
+    }
+
+    // Standalone documents (documents feature)
+    match /houses/{houseId}/documents/{allPaths=**} {
+      allow read: if isHouseMember(houseId);
+      allow create, update: if isValidUpload(houseId);
+      allow delete: if isHouseMember(houseId);
     }
   }
 }
