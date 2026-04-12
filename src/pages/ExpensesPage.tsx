@@ -23,7 +23,8 @@ export function ExpensesPage() {
 
       {/* Mobile FAB */}
       <Button
-        className="sm:hidden fixed bottom-20 right-4 h-12 rounded-full shadow-lg z-30 px-5"
+        className="sm:hidden fixed right-4 h-12 rounded-full shadow-lg z-30 px-5"
+        style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
         onClick={() => setDialogOpen(true)}
       >
         <Plus className="h-5 w-5 mr-1.5" />

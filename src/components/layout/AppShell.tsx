@@ -75,7 +75,7 @@ export function AppShell() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-card border-t flex justify-around py-2 z-40">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-card border-t flex justify-around py-2 z-40" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {navItems.map((item) => (
           <NavLink
             key={item.to}

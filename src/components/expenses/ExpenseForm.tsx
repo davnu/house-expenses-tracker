@@ -27,10 +27,11 @@ type ExpenseFormData = z.infer<typeof expenseSchema>
 interface ExpenseFormProps {
   onSubmit: (data: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
   defaultValues?: Partial<ExpenseFormData>
+  hideAttachments?: boolean
   submitLabel?: string
 }
 
-export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expense' }: ExpenseFormProps) {
+export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLabel = 'Add Expense' }: ExpenseFormProps) {
   const [files, setFiles] = useState<File[]>([])
   const { members } = useHousehold()
   const { storageUsed } = useExpenses()
@@ -73,7 +74,6 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
             type="number"
             step="0.01"
             placeholder="0.00"
-            autoFocus
             {...register('amount')}
           />
           {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
@@ -114,11 +114,13 @@ export function ExpenseForm({ onSubmit, defaultValues, submitLabel = 'Add Expens
         <Input id="description" placeholder="What was this for?" {...register('description')} />
       </div>
 
-      <div className="space-y-2">
-        <Label>Attachments <span className="text-muted-foreground font-normal">(optional)</span></Label>
-        <p className="text-xs text-muted-foreground -mt-1">Receipts, contracts, invoices, photos — keep everything in one place</p>
-        <FileDropZone files={files} onChange={setFiles} householdStorageUsed={storageUsed} />
-      </div>
+      {!hideAttachments && (
+        <div className="space-y-2">
+          <Label>Attachments <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <p className="text-xs text-muted-foreground -mt-1">Receipts, contracts, invoices, photos — keep everything in one place</p>
+          <FileDropZone files={files} onChange={setFiles} householdStorageUsed={storageUsed} />
+        </div>
+      )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? 'Saving...' : submitLabel}

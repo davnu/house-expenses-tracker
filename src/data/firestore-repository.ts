@@ -13,21 +13,7 @@ import {
 import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
 import type { ExpenseRepository } from './repository'
-
-// Firestore rejects undefined values and NaN corrupts data — deep strip both before writing
-function stripInvalid<T>(obj: T): T {
-  if (Array.isArray(obj)) {
-    return obj.map((item) => stripInvalid(item)) as T
-  }
-  if (obj !== null && typeof obj === 'object') {
-    return Object.fromEntries(
-      Object.entries(obj)
-        .filter(([, v]) => v !== undefined && !(typeof v === 'number' && isNaN(v)))
-        .map(([k, v]) => [k, stripInvalid(v)])
-    ) as T
-  }
-  return obj
-}
+import { stripInvalid } from '@/lib/utils'
 
 const DEFAULT_SETTINGS: AppSettings = {
   currency: 'EUR',

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, parseCurrencyInput, friendlyError } from './utils'
+import { formatCurrency, parseCurrencyInput, friendlyError, stripInvalid } from './utils'
 
 describe('formatCurrency', () => {
   it('formats cents to currency string', () => {
@@ -126,5 +126,76 @@ describe('friendlyError', () => {
   it('handles null/undefined', () => {
     expect(friendlyError(null)).toBe('Something went wrong. Please try again.')
     expect(friendlyError(undefined)).toBe('Something went wrong. Please try again.')
+  })
+})
+
+describe('stripInvalid', () => {
+  it('removes undefined values from flat object', () => {
+    expect(stripInvalid({ a: 1, b: undefined, c: 'hello' })).toEqual({ a: 1, c: 'hello' })
+  })
+
+  it('removes NaN values from flat object', () => {
+    expect(stripInvalid({ a: 1, b: NaN, c: 3 })).toEqual({ a: 1, c: 3 })
+  })
+
+  it('removes both undefined and NaN', () => {
+    expect(stripInvalid({ a: undefined, b: NaN, c: 'ok' })).toEqual({ c: 'ok' })
+  })
+
+  it('keeps null values (Firestore accepts null)', () => {
+    expect(stripInvalid({ a: null, b: 1 })).toEqual({ a: null, b: 1 })
+  })
+
+  it('keeps zero, empty string, and false', () => {
+    expect(stripInvalid({ a: 0, b: '', c: false })).toEqual({ a: 0, b: '', c: false })
+  })
+
+  it('strips nested objects recursively', () => {
+    const input = { a: 1, nested: { b: undefined, c: 2, deep: { d: NaN, e: 'ok' } } }
+    expect(stripInvalid(input)).toEqual({ a: 1, nested: { c: 2, deep: { e: 'ok' } } })
+  })
+
+  it('strips inside arrays', () => {
+    const input = { items: [{ a: 1, b: undefined }, { c: NaN, d: 'ok' }] }
+    expect(stripInvalid(input)).toEqual({ items: [{ a: 1 }, { d: 'ok' }] })
+  })
+
+  it('handles empty object', () => {
+    expect(stripInvalid({})).toEqual({})
+  })
+
+  it('handles empty array', () => {
+    expect(stripInvalid([])).toEqual([])
+  })
+
+  it('passes through primitives unchanged', () => {
+    expect(stripInvalid(42)).toBe(42)
+    expect(stripInvalid('hello')).toBe('hello')
+    expect(stripInvalid(true)).toBe(true)
+    expect(stripInvalid(null)).toBe(null)
+  })
+
+  it('handles real-world expense data', () => {
+    const expense = {
+      amount: 15000,
+      category: 'notary',
+      payer: 'uid123',
+      description: undefined,
+      date: '2025-06-01',
+      attachments: [{ id: 'a1', name: 'receipt.pdf', size: NaN, url: 'https://...' }],
+    }
+    const result = stripInvalid(expense)
+    expect(result).toEqual({
+      amount: 15000,
+      category: 'notary',
+      payer: 'uid123',
+      date: '2025-06-01',
+      attachments: [{ id: 'a1', name: 'receipt.pdf', url: 'https://...' }],
+    })
+    expect('description' in result).toBe(false)
+  })
+
+  it('handles object with all invalid values', () => {
+    expect(stripInvalid({ a: undefined, b: NaN })).toEqual({})
   })
 })

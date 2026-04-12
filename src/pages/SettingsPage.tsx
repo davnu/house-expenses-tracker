@@ -130,15 +130,18 @@ export function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {editingName ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Your name"
                 autoFocus
+                className="flex-1"
               />
-              <Button size="sm" onClick={handleSaveName}>Save</Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>Cancel</Button>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleSaveName}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>Cancel</Button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -170,15 +173,18 @@ export function SettingsPage() {
         <CardContent className="space-y-4">
           {/* House name */}
           {editingHouse ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newHouseName}
                 onChange={(e) => setNewHouseName(e.target.value)}
                 placeholder="House name"
                 autoFocus
+                className="flex-1"
               />
-              <Button size="sm" onClick={handleSaveHouseName}>Save</Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditingHouse(false)}>Cancel</Button>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleSaveHouseName}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingHouse(false)}>Cancel</Button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -203,11 +209,13 @@ export function SettingsPage() {
                 const canRemove = isOwner && !isSelf
 
                 return (
-                  <div key={m.uid} className="flex items-center gap-2 group">
-                    <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
-                    <span className="text-sm font-medium">{m.displayName}</span>
-                    <span className="text-xs text-muted-foreground">{m.email}</span>
-                    {m.role === 'owner' && <Badge variant="secondary" className="text-xs">Owner</Badge>}
+                  <div key={m.uid} className="flex items-start sm:items-center gap-2 group flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
+                      <span className="text-sm font-medium truncate">{m.displayName}</span>
+                      {m.role === 'owner' && <Badge variant="secondary" className="text-xs">Owner</Badge>}
+                    </div>
+                    <span className="text-xs text-muted-foreground truncate">{m.email}</span>
                     {canRemove && (
                       removingMemberId === m.uid ? (
                         <div className="flex items-center gap-1">
@@ -250,10 +258,10 @@ export function SettingsPage() {
           <div className="pt-2 border-t">
             <Label className="text-muted-foreground mb-2 block">Invite someone</Label>
             {inviteLink ? (
-              <div className="flex gap-2">
-                <Input value={inviteLink} readOnly className="text-xs" />
-                <Button size="sm" variant="outline" onClick={handleCopy}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input value={inviteLink} readOnly className="text-xs flex-1" />
+                <Button size="sm" variant="outline" className="shrink-0" onClick={handleCopy}>
+                  {copied ? <><Check className="h-4 w-4 mr-1.5" /> Copied</> : <><Copy className="h-4 w-4 mr-1.5" /> Copy link</>}
                 </Button>
               </div>
             ) : (

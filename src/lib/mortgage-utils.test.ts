@@ -421,6 +421,31 @@ describe('getMortgageStats', () => {
     const totalPrincipal = s.reduce((sum, r) => sum + r.principalPortion, 0)
     expect(Math.abs(totalPrincipal - 15000000)).toBeLessThan(100)
   })
+
+  it('fully paid off: 100% progress, zero balance', () => {
+    const stats = getMortgageStats(baseMortgage(), new Date('2060-01-01'))
+    expect(stats.monthsElapsed).toBe(360)
+    expect(stats.monthsRemaining).toBe(0)
+    expect(stats.remainingBalance).toBe(0)
+    expect(stats.progressPercent).toBeCloseTo(100, 0)
+  })
+
+  it('before start date: 0 elapsed, full balance', () => {
+    const stats = getMortgageStats(baseMortgage(), new Date('2024-06-01'))
+    expect(stats.monthsElapsed).toBe(0)
+    expect(stats.remainingBalance).toBe(15000000)
+    expect(stats.progressPercent).toBe(0)
+  })
+
+  it('with extra repayments that pay off early', () => {
+    const config = baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2025-06-01', amount: 10000000, recurring: false, mode: 'reduce_term' as const },
+      ],
+    })
+    const stats = getMortgageStats(config, new Date('2025-01-15'))
+    expect(stats.totalMonths).toBeLessThan(360) // shortened by extra payment
+  })
 })
 
 // ─────────────────────────────────────────────

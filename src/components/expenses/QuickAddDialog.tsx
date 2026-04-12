@@ -26,7 +26,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setError(''); onOpenChange(v) }}>
-      <DialogContent onClose={() => onOpenChange(false)}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Expense</DialogTitle>
         </DialogHeader>

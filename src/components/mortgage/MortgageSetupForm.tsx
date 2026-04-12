@@ -286,10 +286,10 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Loan Details</p>
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="principal" className="text-xs">Loan amount</Label>
-                <Input id="principal" type="number" step="0.01" placeholder="250000" autoFocus {...register('principal')} />
+                <Input id="principal" type="number" step="0.01" placeholder="250000" {...register('principal')} />
                 {errors.principal && <p className="text-xs text-destructive">{errors.principal.message}</p>}
               </div>
               <div className="space-y-1">
@@ -297,7 +297,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
                 <Input id="propertyValue" type="number" step="0.01" placeholder="300000" {...register('propertyValue')} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="termYears" className="text-xs">Term (years)</Label>
                 <Input id="termYears" type="number" placeholder="30" {...register('termYears')} />
@@ -332,7 +332,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
 
           {/* Fixed rate */}
           {(rateType === 'fixed' || isMixed) && (
-            <div className={cn('grid gap-3', isMixed ? 'grid-cols-2' : 'grid-cols-1')}>
+            <div className={cn('grid gap-3', isMixed ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1')}>
               <div className="space-y-1">
                 <Label className="text-xs">{isMixed ? 'Fixed rate (%)' : 'Annual interest rate (%)'}</Label>
                 <Input type="number" step="0.01" placeholder="2.5" {...register('annualRate')} />
@@ -367,7 +367,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
               <p className="text-xs font-medium text-muted-foreground">
                 {isMixed ? 'After the fixed period' : 'Variable rate breakdown'}
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Reference rate<InfoTooltip text="The base rate your bank uses (e.g., Euribor). Your bank adds a spread on top of this." /></Label>
                   <Select {...register('referenceRateId')} className="h-9 text-sm">
@@ -382,7 +382,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
                   {errors.currentReferenceRate && <p className="text-xs text-destructive">{errors.currentReferenceRate.message}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Spread / Margin (%)<InfoTooltip text="Your bank's fixed markup above the reference rate. Set in your contract and doesn't change." /></Label>
                   <Input type="number" step="0.01" placeholder="0.9" {...register('spread')} />
@@ -405,7 +405,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
               )}
               {region === 'usa' && (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Fixed intro period<InfoTooltip text="Years at the initial fixed rate before adjustments begin (e.g., 5 in a 5/1 ARM)." /></Label>
                       <Input type="number" placeholder="5" {...register('fixedIntroPeriodYears')} />
@@ -415,7 +415,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
                       <Input type="number" step="0.01" placeholder="Optional" {...register('rateFloor')} />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Initial cap (%)<InfoTooltip text="Max rate change at the first adjustment after the fixed period." /></Label>
                       <Input type="number" step="0.1" {...register('initialAdjustmentCap')} />
@@ -448,7 +448,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
       <div>
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Payment</p>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Installment type<InfoTooltip text="Fixed: same payment every month (most common). Decreasing: higher first payments that go down over time." /></Label>
               <Select {...register('amortizationType')} className="h-9">

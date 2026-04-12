@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { formatCurrency } from '@/lib/utils'
 import type { Expense } from '@/types/expense'
 
@@ -12,6 +13,7 @@ interface MonthlyTrendProps {
 
 export function MonthlyTrend({ expenses, title = 'Spending by Month' }: MonthlyTrendProps) {
   const { members, getMemberColor } = useHousehold()
+  const isMobile = useIsMobile()
 
   const data = useMemo(() => {
     const byMonth: Record<string, Record<string, number>> = {}
@@ -41,7 +43,7 @@ export function MonthlyTrend({ expenses, title = 'Spending by Month' }: MonthlyT
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 12 }} />

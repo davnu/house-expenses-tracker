@@ -26,7 +26,7 @@ export function MortgageSetupDialog({ open, onOpenChange }: MortgageSetupDialogP
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setError(''); onOpenChange(v) }}>
-      <DialogContent onClose={() => onOpenChange(false)} className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mortgage ? 'Edit Mortgage' : 'Set Up Your Mortgage'}</DialogTitle>
         </DialogHeader>

@@ -116,21 +116,23 @@ export function ExpenseList() {
     <div className="space-y-3">
       <input ref={fileInputRef} type="file" multiple accept={ACCEPTED_TYPES} className="hidden" onChange={handleFileSelected} />
 
-      {/* Search + filter toggle + sort */}
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search expenses..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Filter toggle + sort */}
       <div className="flex gap-2 items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search expenses..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
         <Button
           variant={hasFilters ? 'default' : 'outline'}
           size="sm"
-          className="shrink-0 h-9"
+          className="h-9"
           onClick={() => setShowFilters(!showFilters)}
         >
           <SlidersHorizontal className="h-4 w-4 mr-1.5" />
@@ -141,25 +143,27 @@ export function ExpenseList() {
             </span>
           )}
         </Button>
-        <Select
-          className="w-28 shrink-0"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-        >
-          <option value="date">Date</option>
-          <option value="amount">Amount</option>
-          <option value="category">Category</option>
-          <option value="payer">Member</option>
-        </Select>
-        <Button
-          size="icon"
-          variant="outline"
-          className="h-9 w-9 shrink-0"
-          onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-          title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
-        >
-          <ArrowUpDown className="h-3.5 w-3.5" />
-        </Button>
+        <div className="ml-auto flex gap-1.5 items-center">
+          <Select
+            className="w-28"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          >
+            <option value="date">Date</option>
+            <option value="amount">Amount</option>
+            <option value="category">Category</option>
+            <option value="payer">Member</option>
+          </Select>
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-9 w-9 shrink-0"
+            onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+            title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
 
       {/* Collapsible filters */}
@@ -280,7 +284,7 @@ export function ExpenseList() {
                         <span className="truncate max-w-[100px]">{att.name}</span>
                         <button
                           onClick={(e) => { e.stopPropagation(); removeAttachment(expense.id, att.id) }}
-                          className="ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          className="ml-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
                           title="Remove"
                         >
                           <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
@@ -300,7 +304,7 @@ export function ExpenseList() {
                 {(!expense.attachments || expense.attachments.length === 0) && (
                   <button
                     onClick={() => handleAddAttachment(expense.id)}
-                    className="inline-flex items-center gap-1 text-xs mt-1.5 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer opacity-0 group-hover/row:opacity-100"
+                    className="inline-flex items-center gap-1 text-xs mt-1.5 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer sm:opacity-0 sm:group-hover/row:opacity-100"
                   >
                     <Paperclip className="h-3 w-3" />
                     <span>Attach</span>

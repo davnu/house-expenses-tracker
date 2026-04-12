@@ -47,7 +47,7 @@ export function AmortizationTable({ schedule, currentMonth, showRateColumn }: Am
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle>Amortization Schedule</CardTitle>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={exportCSV}>
@@ -63,8 +63,8 @@ export function AmortizationTable({ schedule, currentMonth, showRateColumn }: Am
         </div>
       </CardHeader>
       <CardContent>
-        <div className="max-h-96 overflow-y-auto rounded-md border">
-          <table className="w-full text-sm">
+        <div className="max-h-96 overflow-auto rounded-md border">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="sticky top-0 bg-card border-b">
               <tr className="text-muted-foreground">
                 <th className="text-left py-2 px-3 font-medium">#</th>

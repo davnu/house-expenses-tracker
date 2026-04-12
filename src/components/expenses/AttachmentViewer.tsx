@@ -75,7 +75,7 @@ export function AttachmentViewer({ attachments, initialIndex = 0, open, onOpenCh
       </div>
 
       {/* Image */}
-      <div className="flex-1 flex items-center justify-center relative min-h-0 px-14">
+      <div className="flex-1 flex items-center justify-center relative min-h-0 px-2 sm:px-14">
         {hasMultiple && (
           <button
             onClick={prev}

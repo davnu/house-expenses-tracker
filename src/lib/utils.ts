@@ -19,6 +19,21 @@ export function parseCurrencyInput(value: string): number {
   return Math.round(num * 100)
 }
 
+/** Deep-strip undefined values and NaN numbers before writing to Firestore */
+export function stripInvalid<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => stripInvalid(item)) as T
+  }
+  if (obj !== null && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([, v]) => v !== undefined && !(typeof v === 'number' && isNaN(v)))
+        .map(([k, v]) => [k, stripInvalid(v)])
+    ) as T
+  }
+  return obj
+}
+
 /** Map Firebase/Firestore error codes to user-friendly messages */
 export function friendlyError(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
   const message = err instanceof Error ? err.message : ''

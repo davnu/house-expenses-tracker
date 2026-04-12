@@ -35,7 +35,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
 
   return (
     <Dialog open={!!expense} onOpenChange={(v) => { setError(''); onOpenChange(v) }}>
-      <DialogContent onClose={() => onOpenChange(false)}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Expense</DialogTitle>
         </DialogHeader>
@@ -49,6 +49,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
             description: expense.description,
             date: expense.date,
           }}
+          hideAttachments
           submitLabel="Save Changes"
         />
       </DialogContent>

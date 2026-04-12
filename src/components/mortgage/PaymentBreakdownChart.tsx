@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { format } from 'date-fns'
 import type { AmortizationRow } from '@/types/mortgage'
 
@@ -10,6 +11,7 @@ interface PaymentBreakdownChartProps {
 }
 
 export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdownChartProps) {
+  const isMobile = useIsMobile()
   const data = useMemo(() => {
     // Sample every 3 months, but always include rate change months and extra payment months
     return schedule
@@ -33,7 +35,7 @@ export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdo
         <CardTitle>Payment Breakdown Over Time</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
           <AreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />

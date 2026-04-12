@@ -36,7 +36,7 @@ export function MortgageOverviewCard({ config }: MortgageOverviewCardProps) {
         <CardTitle className="text-sm text-muted-foreground font-medium">Mortgage Details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {details.map((d) => (
             <div key={d.label}>
               <p className="text-xs text-muted-foreground">{d.label}</p>
