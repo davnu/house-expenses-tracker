@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useDocuments } from '@/context/DocumentContext'
@@ -13,6 +14,7 @@ interface MoveDocumentDialogProps {
 }
 
 export function MoveDocumentDialog({ document, open, onOpenChange }: MoveDocumentDialogProps) {
+  const { t } = useTranslation()
   const { folders, moveDocument } = useDocuments()
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -43,11 +45,11 @@ export function MoveDocumentDialog({ document, open, onOpenChange }: MoveDocumen
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Move "{document?.name}"</DialogTitle>
+          <DialogTitle>{t('documents.moveDocument', { name: document?.name })}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">Select destination folder:</p>
+          <p className="text-sm text-muted-foreground">{t('documents.selectDestination')}</p>
 
           <div className="space-y-1">
             {otherFolders.map((folder) => (
@@ -69,17 +71,17 @@ export function MoveDocumentDialog({ document, open, onOpenChange }: MoveDocumen
           </div>
 
           {otherFolders.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No other folders available</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t('documents.noOtherFolders')}</p>
           )}
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleMove} disabled={!selectedFolderId || saving}>
-              {saving ? 'Moving...' : 'Move'}
+              {saving ? t('common.moving') : t('documents.move')}
             </Button>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
-import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield, Trash2, DoorOpen, Paperclip, Receipt, Home, Plus } from 'lucide-react'
-import { friendlyError } from '@/lib/utils'
+import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield, Trash2, DoorOpen, Paperclip, Receipt, Home, Plus, Globe } from 'lucide-react'
+import { friendlyError, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,26 +15,28 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { CreateHouseDialog } from '@/components/layout/CreateHouseDialog'
-
-const HOUSE_DELETE_STEPS: CascadeStep[] = [
-  { id: 'attachments', label: 'Removing files', icon: Paperclip },
-  { id: 'data', label: 'Clearing expenses & data', icon: Receipt },
-  { id: 'members', label: 'Updating members', icon: Users },
-  { id: 'finalize', label: 'Finalizing', icon: Home },
-]
-
-const ACCOUNT_DELETE_STEPS: CascadeStep[] = [
-  { id: 'auth', label: 'Removing authentication', icon: Shield },
-  { id: 'houses', label: 'Deleting owned houses', icon: Home },
-  { id: 'memberships', label: 'Cleaning up memberships', icon: Users },
-  { id: 'profile', label: 'Removing profile', icon: Trash2 },
-]
+import { SUPPORTED_LANGUAGES } from '@/i18n'
 
 export function SettingsPage() {
+  const { t, i18n } = useTranslation()
   const { expenses } = useExpenses()
   const { logout, deleteAccount } = useAuth()
   const { userProfile, house, houses, members, generateInvite, updateDisplayName, updateHouseName, removeMember, leaveHouse, deleteHouse } = useHousehold()
   const { mortgage } = useMortgage()
+
+  const HOUSE_DELETE_STEPS: CascadeStep[] = [
+    { id: 'attachments', label: t('settings.removingFiles'), icon: Paperclip },
+    { id: 'data', label: t('settings.clearingExpenses'), icon: Receipt },
+    { id: 'members', label: t('settings.updatingMembers'), icon: Users },
+    { id: 'finalize', label: t('settings.finalizing'), icon: Home },
+  ]
+
+  const ACCOUNT_DELETE_STEPS: CascadeStep[] = [
+    { id: 'auth', label: t('settings.removingAuth'), icon: Shield },
+    { id: 'houses', label: t('settings.deletingOwnedHouses'), icon: Home },
+    { id: 'memberships', label: t('settings.cleaningMemberships'), icon: Users },
+    { id: 'profile', label: t('settings.removingProfile'), icon: Trash2 },
+  ]
 
   const houseProgress = useCascadeProgress(HOUSE_DELETE_STEPS)
   const accountProgress = useCascadeProgress(ACCOUNT_DELETE_STEPS)
@@ -73,7 +76,7 @@ export function SettingsPage() {
       const link = await generateInvite()
       setInviteLink(link)
     } catch {
-      setInviteError('Failed to generate invite link. Please try again.')
+      setInviteError(t('settings.failedToGenerateInvite'))
     } finally {
       setInviteLoading(false)
     }
@@ -105,7 +108,7 @@ export function SettingsPage() {
     try {
       await leaveHouse()
     } catch (err) {
-      setLeaveError(friendlyError(err, 'Failed to leave household. Please try again.'))
+      setLeaveError(friendlyError(err))
       setLeaveStep('idle')
     }
   }
@@ -117,7 +120,7 @@ export function SettingsPage() {
     try {
       await deleteHouse(houseProgress.onProgress)
     } catch (err) {
-      setDeleteHouseError(friendlyError(err, 'Failed to delete household. Please try again.'))
+      setDeleteHouseError(friendlyError(err))
       setDeleteHouseStep('idle')
     }
   }
@@ -128,9 +131,8 @@ export function SettingsPage() {
     accountProgress.reset()
     try {
       await deleteAccount(accountProgress.onProgress)
-      // Auth state change will redirect to login
     } catch (err) {
-      setDeleteError(friendlyError(err, 'Failed to delete account. Please try again.'))
+      setDeleteError(friendlyError(err))
       setDeleteStep('idle')
     }
   }
@@ -175,12 +177,12 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t('nav.settings')}</h1>
 
       {/* Profile */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Profile</CardTitle>
+          <CardTitle>{t('settings.yourProfile')}</CardTitle>
           <CardDescription>{userProfile?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -189,18 +191,18 @@ export function SettingsPage() {
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Your name"
+                placeholder={t('settings.yourName')}
                 autoFocus
                 className="flex-1"
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveName}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleSaveName}>{t('common.save')}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingName(false)}>{t('common.cancel')}</Button>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground">Name:</Label>
+              <Label className="text-muted-foreground">{t('common.name')}:</Label>
               <span className="font-medium">{userProfile?.displayName}</span>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
                 setNewName(userProfile?.displayName ?? '')
@@ -212,15 +214,15 @@ export function SettingsPage() {
           )}
           {houses.length > 1 && (
             <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground">Houses:</Label>
+              <Label className="text-muted-foreground">{t('settings.housesLabel')}</Label>
               <span className="text-sm text-muted-foreground">
-                Member of {houses.length} households
+                {t('settings.memberOfHouseholds', { count: houses.length })}
               </span>
             </div>
           )}
           <Button variant="outline" onClick={logout}>
             <LogOut className="h-4 w-4 mr-2" />
-            Sign out
+            {t('common.signOut')}
           </Button>
         </CardContent>
       </Card>
@@ -230,10 +232,10 @@ export function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            <CardTitle>Household</CardTitle>
+            <CardTitle>{t('settings.household')}</CardTitle>
           </div>
           {houses.length > 1 && (
-            <CardDescription>Managing: {house?.name}</CardDescription>
+            <CardDescription>{t('settings.managing', { name: house?.name })}</CardDescription>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
@@ -243,18 +245,18 @@ export function SettingsPage() {
               <Input
                 value={newHouseName}
                 onChange={(e) => setNewHouseName(e.target.value)}
-                placeholder="House name"
+                placeholder={t('settings.houseName')}
                 autoFocus
                 className="flex-1"
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveHouseName}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditingHouse(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleSaveHouseName}>{t('common.save')}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingHouse(false)}>{t('common.cancel')}</Button>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground">House:</Label>
+              <Label className="text-muted-foreground">{t('settings.houseLabel')}</Label>
               <span className="font-medium">{house?.name}</span>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
                 setNewHouseName(house?.name ?? '')
@@ -267,7 +269,7 @@ export function SettingsPage() {
 
           {/* Members */}
           <div>
-            <Label className="text-muted-foreground mb-2 block">Members</Label>
+            <Label className="text-muted-foreground mb-2 block">{t('settings.members')}</Label>
             <div className="space-y-2">
               {members.map((m) => {
                 const isSelf = m.uid === userProfile?.uid
@@ -278,7 +280,7 @@ export function SettingsPage() {
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
                       <span className="text-sm font-medium truncate">{m.displayName}</span>
-                      {m.role === 'owner' && <Badge variant="secondary" className="text-xs">Owner</Badge>}
+                      {m.role === 'owner' && <Badge variant="secondary" className="text-xs">{t('settings.owner')}</Badge>}
                     </div>
                     <span className="text-xs text-muted-foreground truncate">{m.email}</span>
                     {canRemove && (
@@ -293,7 +295,7 @@ export function SettingsPage() {
                               setRemovingMemberId(null)
                             }}
                           >
-                            Confirm
+                            {t('common.confirm')}
                           </Button>
                           <Button
                             size="sm"
@@ -301,7 +303,7 @@ export function SettingsPage() {
                             className="h-6 text-xs px-2"
                             onClick={() => setRemovingMemberId(null)}
                           >
-                            Cancel
+                            {t('common.cancel')}
                           </Button>
                         </div>
                       ) : (
@@ -309,7 +311,7 @@ export function SettingsPage() {
                           className="text-xs text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                           onClick={() => setRemovingMemberId(m.uid)}
                         >
-                          Remove
+                          {t('common.remove')}
                         </button>
                       )
                     )}
@@ -325,27 +327,27 @@ export function SettingsPage() {
               {leaveStep === 'idle' && (
                 <Button variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setLeaveStep('confirm')}>
                   <DoorOpen className="h-4 w-4 mr-2" />
-                  Leave Household
+                  {t('settings.leaveHousehold')}
                 </Button>
               )}
               {leaveStep === 'confirm' && (
                 <div className="space-y-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
-                  <p className="text-sm font-medium">Leave "{house?.name}"?</p>
+                  <p className="text-sm font-medium">{t('settings.leaveConfirm', { name: house?.name })}</p>
                   <p className="text-sm text-muted-foreground">
-                    You will lose access to all expenses and data in this household. This cannot be undone.
+                    {t('settings.leaveWarning')}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button variant="destructive" onClick={handleLeaveHouse}>
-                      Leave Household
+                      {t('settings.leaveHousehold')}
                     </Button>
                     <Button variant="outline" onClick={() => setLeaveStep('idle')}>
-                      Cancel
+                      {t('common.cancel')}
                     </Button>
                   </div>
                 </div>
               )}
               {leaveStep === 'leaving' && (
-                <p className="text-sm text-muted-foreground">Leaving household...</p>
+                <p className="text-sm text-muted-foreground">{t('settings.leavingHousehold')}</p>
               )}
               {leaveError && <p className="text-sm text-destructive mt-2">{leaveError}</p>}
             </div>
@@ -353,23 +355,23 @@ export function SettingsPage() {
 
           {/* Invite */}
           <div className="pt-2 border-t">
-            <Label className="text-muted-foreground mb-2 block">Invite someone</Label>
+            <Label className="text-muted-foreground mb-2 block">{t('settings.inviteSomeone')}</Label>
             {inviteLink ? (
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input value={inviteLink} readOnly className="text-xs flex-1" />
                 <Button size="sm" variant="outline" className="shrink-0" onClick={handleCopy}>
-                  {copied ? <><Check className="h-4 w-4 mr-1.5" /> Copied</> : <><Copy className="h-4 w-4 mr-1.5" /> Copy link</>}
+                  {copied ? <><Check className="h-4 w-4 mr-1.5" /> {t('settings.copied')}</> : <><Copy className="h-4 w-4 mr-1.5" /> {t('settings.copyLink')}</>}
                 </Button>
               </div>
             ) : (
               <Button variant="outline" onClick={handleGenerateInvite} disabled={inviteLoading}>
                 <Link className="h-4 w-4 mr-2" />
-                {inviteLoading ? 'Generating...' : 'Generate Invite Link'}
+                {inviteLoading ? t('common.generating') : t('settings.generateInviteLink')}
               </Button>
             )}
             {inviteError && <p className="text-xs text-destructive mt-2">{inviteError}</p>}
             <p className="text-xs text-muted-foreground mt-2">
-              The link expires in 7 days. Share it with anyone you want to join your household.
+              {t('settings.inviteLinkExpiry')}
             </p>
           </div>
 
@@ -377,10 +379,10 @@ export function SettingsPage() {
           <div className="pt-2 border-t">
             <Button variant="ghost" onClick={() => setCreateHouseOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create New House
+              {t('settings.createNewHouse')}
             </Button>
             <p className="text-xs text-muted-foreground mt-1.5">
-              Track expenses for another property separately.
+              {t('settings.createNewHouseDesc')}
             </p>
             <CreateHouseDialog open={createHouseOpen} onOpenChange={setCreateHouseOpen} />
           </div>
@@ -390,23 +392,23 @@ export function SettingsPage() {
       {/* Data */}
       <Card>
         <CardHeader>
-          <CardTitle>Data & Privacy</CardTitle>
-          <CardDescription>Your data belongs to you</CardDescription>
+          <CardTitle>{t('settings.dataPrivacy')}</CardTitle>
+          <CardDescription>{t('settings.dataPrivacyDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
             <Button variant="outline" onClick={handleExport}>
               <Download className="h-4 w-4 mr-2" />
-              Export All My Data
+              {t('settings.exportAllData')}
             </Button>
             <p className="text-xs text-muted-foreground mt-1.5">
-              Download your profile, expenses, mortgage, and household data as JSON.
+              {t('settings.exportDesc')}
             </p>
           </div>
           <div className="pt-2 border-t">
             <RouterLink to="/privacy" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
               <Shield className="h-3.5 w-3.5" />
-              Privacy Policy
+              {t('common.privacyPolicy')}
             </RouterLink>
           </div>
         </CardContent>
@@ -415,18 +417,48 @@ export function SettingsPage() {
       {/* Stats */}
       <Card>
         <CardHeader>
-          <CardTitle>Statistics</CardTitle>
+          <CardTitle>{t('settings.statistics')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">Expenses</p>
+              <p className="text-muted-foreground">{t('settings.expensesLabel')}</p>
               <p className="text-xl font-semibold">{expenses.length}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Members</p>
+              <p className="text-muted-foreground">{t('settings.membersLabel')}</p>
               <p className="text-xl font-semibold">{members.length}</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Language */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            <CardTitle>{t('settings.language')}</CardTitle>
+          </div>
+          <CardDescription>{t('settings.languageDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => i18n.changeLanguage(lang.code)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-sm font-medium border transition-colors cursor-pointer',
+                  i18n.language.startsWith(lang.code)
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-input hover:bg-accent'
+                )}
+              >
+                {lang.label}
+              </button>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -437,32 +469,32 @@ export function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
-              <CardTitle className="text-destructive">Delete Household</CardTitle>
+              <CardTitle className="text-destructive">{t('settings.deleteHousehold')}</CardTitle>
             </div>
             <CardDescription>
-              Permanently delete this household and all associated data. This cannot be undone.
+              {t('settings.deleteHouseholdDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {deleteHouseStep === 'idle' && (
               <>
-                <p className="text-sm text-muted-foreground">This will delete:</p>
+                <p className="text-sm text-muted-foreground">{t('settings.thisWillDelete')}</p>
                 <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                  <li>All {expenses.length} expense{expenses.length !== 1 ? 's' : ''} and their attachments</li>
-                  <li>Mortgage configuration and history</li>
-                  <li>All {members.length} member{members.length !== 1 ? 's' : ''} will lose access</li>
+                  <li>{t('settings.deleteExpenses', { count: expenses.length })}</li>
+                  <li>{t('settings.deleteMortgageConfig')}</li>
+                  <li>{t('settings.deleteMembers', { count: members.length })}</li>
                 </ul>
                 <Button
                   variant="destructive"
                   onClick={() => setDeleteHouseStep('confirm')}
                 >
-                  Delete "{house?.name}"
+                  {t('settings.deleteHouseName', { name: house?.name })}
                 </Button>
               </>
             )}
             {deleteHouseStep === 'confirm' && (
               <div className="space-y-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
-                <p className="text-sm font-medium">Type the house name to confirm deletion:</p>
+                <p className="text-sm font-medium">{t('settings.typeHouseNameConfirm')}</p>
                 <Input
                   value={deleteHouseConfirmName}
                   onChange={(e) => setDeleteHouseConfirmName(e.target.value)}
@@ -475,13 +507,13 @@ export function SettingsPage() {
                     onClick={handleDeleteHouse}
                     disabled={deleteHouseConfirmName !== house?.name}
                   >
-                    Permanently Delete
+                    {t('settings.permanentlyDelete')}
                   </Button>
                   <Button variant="outline" onClick={() => {
                     setDeleteHouseStep('idle')
                     setDeleteHouseConfirmName('')
                   }}>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </div>
               </div>
@@ -491,7 +523,7 @@ export function SettingsPage() {
                 steps={HOUSE_DELETE_STEPS}
                 stepStates={houseProgress.stepStates}
                 overallPercent={houseProgress.overallPercent}
-                title={`Deleting "${house?.name}"...`}
+                title={t('settings.deletingHouse', { name: house?.name })}
                 variant="house-delete"
               />
             )}
@@ -505,44 +537,44 @@ export function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            <CardTitle className="text-destructive">Delete Account</CardTitle>
+            <CardTitle className="text-destructive">{t('settings.deleteAccount')}</CardTitle>
           </div>
           <CardDescription>
-            Permanently delete your account and all associated data. This cannot be undone.
+            {t('settings.deleteAccountDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {deleteStep === 'idle' && (
             <>
-              <p className="text-sm text-muted-foreground">This will delete:</p>
+              <p className="text-sm text-muted-foreground">{t('settings.thisWillDelete')}</p>
               <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                <li>Your user profile and authentication</li>
-                <li>Your expenses and their attachments</li>
-                <li>Your membership from all households</li>
+                <li>{t('settings.deleteAccountList1')}</li>
+                <li>{t('settings.deleteAccountList2')}</li>
+                <li>{t('settings.deleteAccountList3')}</li>
                 {houses.some((h) => h.ownerId === userProfile?.uid) && (
-                  <li className="text-amber-600 font-medium">All houses you own will be permanently deleted for all members</li>
+                  <li className="text-amber-600 font-medium">{t('settings.deleteAccountOwnedHouses')}</li>
                 )}
               </ul>
               <Button
                 variant="destructive"
                 onClick={() => setDeleteStep('confirm')}
               >
-                Delete my account
+                {t('settings.deleteMyAccount')}
               </Button>
             </>
           )}
           {deleteStep === 'confirm' && (
             <div className="space-y-3 p-4 rounded-lg bg-destructive/5 border border-destructive/20">
-              <p className="text-sm font-medium">Are you sure? This action is permanent and cannot be reversed.</p>
+              <p className="text-sm font-medium">{t('settings.deleteAccountConfirm')}</p>
               <p className="text-sm text-muted-foreground">
-                We recommend exporting your data first using the button above.
+                {t('settings.deleteAccountExportFirst')}
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="destructive" onClick={handleDeleteAccount}>
-                  Yes, permanently delete my account
+                  {t('settings.confirmDeleteAccount')}
                 </Button>
                 <Button variant="outline" onClick={() => setDeleteStep('idle')}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>
@@ -552,7 +584,7 @@ export function SettingsPage() {
               steps={ACCOUNT_DELETE_STEPS}
               stepStates={accountProgress.stepStates}
               overallPercent={accountProgress.overallPercent}
-              title="Deleting your account..."
+              title={t('settings.deletingAccount')}
             />
           )}
           {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -15,15 +16,17 @@ import { useAuth } from '@/context/AuthContext'
 import { format } from 'date-fns'
 import type { Expense } from '@/types/expense'
 
-const expenseSchema = z.object({
-  amount: z.string().min(1, 'Required').refine((v) => parseFloat(v) > 0, 'Must be positive'),
-  category: z.string().min(1, 'Required'),
-  payer: z.string().min(1, 'Required'),
-  description: z.string().optional(),
-  date: z.string().min(1, 'Required'),
-})
+function createExpenseSchema(t: (key: string) => string) {
+  return z.object({
+    amount: z.string().min(1, t('common.required')).refine((v) => parseFloat(v) > 0, t('common.mustBePositive')),
+    category: z.string().min(1, t('common.required')),
+    payer: z.string().min(1, t('common.required')),
+    description: z.string().optional(),
+    date: z.string().min(1, t('common.required')),
+  })
+}
 
-type ExpenseFormData = z.infer<typeof expenseSchema>
+type ExpenseFormData = z.infer<ReturnType<typeof createExpenseSchema>>
 
 interface ExpenseFormProps {
   onSubmit: (data: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
@@ -32,7 +35,8 @@ interface ExpenseFormProps {
   submitLabel?: string
 }
 
-export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLabel = 'Add Expense' }: ExpenseFormProps) {
+export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLabel }: ExpenseFormProps) {
+  const { t } = useTranslation()
   const [files, setFiles] = useState<File[]>([])
   const { members } = useHousehold()
   const { storageUsed } = useExpenses()
@@ -42,7 +46,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
   const defaultPayer = defaultValues?.payer ?? (isMultiMember ? SHARED_PAYER : (user?.uid ?? ''))
 
   const { register, handleSubmit, reset, watch, control, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema),
+    resolver: zodResolver(createExpenseSchema(t)),
     defaultValues: {
       amount: '',
       category: 'other',
@@ -68,11 +72,13 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
     setFiles([])
   }
 
+  const resolvedSubmitLabel = submitLabel ?? t('expenses.addExpense')
+
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">{t('common.amount')}</Label>
           <Input
             id="amount"
             type="number"
@@ -83,7 +89,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
           {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
+          <Label htmlFor="date">{t('common.date')}</Label>
           <Input id="date" type="date" {...register('date')} />
           {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
         </div>
@@ -91,7 +97,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
 
       <div className={`grid grid-cols-1 ${isMultiMember ? 'sm:grid-cols-2' : ''} gap-4`}>
         <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
+          <Label htmlFor="category">{t('filters.category')}</Label>
           <Select id="category" {...register('category')}>
             {EXPENSE_CATEGORIES.map((cat) => (
               <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -108,7 +114,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
             control={control}
             render={({ field }) => (
               <div className="space-y-2">
-                <Label htmlFor="payer">Paid by</Label>
+                <Label htmlFor="payer">{t('expenses.paidBy')}</Label>
                 <PayerSelect
                   id="payer"
                   value={field.value}
@@ -118,8 +124,8 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
                 />
                 <p className="text-xs text-muted-foreground">
                   {field.value === SHARED_PAYER
-                    ? 'Paid from shared household funds'
-                    : `Paid personally by ${members.find((m) => m.uid === field.value)?.displayName ?? 'member'}`}
+                    ? t('expenses.paidShared')
+                    : t('expenses.paidPersonally', { name: members.find((m) => m.uid === field.value)?.displayName ?? 'member' })}
                 </p>
                 {errors.payer && <p className="text-xs text-destructive">{errors.payer.message}</p>}
               </div>
@@ -131,20 +137,20 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Input id="description" placeholder="e.g. Down payment deposit, notary fees, home inspection..." {...register('description')} />
+        <Label htmlFor="description">{t('expenses.description')}</Label>
+        <Input id="description" placeholder={t('expenses.descriptionPlaceholder')} {...register('description')} />
       </div>
 
       {!hideAttachments && (
         <div className="space-y-2">
-          <Label>Attachments <span className="text-muted-foreground font-normal">(optional)</span></Label>
-          <p className="text-xs text-muted-foreground -mt-1">Receipts, contracts, invoices, photos — keep everything in one place</p>
+          <Label>{t('expenses.attachments')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+          <p className="text-xs text-muted-foreground -mt-1">{t('expenses.attachmentsHint')}</p>
           <FileDropZone files={files} onChange={setFiles} householdStorageUsed={storageUsed} />
         </div>
       )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : submitLabel}
+        {isSubmitting ? t('common.saving') : resolvedSubmitLabel}
       </Button>
     </form>
   )

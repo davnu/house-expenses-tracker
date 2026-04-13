@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { doc, getDoc } from 'firebase/firestore'
+import { useTranslation } from 'react-i18next'
 import { db } from '@/data/firebase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -13,6 +14,7 @@ import { LoadingScreen } from '@/components/ui/loading'
 import type { Invite } from '@/types/expense'
 
 export function InvitePage() {
+  const { t } = useTranslation()
   const { inviteId } = useParams<{ inviteId: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -49,9 +51,9 @@ export function InvitePage() {
     setError('')
     try {
       await joinHouse(inviteId)
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch (err) {
-      setError(friendlyError(err, 'Failed to join household. Please try again.'))
+      setError(friendlyError(err))
       setJoining(false)
     }
   }
@@ -65,8 +67,8 @@ export function InvitePage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <AlertCircle className="h-10 w-10 mx-auto mb-2 text-destructive" />
-            <CardTitle>Invalid Invite</CardTitle>
-            <CardDescription>This invite link is invalid or has been removed.</CardDescription>
+            <CardTitle>{t('invite.invalidInvite')}</CardTitle>
+            <CardDescription>{t('invite.invalidInviteDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -80,8 +82,8 @@ export function InvitePage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <AlertCircle className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-            <CardTitle>Invite Expired</CardTitle>
-            <CardDescription>This invite link has expired. Ask the house owner for a new one.</CardDescription>
+            <CardTitle>{t('invite.inviteExpired')}</CardTitle>
+            <CardDescription>{t('invite.inviteExpiredDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -95,8 +97,8 @@ export function InvitePage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <AlertCircle className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-            <CardTitle>Invite Already Used</CardTitle>
-            <CardDescription>This invite has already been accepted.</CardDescription>
+            <CardTitle>{t('invite.inviteAlreadyUsed')}</CardTitle>
+            <CardDescription>{t('invite.inviteAlreadyUsedDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -105,7 +107,7 @@ export function InvitePage() {
 
   // Not logged in — show login form with invite context
   if (!user) {
-    return <LoginPage subtitle={`Sign in or sign up to join "${invite.houseName}"`} />
+    return <LoginPage subtitle={t('auth.joinHouseSubtitle', { houseName: invite.houseName })} />
   }
 
   // Joining state
@@ -114,13 +116,13 @@ export function InvitePage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <UserPlus className="h-10 w-10 mx-auto mb-2 text-primary" />
-          <CardTitle>Join {invite.houseName}</CardTitle>
-          <CardDescription>You've been invited to join this household.</CardDescription>
+          <CardTitle>{t('invite.joinHouse', { name: invite.houseName })}</CardTitle>
+          <CardDescription>{t('invite.joinHouseDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
           <Button className="w-full" onClick={handleJoin} disabled={joining}>
-            {joining ? 'Joining...' : 'Join Household'}
+            {joining ? t('common.joining') : t('invite.joinHousehold')}
           </Button>
         </CardContent>
       </Card>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ interface RenameFolderDialogProps {
 }
 
 export function RenameFolderDialog({ folder, open, onOpenChange }: RenameFolderDialogProps) {
+  const { t } = useTranslation()
   const { updateFolder } = useDocuments()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -56,12 +58,12 @@ export function RenameFolderDialog({ folder, open, onOpenChange }: RenameFolderD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Folder</DialogTitle>
+          <DialogTitle>{t('documents.editFolder')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="rename-folder">Name</Label>
+            <Label htmlFor="rename-folder">{t('documents.folderName')}</Label>
             <Input
               id="rename-folder"
               value={name}
@@ -72,20 +74,18 @@ export function RenameFolderDialog({ folder, open, onOpenChange }: RenameFolderD
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-folder-desc">
-              Description <span className="text-muted-foreground font-normal">(optional)</span>
-            </Label>
+            <Label htmlFor="edit-folder-desc">{t('documents.descriptionOptional')}</Label>
             <Input
               id="edit-folder-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What goes in this folder?"
+              placeholder={t('documents.descriptionPlaceholder')}
               maxLength={100}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Icon</Label>
+            <Label>{t('documents.icon')}</Label>
             <div className="flex flex-wrap gap-1.5">
               {FOLDER_ICONS.map((emoji) => (
                 <button
@@ -108,10 +108,10 @@ export function RenameFolderDialog({ folder, open, onOpenChange }: RenameFolderD
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={!name.trim() || saving}>
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </form>

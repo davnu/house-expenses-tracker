@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import _userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 
 // ── jsdom polyfills ───────────────────────────────────
@@ -64,7 +64,6 @@ vi.mock('@/context/HouseholdContext', () => ({
   }),
 }))
 
-import React from 'react'
 import { DocumentsPage } from './DocumentsPage'
 import { getFolderIconBg } from '@/lib/file-type-info'
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal, Loader2 } from 'lucide-react'
 import { getFileTypeInfo, getExtensionBadgeClasses } from '@/lib/file-type-info'
 import { Button } from '@/components/ui/button'
@@ -9,20 +10,17 @@ import { AttachmentViewer } from './AttachmentViewer'
 import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { cn, formatCurrency, friendlyError } from '@/lib/utils'
-import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { cn, formatCurrency, friendlyError, getDateLocale } from '@/lib/utils'
+import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, getSharedPayerLabel, getCategoryLabel } from '@/lib/constants'
 import { groupExpensesByMonth } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
 
 const ACCEPTED_TYPES = 'image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-const categoryLabel = (val: string) =>
-  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
-
 function monthLabel(key: string): string {
   const [y, m] = key.split('-').map(Number)
-  return format(new Date(y, m - 1, 1), 'MMMM yyyy')
+  return format(new Date(y, m - 1, 1), 'MMMM yyyy', { locale: getDateLocale() })
 }
 
 interface ExpenseListProps {
@@ -31,6 +29,7 @@ interface ExpenseListProps {
 }
 
 export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseListProps) {
+  const { t } = useTranslation()
   const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
   const isMultiMember = members.length > 1
@@ -121,7 +120,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
       .filter((e) => !filterPayer || e.payer === filterPayer)
       .filter((e) => !filterFrom || e.date >= filterFrom)
       .filter((e) => !filterTo || e.date <= filterTo)
-      .filter((e) => !search || e.description.toLowerCase().includes(searchLower) || categoryLabel(e.category).toLowerCase().includes(searchLower))
+      .filter((e) => !search || e.description.toLowerCase().includes(searchLower) || getCategoryLabel(e.category).toLowerCase().includes(searchLower))
       .sort((a, b) => {
         const dir = sortDir === 'asc' ? 1 : -1
         switch (sortBy) {
@@ -209,8 +208,8 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold">{formatCurrency(expense.amount)}</span>
-            <span className="text-sm text-muted-foreground">{format(new Date(expense.date), 'MMM d, yyyy')}</span>
-            <Badge variant="secondary">{categoryLabel(expense.category)}</Badge>
+            <span className="text-sm text-muted-foreground">{format(new Date(expense.date), 'MMM d, yyyy', { locale: getDateLocale() })}</span>
+            <Badge variant="secondary">{getCategoryLabel(expense.category)}</Badge>
             {isMultiMember && (
               <Badge variant="outline" className="gap-1">
                 <span
@@ -265,7 +264,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
                       <button
                         onClick={(e) => { e.stopPropagation(); withErrorHandling(async () => removeAttachment(expense.id, att.id)) }}
                         className="ml-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
-                        title="Remove"
+                        title={t('common.remove')}
                       >
                         <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                       </button>
@@ -277,7 +276,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
                 <button
                   onClick={() => handleAddAttachment(expense.id)}
                   className="inline-flex items-center text-xs px-1.5 py-1 rounded-lg border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"
-                  title="Add attachment"
+                  title={t('common.attach')}
                 >
                   <Plus className="h-3 w-3" />
                 </button>
@@ -291,7 +290,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
               className="inline-flex items-center gap-1 text-xs mt-1.5 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer sm:opacity-0 sm:group-hover/row:opacity-100"
             >
               <Paperclip className="h-3 w-3" />
-              <span>Attach</span>
+              <span>{t('common.attach')}</span>
             </button>
           )}
         </div>
@@ -305,10 +304,10 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
         <div className="flex items-center gap-0.5 shrink-0 sm:opacity-0 sm:group-hover/row:opacity-100 transition-opacity">
           {deletingId === expense.id ? (
             <>
-              <Button size="icon" variant="ghost" className="h-8 w-8" title="Confirm" onClick={() => { withErrorHandling(async () => { await deleteExpense(expense.id) }); setDeletingId(null) }}>
+              <Button size="icon" variant="ghost" className="h-8 w-8" title={t('common.confirm')} onClick={() => { withErrorHandling(async () => { await deleteExpense(expense.id) }); setDeletingId(null) }}>
                 <Check className="h-4 w-4 text-destructive" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8" title="Cancel" onClick={() => setDeletingId(null)}>
+              <Button size="icon" variant="ghost" className="h-8 w-8" title={t('common.cancel')} onClick={() => setDeletingId(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </>
@@ -336,7 +335,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search expenses..."
+          placeholder={t('expenses.searchExpenses')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -352,7 +351,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
           onClick={() => setShowFilters(!showFilters)}
         >
           <SlidersHorizontal className="h-4 w-4 mr-1.5" />
-          Filters
+          {t('filters.filters')}
           {activeFilterCount > 0 && (
             <span className="ml-1.5 h-5 w-5 rounded-full bg-primary-foreground text-primary text-xs flex items-center justify-center">
               {activeFilterCount}
@@ -365,17 +364,17 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
           >
-            <option value="date">Date</option>
-            <option value="amount">Amount</option>
-            <option value="category">Category</option>
-            {isMultiMember && <option value="payer">Member</option>}
+            <option value="date">{t('common.date')}</option>
+            <option value="amount">{t('common.amount')}</option>
+            <option value="category">{t('filters.category')}</option>
+            {isMultiMember && <option value="payer">{t('expenses.member')}</option>}
           </Select>
           <Button
             size="icon"
             variant="outline"
             className="h-9 w-9 shrink-0"
             onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-            title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+            title={sortDir === 'asc' ? t('common.ascending') : t('common.descending')}
           >
             <ArrowUpDown className="h-3.5 w-3.5" />
           </Button>
@@ -390,7 +389,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
           >
-            <option value="">All categories</option>
+            <option value="">{t('filters.allCategories')}</option>
             {EXPENSE_CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
@@ -401,22 +400,22 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
               value={filterPayer}
               onChange={(e) => setFilterPayer(e.target.value)}
             >
-              <option value="">All members</option>
-              <option value={SHARED_PAYER}>{SHARED_PAYER_LABEL}</option>
+              <option value="">{t('filters.allMembers')}</option>
+              <option value={SHARED_PAYER}>{getSharedPayerLabel()}</option>
               {members.map((m) => (
                 <option key={m.uid} value={m.uid}>{m.displayName}</option>
               ))}
             </Select>
           )}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <span className="text-xs text-muted-foreground shrink-0">From</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t('common.from')}</span>
             <Input
               type="date"
               className="flex-1 sm:flex-none sm:w-36"
               value={filterFrom}
               onChange={(e) => setFilterFrom(e.target.value)}
             />
-            <span className="text-xs text-muted-foreground shrink-0">to</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t('common.to')}</span>
             <Input
               type="date"
               className="flex-1 sm:flex-none sm:w-36"
@@ -426,7 +425,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
           </div>
           {hasFilters && (
             <button onClick={clearFilters} className="text-xs text-primary hover:underline cursor-pointer ml-auto">
-              Clear all
+              {t('common.clearAll')}
             </button>
           )}
         </div>
@@ -436,10 +435,10 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
       {filtered.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {filtered.length} expense{filtered.length !== 1 ? 's' : ''}
+            {t('expenses.expenseCount', { count: filtered.length })}
             {(hasFilters || search) && !showFilters && (
               <button onClick={clearFilters} className="ml-2 text-primary hover:underline cursor-pointer">
-                Clear filters
+                {t('expenses.clearFilters')}
               </button>
             )}
           </p>
@@ -455,16 +454,16 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
         <div className="text-center py-12 text-muted-foreground">
           {expenses.length > 0 ? (
             <>
-              <p className="text-lg">No matching expenses</p>
+              <p className="text-lg">{t('expenses.noMatchingExpenses')}</p>
               <p className="text-sm">
-                Try adjusting your filters or{' '}
-                <button onClick={clearFilters} className="text-primary hover:underline cursor-pointer">clear all filters</button>
+                {t('expenses.tryAdjustingFilters')}{' '}
+                <button onClick={clearFilters} className="text-primary hover:underline cursor-pointer">{t('expenses.clearAllFilters')}</button>
               </p>
             </>
           ) : (
             <>
-              <p className="text-lg">No costs logged yet</p>
-              <p className="text-sm">Tap + to log your first house purchase cost</p>
+              <p className="text-lg">{t('expenses.noCostsLogged')}</p>
+              <p className="text-sm">{t('expenses.tapToLog')}</p>
             </>
           )}
         </div>
@@ -479,13 +478,13 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
                   <h2 className="text-sm font-semibold">{monthLabel(group.key)}</h2>
                   {group.isCurrent && (
                     <span className="text-xs font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full leading-none">
-                      now
+                      {t('expenses.now')}
                     </span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-3">
                   <span className="text-xs text-muted-foreground">
-                    {group.expenses.length} expense{group.expenses.length !== 1 ? 's' : ''}
+                    {t('expenses.expenseCount', { count: group.expenses.length })}
                   </span>
                   <span className="text-sm font-semibold">{formatCurrency(group.total)}</span>
                 </div>

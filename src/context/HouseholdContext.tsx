@@ -20,6 +20,7 @@ import { deleteAttachments } from '@/data/firebase-attachment-store'
 import { deleteDocumentFiles } from '@/data/firebase-document-store'
 import { useAuth } from './AuthContext'
 import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { setCurrencyContext } from '@/lib/utils'
 import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
 import type { UserProfile, House, HouseMember, Invite } from '@/types/expense'
 
@@ -57,6 +58,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [housesLoaded, setHousesLoaded] = useState(false)
 
   const loading = !profileLoaded || !housesLoaded
+
+  // Sync currency formatting to the active house's country
+  useEffect(() => {
+    setCurrencyContext(house?.country, house?.currency)
+  }, [house?.country, house?.currency])
 
   // Ref to avoid stale closures in callbacks
   const housesRef = useRef(houses)

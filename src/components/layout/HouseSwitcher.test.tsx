@@ -85,7 +85,7 @@ describe('HouseSwitcher', () => {
     })
 
     expect(mockSwitchHouse).toHaveBeenCalledWith('house-2')
-    expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
+    expect(mockNavigate).toHaveBeenCalledWith('/app', { replace: true })
   })
 
   it('does NOT navigate when clicking the already-active house', async () => {
@@ -135,7 +135,7 @@ describe('CreateHouseDialog', () => {
 
     expect(mockCreateHouse).toHaveBeenCalledWith('New House', undefined, undefined)
     expect(onOpenChange).toHaveBeenCalledWith(false)
-    expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
+    expect(mockNavigate).toHaveBeenCalledWith('/app', { replace: true })
   })
 
   it('does NOT navigate when creation fails', async () => {
@@ -153,7 +153,7 @@ describe('CreateHouseDialog', () => {
     expect(mockCreateHouse).toHaveBeenCalled()
     expect(onOpenChange).not.toHaveBeenCalled()
     expect(mockNavigate).not.toHaveBeenCalled()
-    expect(screen.getByText(/failed to create house/i)).toBeTruthy()
+    expect(screen.getByText(/something went wrong/i)).toBeTruthy()
   })
 
   it('resets form state when dialog closes', () => {

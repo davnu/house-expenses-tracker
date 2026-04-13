@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { AmortizationRow } from '@/types/mortgage'
 
@@ -11,6 +13,7 @@ interface AmortizationChartProps {
 }
 
 export function AmortizationChart({ schedule, currentMonth }: AmortizationChartProps) {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const data = useMemo(() => {
     // Sample every 6 months, but always include rate changes and extra payments
@@ -31,7 +34,7 @@ export function AmortizationChart({ schedule, currentMonth }: AmortizationChartP
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Remaining Balance Over Time</CardTitle>
+        <CardTitle>{t('mortgage.remainingBalanceOverTime')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
@@ -41,7 +44,7 @@ export function AmortizationChart({ schedule, currentMonth }: AmortizationChartP
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
             <Tooltip
               formatter={(value) => `€${Number(value).toLocaleString()}`}
-              labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy')}
+              labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() })}
             />
             <Area
               type="monotone"
@@ -57,7 +60,7 @@ export function AmortizationChart({ schedule, currentMonth }: AmortizationChartP
                 stroke="#e76e50"
                 strokeWidth={2}
                 strokeDasharray="4 4"
-                label={{ value: 'Now', position: 'top', fill: '#e76e50', fontSize: 12 }}
+                label={{ value: t('mortgage.nowMarker'), position: 'top', fill: '#e76e50', fontSize: 12 }}
               />
             )}
           </AreaChart>

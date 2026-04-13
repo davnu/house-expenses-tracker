@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useMortgage } from '@/context/MortgageContext'
 import { generateAmortizationSchedule } from '@/lib/mortgage-utils'
-import { formatCurrency, cn } from '@/lib/utils'
+import { formatCurrency, cn, getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ShieldCheck, Plus, Edit2, Trash2 } from 'lucide-react'
 import type { MortgageConfig, BalanceCorrection } from '@/types/mortgage'
 
 export function BalanceCorrectionCard() {
+  const { t } = useTranslation()
   const { mortgage, saveMortgage } = useMortgage()
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -59,11 +61,11 @@ export function BalanceCorrectionCard() {
 
   const validate = (): boolean => {
     setError('')
-    if (!corrDate) { setError('Date is required'); return false }
-    if (corrDate > today) { setError('Date cannot be in the future'); return false }
-    if (corrDate < mortgage.startDate) { setError('Date must be after mortgage start'); return false }
+    if (!corrDate) { setError(t('mortgage.dateRequired')); return false }
+    if (corrDate > today) { setError(t('mortgage.dateNotFuture')); return false }
+    if (corrDate < mortgage.startDate) { setError(t('mortgage.dateAfterMortgageStart')); return false }
     const bal = parseFloat(corrBalance)
-    if (isNaN(bal) || bal < 0) { setError('Balance must be a positive number'); return false }
+    if (isNaN(bal) || bal < 0) { setError(t('mortgage.balancePositive')); return false }
     return true
   }
 
@@ -103,7 +105,7 @@ export function BalanceCorrectionCard() {
     <div className="space-y-3 p-3 rounded-md border border-dashed">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-xs">Date (from bank statement)</Label>
+          <Label className="text-xs">{t('mortgage.dateFromBank')}</Label>
           <Input
             type="date"
             value={corrDate}
@@ -114,7 +116,7 @@ export function BalanceCorrectionCard() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Actual remaining balance</Label>
+          <Label className="text-xs">{t('mortgage.actualBalance')}</Label>
           <Input
             type="number"
             step="0.01"
@@ -130,11 +132,10 @@ export function BalanceCorrectionCard() {
       {/* Show comparison with calculated balance */}
       {calculatedForDate !== null && corrDate && (
         <div className="text-xs p-2 rounded bg-muted">
-          <span className="text-muted-foreground">App calculates: </span>
-          <span className="font-medium">{formatCurrency(calculatedForDate)}</span>
+          <span className="text-muted-foreground">{t('mortgage.appCalculates', { amount: formatCurrency(calculatedForDate) })}</span>
           {corrBalance && (
             <>
-              <span className="text-muted-foreground"> — Difference: </span>
+              <span className="text-muted-foreground"> — {t('mortgage.difference', { amount: '' })}</span>
               <span className={cn('font-medium', Math.round(parseFloat(corrBalance) * 100) - calculatedForDate > 0 ? 'text-destructive' : 'text-green-600')}>
                 {formatCurrency(Math.abs(Math.round(parseFloat(corrBalance) * 100) - calculatedForDate))}
               </span>
@@ -146,11 +147,11 @@ export function BalanceCorrectionCard() {
       {/* Keep payment or recalculate — only for fixed installment */}
       {mortgage.amortizationType === 'italian' ? (
         <p className="text-xs text-muted-foreground">
-          The principal portion adjusts automatically based on the corrected balance.
+          {t('mortgage.italianAutoAdjust')}
         </p>
       ) : (
       <div className="space-y-1">
-        <Label className="text-xs">After correction</Label>
+        <Label className="text-xs">{t('mortgage.afterCorrection')}</Label>
         <div className="flex rounded-lg border bg-muted p-0.5 gap-0.5">
           <button
             type="button"
@@ -160,7 +161,7 @@ export function BalanceCorrectionCard() {
               !corrKeepPayment ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
             )}
           >
-            Recalculate payment
+            {t('mortgage.recalculatePayment')}
           </button>
           <button
             type="button"
@@ -170,21 +171,21 @@ export function BalanceCorrectionCard() {
               corrKeepPayment ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
             )}
           >
-            Keep current payment
+            {t('mortgage.keepCurrentPayment')}
           </button>
         </div>
         <p className="text-xs text-muted-foreground">
           {corrKeepPayment
-            ? 'Monthly payment stays the same — the term may change.'
-            : 'Monthly payment is recalculated for the corrected balance.'}
+            ? t('mortgage.keepPaymentNote')
+            : t('mortgage.recalculateNote')}
         </p>
       </div>
       )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex gap-2">
-        <Button size="sm" onClick={handleSave}>Save</Button>
-        <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setEditingId(null) }}>Cancel</Button>
+        <Button size="sm" onClick={handleSave}>{t('common.save')}</Button>
+        <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setEditingId(null) }}>{t('common.cancel')}</Button>
       </div>
     </div>
   )
@@ -194,12 +195,12 @@ export function BalanceCorrectionCard() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base flex items-center gap-2">
           <ShieldCheck className="h-4 w-4" />
-          Balance Corrections
+          {t('mortgage.balanceCorrections')}
         </CardTitle>
         {!adding && !editingId && (
           <Button size="sm" variant="outline" onClick={startAdding}>
             <Plus className="h-3.5 w-3.5 mr-1" />
-            Add Correction
+            {t('mortgage.addCorrection')}
           </Button>
         )}
       </CardHeader>
@@ -214,11 +215,11 @@ export function BalanceCorrectionCard() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{formatCurrency(c.balance)}</span>
                   <span className="text-xs text-muted-foreground">
-                    {c.keepCurrentPayment ? '(kept payment)' : '(recalculated)'}
+                    {c.keepCurrentPayment ? t('mortgage.keptPayment') : t('mortgage.recalculated')}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  As of {format(new Date(c.date), 'MMM d, yyyy')}
+                  {t('mortgage.asOf', { date: format(new Date(c.date), 'MMM d, yyyy', { locale: getDateLocale() }) })}
                 </p>
               </div>
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEditing(c)}>
@@ -236,7 +237,7 @@ export function BalanceCorrectionCard() {
 
         {corrections.length === 0 && !adding && (
           <p className="text-xs text-muted-foreground text-center py-2">
-            If the calculated balance doesn't match your bank statement, add a correction here.
+            {t('mortgage.correctionHint')}
           </p>
         )}
       </CardContent>

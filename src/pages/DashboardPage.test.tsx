@@ -129,10 +129,10 @@ describe('DashboardPage', () => {
       expect(container.textContent).toContain('Payments, interest, and payoff progress')
     })
 
-    it('mortgage card links to /mortgage', () => {
+    it('mortgage card links to /app/mortgage', () => {
       const container = renderPage()
 
-      const link = container.querySelector('a[href="/mortgage"]')
+      const link = container.querySelector('a[href="/app/mortgage"]')
       expect(link).not.toBeNull()
       expect(link!.textContent).toContain('Set up mortgage')
     })

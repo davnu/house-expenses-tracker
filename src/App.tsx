@@ -1,5 +1,4 @@
-import { useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
@@ -11,6 +10,7 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { LandingPage } from '@/pages/LandingPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
 import { InvitePage } from '@/pages/InvitePage'
 import { InviteLandingPage } from '@/pages/InviteLandingPage'
@@ -18,23 +18,23 @@ import { DocumentsPage } from '@/pages/DocumentsPage'
 import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 
+/* ── App routes (inside /app/*, requires house) ── */
+
 function AppRoutes() {
   const { house, houses, userProfile, loading } = useHousehold()
 
   if (loading) return <LoadingScreen />
 
-  // User has no houses at all — show onboarding (unless on invite or privacy route)
+  // User has no houses — show onboarding
   if (!house && !userProfile?.houseId && houses.length === 0) {
     return (
       <Routes>
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/invite/:inviteId" element={<InvitePage />} />
         <Route path="*" element={<OnboardingPage />} />
       </Routes>
     )
   }
 
-  // houseId is set or houses exist but house doc hasn't loaded yet — show loading
+  // House doc hasn't loaded yet
   if (!house) {
     return (
       <Routes>
@@ -45,7 +45,6 @@ function AppRoutes() {
     )
   }
 
-  // User has a house — show the app
   return (
     <ExpenseProvider>
       <MortgageProvider>
@@ -58,8 +57,6 @@ function AppRoutes() {
               <Route path="documents" element={<DocumentsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
-            <Route path="/invite/:inviteId" element={<InvitePage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
           </Routes>
         </DocumentProvider>
       </MortgageProvider>
@@ -67,30 +64,13 @@ function AppRoutes() {
   )
 }
 
-function AuthGate() {
+/* ── Auth guard for /app/* ── */
+
+function ProtectedApp() {
   const { user, loading } = useAuth()
-  const location = useLocation()
-  const wasLoggedOut = useRef(true)
 
   if (loading) return <LoadingScreen />
-
-  if (!user) {
-    wasLoggedOut.current = true
-    return (
-      <Routes>
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/invite/:inviteId" element={<InviteLandingPage />} />
-        <Route path="*" element={<LoginPage />} />
-      </Routes>
-    )
-  }
-
-  // Just logged in — redirect to dashboard if on a stale route
-  if (wasLoggedOut.current && location.pathname !== '/' && !location.pathname.startsWith('/invite') && location.pathname !== '/privacy') {
-    wasLoggedOut.current = false
-    return <Navigate to="/" replace />
-  }
-  wasLoggedOut.current = false
+  if (!user) return <Navigate to="/login" replace />
 
   return (
     <HouseholdProvider>
@@ -99,11 +79,57 @@ function AuthGate() {
   )
 }
 
+/* ── Login route: redirect to /app if already logged in ── */
+
+function LoginGate() {
+  const { user, loading } = useAuth()
+
+  if (loading) return <LoadingScreen />
+  if (user) return <Navigate to="/app" replace />
+
+  return <LoginPage />
+}
+
+/* ── Invite route: landing if not logged in, join flow if logged in ── */
+
+function InviteGate() {
+  const { user, loading } = useAuth()
+
+  if (loading) return <LoadingScreen />
+  if (!user) return <InviteLandingPage />
+
+  return (
+    <HouseholdProvider>
+      <InvitePage />
+    </HouseholdProvider>
+  )
+}
+
+/* ── Root ── */
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AuthGate />
+        <Routes>
+          {/* Public routes */}
+          <Route index element={<LandingPage />} />
+          <Route path="/login" element={<LoginGate />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/invite/:inviteId" element={<InviteGate />} />
+
+          {/* Protected app */}
+          <Route path="/app/*" element={<ProtectedApp />} />
+
+          {/* Legacy redirects (old bookmarks) */}
+          <Route path="/mortgage" element={<Navigate to="/app/mortgage" replace />} />
+          <Route path="/expenses" element={<Navigate to="/app/expenses" replace />} />
+          <Route path="/documents" element={<Navigate to="/app/documents" replace />} />
+          <Route path="/settings" element={<Navigate to="/app/settings" replace />} />
+
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   )

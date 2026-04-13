@@ -1,9 +1,10 @@
 import { useState, useEffect, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Download, Trash2, MoreVertical, Pencil, FolderInput, Loader2, StickyNote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useDocuments } from '@/context/DocumentContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { cn } from '@/lib/utils'
+import { cn, getDateLocale } from '@/lib/utils'
 import { getFileTypeInfo, isImageType } from '@/lib/file-type-info'
 import { formatDistanceToNow, differenceInDays, format } from 'date-fns'
 import type { HouseDocument } from '@/types/document'
@@ -22,7 +23,7 @@ function formatSmartDate(isoDate: string): string {
     // Older documents: exact date (more useful for financial records)
     return days < 7
       ? formatDistanceToNow(date, { addSuffix: true })
-      : format(date, 'MMM d, yyyy')
+      : format(date, 'MMM d, yyyy', { locale: getDateLocale() })
   } catch {
     return ''
   }
@@ -40,6 +41,7 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document, isPending, readOnly, onRename, onMove, onPreview, onNotesChange, folderBadge }: DocumentCardProps) {
+  const { t } = useTranslation()
   const { deleteDocument } = useDocuments()
   const { getMemberName } = useHousehold()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -170,7 +172,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
               }}
               onBlur={handleNotesSave}
               autoFocus
-              placeholder="Add a note..."
+              placeholder={t('documents.addNote')}
               className="text-xs bg-transparent border-b border-input focus:border-primary outline-none w-full py-0.5"
               maxLength={200}
             />
@@ -201,7 +203,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
               size="icon"
               className="h-7 w-7"
               onClick={handleDownload}
-              title="Download"
+              title={t('documents.download')}
             >
               <Download className="h-3.5 w-3.5" />
             </Button>
@@ -214,7 +216,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
                   e.stopPropagation()
                   setMenuOpen(!menuOpen)
                 }}
-                title="More"
+                title={t('documents.more')}
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
@@ -236,7 +238,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
                     }}
                   >
                     <Pencil className="h-3.5 w-3.5" />
-                    Rename
+                    {t('documents.rename')}
                   </button>
                 )}
                 {onNotesChange && (
@@ -251,7 +253,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
                     }}
                   >
                     <StickyNote className="h-3.5 w-3.5" />
-                    {document.notes ? 'Edit note' : 'Add note'}
+                    {document.notes ? t('documents.editNote') : t('documents.addNoteAction')}
                   </button>
                 )}
                 {onMove && (
@@ -265,7 +267,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
                     }}
                   >
                     <FolderInput className="h-3.5 w-3.5" />
-                    Move to...
+                    {t('documents.moveTo')}
                   </button>
                 )}
                 <button
@@ -280,7 +282,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
                   disabled={deleting}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  {deleting ? 'Deleting...' : confirmDelete ? 'Confirm delete' : 'Delete'}
+                  {deleting ? t('common.deleting') : confirmDelete ? t('documents.confirmDelete') : t('common.delete')}
                 </button>
               </div>
             </>

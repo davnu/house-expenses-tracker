@@ -1,16 +1,14 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHousehold } from '@/context/HouseholdContext'
 import { formatCurrency } from '@/lib/utils'
-import { EXPENSE_CATEGORIES, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel, getCategoryLabel, getFormerMemberLabel } from '@/lib/constants'
 import type { Expense } from '@/types/expense'
 
 interface PersonSummaryProps {
   expenses: Expense[]
 }
-
-const categoryLabel = (val: string) =>
-  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
 
 interface PayerSummaryData {
   key: string
@@ -32,7 +30,7 @@ function buildPayerData(expenses: Expense[], payerKey: string, name: string, col
   const topCategories = Object.entries(byCat)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3)
-    .map(([cat, amount]) => ({ label: categoryLabel(cat), amount }))
+    .map(([cat, amount]) => ({ label: getCategoryLabel(cat), amount }))
 
   return {
     key: payerKey,
@@ -46,6 +44,7 @@ function buildPayerData(expenses: Expense[], payerKey: string, name: string, col
 }
 
 export function PersonSummary({ expenses }: PersonSummaryProps) {
+  const { t } = useTranslation()
   const { members } = useHousehold()
 
   const data = useMemo(() => {
@@ -54,7 +53,7 @@ export function PersonSummary({ expenses }: PersonSummaryProps) {
     const accounted = new Set<string>()
 
     // Shared slice
-    const shared = buildPayerData(expenses, SHARED_PAYER, SHARED_PAYER_LABEL, SHARED_PAYER_COLOR, grandTotal)
+    const shared = buildPayerData(expenses, SHARED_PAYER, getSharedPayerLabel(), SHARED_PAYER_COLOR, grandTotal)
     if (shared.count > 0) { result.push(shared); accounted.add(SHARED_PAYER) }
 
     // Individual member slices
@@ -69,8 +68,8 @@ export function PersonSummary({ expenses }: PersonSummaryProps) {
       const orphanedTotal = orphanedExpenses.reduce((s, e) => s + e.amount, 0)
       const byCat: Record<string, number> = {}
       for (const e of orphanedExpenses) { byCat[e.category] = (byCat[e.category] ?? 0) + e.amount }
-      const topCategories = Object.entries(byCat).sort(([, a], [, b]) => b - a).slice(0, 3).map(([cat, amount]) => ({ label: categoryLabel(cat), amount }))
-      result.push({ key: '__former__', name: 'Former member', color: '#6b7280', total: orphanedTotal, percent: grandTotal > 0 ? (orphanedTotal / grandTotal) * 100 : 0, count: orphanedExpenses.length, topCategories })
+      const topCategories = Object.entries(byCat).sort(([, a], [, b]) => b - a).slice(0, 3).map(([cat, amount]) => ({ label: getCategoryLabel(cat), amount }))
+      result.push({ key: '__former__', name: getFormerMemberLabel(), color: '#6b7280', total: orphanedTotal, percent: grandTotal > 0 ? (orphanedTotal / grandTotal) * 100 : 0, count: orphanedExpenses.length, topCategories })
     }
 
     return result
@@ -81,7 +80,7 @@ export function PersonSummary({ expenses }: PersonSummaryProps) {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-4">Per Person</h3>
+      <h3 className="text-lg font-semibold mb-4">{t('summary.perPerson')}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {data.map((person) => (
           <Card key={person.key}>
@@ -95,12 +94,12 @@ export function PersonSummary({ expenses }: PersonSummaryProps) {
               <div className="flex justify-between">
                 <span className="text-2xl font-bold">{formatCurrency(person.total)}</span>
                 <span className="text-sm text-muted-foreground self-end">
-                  {person.percent.toFixed(1)}% &middot; {person.count} expense{person.count !== 1 ? 's' : ''}
+                  {person.percent.toFixed(1)}% &middot; {t('expenses.expenseCount', { count: person.count })}
                 </span>
               </div>
               {person.topCategories.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Top categories</p>
+                  <p className="text-xs text-muted-foreground">{t('summary.topCategories')}</p>
                   {person.topCategories.map((cat) => (
                     <div key={cat.label} className="flex justify-between text-sm">
                       <span>{cat.label}</span>

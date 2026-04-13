@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Home } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHousehold } from '@/context/HouseholdContext'
 import { formatCurrency } from '@/lib/utils'
-import { SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
 import type { Expense } from '@/types/expense'
 
 interface PersonSplitCardProps {
@@ -19,6 +20,7 @@ interface PayerSlice {
 }
 
 export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
+  const { t } = useTranslation()
   const { members } = useHousehold()
 
   const data = useMemo(() => {
@@ -36,7 +38,7 @@ export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
     // Shared slice (first)
     const sharedTotal = byPayer.get(SHARED_PAYER) ?? 0
     if (sharedTotal > 0) {
-      slices.push({ key: SHARED_PAYER, name: SHARED_PAYER_LABEL, color: SHARED_PAYER_COLOR, total: sharedTotal, percent: total > 0 ? (sharedTotal / total) * 100 : 0 })
+      slices.push({ key: SHARED_PAYER, name: getSharedPayerLabel(), color: SHARED_PAYER_COLOR, total: sharedTotal, percent: total > 0 ? (sharedTotal / total) * 100 : 0 })
       accounted.add(SHARED_PAYER)
     }
 
@@ -55,11 +57,11 @@ export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
       if (!accounted.has(payer)) orphanedTotal += amount
     }
     if (orphanedTotal > 0) {
-      slices.push({ key: '__former__', name: 'Former member', color: '#6b7280', total: orphanedTotal, percent: total > 0 ? (orphanedTotal / total) * 100 : 0 })
+      slices.push({ key: '__former__', name: t('common.formerMember'), color: '#6b7280', total: orphanedTotal, percent: total > 0 ? (orphanedTotal / total) * 100 : 0 })
     }
 
     return slices
-  }, [expenses, members])
+  }, [expenses, members, t])
 
   if (members.length < 2) return null
 
@@ -86,7 +88,7 @@ export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
             <div className="space-y-1">
               <p className="text-lg font-semibold">{formatCurrency(total)}</p>
               <p className="text-sm text-muted-foreground">
-                All expenses shared between household members
+                {t('dashboard.allExpensesShared')}
               </p>
             </div>
           </div>
@@ -98,7 +100,7 @@ export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Expense Split</CardTitle>
+        <CardTitle className="text-base">{t('dashboard.expenseSplit')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Stacked bar */}
@@ -117,14 +119,14 @@ export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} />
-              <span className="text-sm font-medium">{SHARED_PAYER_LABEL}</span>
+              <span className="text-sm font-medium">{getSharedPayerLabel()}</span>
               <span className="ml-auto text-base font-semibold">{formatCurrency(sharedSlice.total)}</span>
               <span className="text-xs text-muted-foreground w-10 text-right">{sharedSlice.percent.toFixed(0)}%</span>
             </div>
 
             {individualSlices.length > 0 && (
               <div className="border-t pt-3 space-y-1.5">
-                <p className="text-xs text-muted-foreground">Individual contributions</p>
+                <p className="text-xs text-muted-foreground">{t('dashboard.individualContributions')}</p>
                 {individualSlices.map((d) => (
                   <div key={d.key} className="flex items-center justify-between text-sm pl-6">
                     <div className="flex items-center gap-2">

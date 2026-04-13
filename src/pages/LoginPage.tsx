@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,11 +14,13 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ subtitle }: LoginPageProps) {
+  const { t } = useTranslation()
   const { signInEmail, signUpEmail, signInGoogle } = useAuth()
+  const [searchParams] = useSearchParams()
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(searchParams.get('mode') === 'signup')
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,7 +36,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
         await signInEmail(email, password)
       }
     } catch (err) {
-      setError(friendlyError(err, 'Authentication failed. Please try again.'))
+      setError(friendlyError(err))
     } finally {
       setLoading(false)
     }
@@ -45,7 +48,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
     try {
       await signInGoogle()
     } catch (err) {
-      setError(friendlyError(err, 'Authentication failed. Please try again.'))
+      setError(friendlyError(err))
     } finally {
       setLoading(false)
     }
@@ -60,9 +63,9 @@ export function LoginPage({ subtitle }: LoginPageProps) {
           <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary flex items-center justify-center">
             <Home className="h-6 w-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-xl">House Expenses</CardTitle>
+          <CardTitle className="text-xl">{t('common.houseExpenses')}</CardTitle>
           <CardDescription>
-            {subtitle ?? 'Every cost of buying your home, in one place'}
+            {subtitle ?? t('auth.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -78,7 +81,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            Continue with Google
+            {t('auth.continueWithGoogle')}
           </Button>
 
           <div className="relative">
@@ -86,18 +89,18 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or</span>
+              <span className="bg-card px-2 text-muted-foreground">{t('common.or')}</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="displayName">Your name</Label>
+                <Label htmlFor="displayName">{t('auth.yourName')}</Label>
                 <Input
                   id="displayName"
                   type="text"
-                  placeholder="e.g. Alex"
+                  placeholder={t('auth.namePlaceholder')}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required={isSignUp}
@@ -105,22 +108,22 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -137,9 +140,9 @@ export function LoginPage({ subtitle }: LoginPageProps) {
                   className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
                 />
                 <span className="text-sm text-muted-foreground">
-                  I agree to the{' '}
+                  {t('auth.agreeToPrivacy')}{' '}
                   <Link to="/privacy" target="_blank" className="text-primary hover:underline font-medium">
-                    Privacy Policy
+                    {t('common.privacyPolicy')}
                   </Link>
                 </span>
               </label>
@@ -148,12 +151,12 @@ export function LoginPage({ subtitle }: LoginPageProps) {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={!canSubmit}>
-              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+              {loading ? t('common.loading') : isSignUp ? t('auth.createAccount') : t('auth.signIn')}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            {isSignUp ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}{' '}
             <button
               type="button"
               onClick={() => {
@@ -163,12 +166,12 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               }}
               className="text-primary font-medium hover:underline cursor-pointer"
             >
-              {isSignUp ? 'Sign in' : 'Sign up'}
+              {isSignUp ? t('auth.signInLink') : t('auth.signUpLink')}
             </button>
           </p>
 
           <p className="text-center text-xs text-muted-foreground">
-            <Link to="/privacy" className="hover:underline">Privacy Policy</Link>
+            <Link to="/privacy" className="hover:underline">{t('common.privacyPolicy')}</Link>
           </p>
         </CardContent>
       </Card>

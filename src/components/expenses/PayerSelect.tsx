@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Home, ChevronDown, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
 import type { HouseMember } from '@/types/expense'
 
 interface PayerSelectProps {
@@ -13,6 +14,7 @@ interface PayerSelectProps {
 }
 
 export function PayerSelect({ value, onChange, members, id, ...props }: PayerSelectProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [focusIndex, setFocusIndex] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -128,7 +130,7 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
           {value === SHARED_PAYER ? (
             <>
               <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} aria-hidden="true" />
-              <span>{SHARED_PAYER_LABEL}</span>
+              <span>{getSharedPayerLabel()}</span>
             </>
           ) : selectedMember ? (
             <>
@@ -142,7 +144,7 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
           ) : (
             <>
               <span className="h-2.5 w-2.5 rounded-full shrink-0 bg-muted-foreground/50" aria-hidden="true" />
-              <span className="text-muted-foreground">Former member</span>
+              <span className="text-muted-foreground">{t('common.formerMember')}</span>
             </>
           )}
         </span>
@@ -156,7 +158,7 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
       {open && (
         <div
           role="listbox"
-          aria-label="Select who paid"
+          aria-label={t('expenses.selectWhoPaid')}
           className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border bg-card shadow-lg overflow-hidden"
         >
           {/* Shared option */}
@@ -171,7 +173,7 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
               onClick={() => select(SHARED_PAYER)}
             >
               <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} aria-hidden="true" />
-              <span className="flex-1 truncate">{SHARED_PAYER_LABEL}</span>
+              <span className="flex-1 truncate">{getSharedPayerLabel()}</span>
               {value === SHARED_PAYER && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
             </button>
           </div>

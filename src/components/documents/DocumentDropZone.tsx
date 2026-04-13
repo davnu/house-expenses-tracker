@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, type DragEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
@@ -18,6 +19,7 @@ interface DocumentDropZoneProps {
 }
 
 export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }: DocumentDropZoneProps) {
+  const { t } = useTranslation()
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,15 +35,15 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
 
       for (const file of Array.from(fileList)) {
         if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
-          setError(`"${file.name}" is not a supported file type`)
+          setError(t('files.unsupportedType', { name: file.name }))
           continue
         }
         if (file.size > MAX_FILE_SIZE) {
-          setError(`"${file.name}" exceeds 10 MB limit`)
+          setError(t('files.exceedsLimit', { name: file.name }))
           continue
         }
         if (totalStorageUsed + pendingSize + file.size > MAX_HOUSEHOLD_STORAGE) {
-          setError(`Household storage limit reached (${formatSize(MAX_HOUSEHOLD_STORAGE)})`)
+          setError(t('files.householdStorageLimit', { size: formatSize(MAX_HOUSEHOLD_STORAGE) }))
           break
         }
         valid.push(file)
@@ -52,7 +54,7 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
         onFilesSelected(valid)
       }
     },
-    [onFilesSelected, totalStorageUsed]
+    [onFilesSelected, totalStorageUsed, t]
   )
 
   const handleDragOver = (e: DragEvent) => {
@@ -94,12 +96,9 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
         <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           {isDisabled
-            ? 'Storage limit reached'
-            : <>Drop files here or <span className="text-primary font-medium">browse</span></>
+            ? t('files.storageLimitReached')
+            : t('files.dropOrBrowsePlain')
           }
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Images, PDF, Word, Excel &middot; Max 10 MB each
         </p>
         <input
           ref={inputRef}

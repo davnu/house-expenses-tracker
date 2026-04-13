@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,6 +46,7 @@ interface Props {
 }
 
 export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }: Props) {
+  const { t } = useTranslation()
   const { house } = useHousehold()
   const region = house?.country ? getRegion(house.country) : undefined
   const availableRates = house?.country ? getReferenceRatesForCountry(house.country) : []
@@ -130,17 +132,17 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
     if (useCustomPayment) return
     const p = parseFloat(principal)
     const r = effectiveRate
-    const t = parseInt(termYears)
-    if (p > 0 && r && r > 0 && t > 0) {
-      setValue('monthlyPayment', String(calculateMonthlyPayment(Math.round(p * 100), r, t * 12) / 100))
+    const ty = parseInt(termYears)
+    if (p > 0 && r && r > 0 && ty > 0) {
+      setValue('monthlyPayment', String(calculateMonthlyPayment(Math.round(p * 100), r, ty * 12) / 100))
     }
   }, [principal, effectiveRate, termYears, useCustomPayment, setValue])
 
   const calculatedPayment = (() => {
     const p = parseFloat(principal)
     const r = effectiveRate
-    const t = parseInt(termYears)
-    if (p > 0 && r && r > 0 && t > 0) return calculateMonthlyPayment(Math.round(p * 100), r, t * 12)
+    const ty = parseInt(termYears)
+    if (p > 0 && r && r > 0 && ty > 0) return calculateMonthlyPayment(Math.round(p * 100), r, ty * 12)
     return 0
   })()
 
@@ -174,22 +176,22 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
       hasErrors = true
     }
 
-    if (!data.principal || safeFloat(data.principal) <= 0) requireField('principal', 'Required')
-    if (!data.termYears || safeInt(data.termYears) <= 0) requireField('termYears', 'Required')
-    if (!data.startDate) requireField('startDate', 'Required')
+    if (!data.principal || safeFloat(data.principal) <= 0) requireField('principal', t('common.required'))
+    if (!data.termYears || safeInt(data.termYears) <= 0) requireField('termYears', t('common.required'))
+    if (!data.startDate) requireField('startDate', t('common.required'))
 
     if (rateType === 'fixed' || isMixed) {
-      if (!data.annualRate || safeFloat(data.annualRate) <= 0) requireField('annualRate', 'Required')
+      if (!data.annualRate || safeFloat(data.annualRate) <= 0) requireField('annualRate', t('common.required'))
     }
     if (isVariable && !region) {
-      if (!data.annualRate || safeFloat(data.annualRate) <= 0) requireField('annualRate', 'Required')
+      if (!data.annualRate || safeFloat(data.annualRate) <= 0) requireField('annualRate', t('common.required'))
     }
     if ((isVariable || isMixed) && region) {
-      if (!data.currentReferenceRate) requireField('currentReferenceRate', 'Required')
-      if (!data.spread && data.spread !== '0') requireField('spread', 'Required')
+      if (!data.currentReferenceRate) requireField('currentReferenceRate', t('common.required'))
+      if (!data.spread && data.spread !== '0') requireField('spread', t('common.required'))
     }
     if (isMixed) {
-      if (!data.fixedPeriodYears || safeInt(data.fixedPeriodYears) <= 0) requireField('fixedPeriodYears', 'Required')
+      if (!data.fixedPeriodYears || safeInt(data.fixedPeriodYears) <= 0) requireField('fixedPeriodYears', t('common.required'))
     }
 
     if (hasErrors) return
@@ -276,7 +278,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
         /* ── Edit mode: only editable fields ── */
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="propertyValue" className="text-xs">Property value <span className="text-muted-foreground">(optional)</span></Label>
+            <Label htmlFor="propertyValue" className="text-xs">{t('mortgage.propertyValue')} <span className="text-muted-foreground">({t('common.optional')})</span></Label>
             <Input id="propertyValue" type="number" step="0.01" placeholder="300000" {...register('propertyValue')} />
           </div>
         </div>
@@ -284,27 +286,27 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
         <>
         {/* ── Section 1: The Basics ── */}
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Loan Details</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">{t('mortgage.loanDetails')}</p>
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="principal" className="text-xs">Loan amount</Label>
+                <Label htmlFor="principal" className="text-xs">{t('mortgage.loanAmount')}</Label>
                 <Input id="principal" type="number" step="0.01" placeholder="250000" {...register('principal')} />
                 {errors.principal && <p className="text-xs text-destructive">{errors.principal.message}</p>}
               </div>
               <div className="space-y-1">
-                <Label htmlFor="propertyValue" className="text-xs">Property value <span className="text-muted-foreground">(optional)</span></Label>
+                <Label htmlFor="propertyValue" className="text-xs">{t('mortgage.propertyValue')} <span className="text-muted-foreground">({t('common.optional')})</span></Label>
                 <Input id="propertyValue" type="number" step="0.01" placeholder="300000" {...register('propertyValue')} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="termYears" className="text-xs">Term (years)</Label>
+                <Label htmlFor="termYears" className="text-xs">{t('mortgage.termYears')}</Label>
                 <Input id="termYears" type="number" placeholder="30" {...register('termYears')} />
                 {errors.termYears && <p className="text-xs text-destructive">{errors.termYears.message}</p>}
               </div>
               <div className="space-y-1">
-                <Label htmlFor="startDate" className="text-xs">Start date</Label>
+                <Label htmlFor="startDate" className="text-xs">{t('mortgage.startDate')}</Label>
                 <Input id="startDate" type="date" {...register('startDate')} />
                 {errors.startDate && <p className="text-xs text-destructive">{errors.startDate.message}</p>}
               </div>
@@ -317,15 +319,15 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
       {/* ── Section 2: Interest Rate — hidden in edit mode ── */}
       {!isEditing && (
       <div>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Interest Rate</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">{t('mortgage.interestRate')}</p>
         <div className="space-y-3">
           {/* Rate type toggle */}
           <div className="flex rounded-lg border bg-muted p-0.5 gap-0.5">
             {(['fixed', 'mixed', 'variable'] as const).map((type) => (
               <button key={type} type="button" onClick={() => setValue('rateType', type)}
-                className={cn('flex-1 rounded-md px-3 py-2 text-sm font-medium transition-all cursor-pointer capitalize',
+                className={cn('flex-1 rounded-md px-3 py-2 text-sm font-medium transition-all cursor-pointer',
                   rateType === type ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground')}>
-                {type}
+                {t(`common.${type}`)}
               </button>
             ))}
           </div>
@@ -334,13 +336,13 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
           {(rateType === 'fixed' || isMixed) && (
             <div className={cn('grid gap-3', isMixed ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1')}>
               <div className="space-y-1">
-                <Label className="text-xs">{isMixed ? 'Fixed rate (%)' : 'Annual interest rate (%)'}</Label>
+                <Label className="text-xs">{isMixed ? t('mortgage.fixedRate') : t('mortgage.annualRate')}</Label>
                 <Input type="number" step="0.01" placeholder="2.5" {...register('annualRate')} />
                 {errors.annualRate && <p className="text-xs text-destructive">{errors.annualRate.message}</p>}
               </div>
               {isMixed && (
                 <div className="space-y-1">
-                  <Label className="text-xs">Fixed period (years)<InfoTooltip text="How long your rate stays fixed before switching to variable." /></Label>
+                  <Label className="text-xs">{t('mortgage.fixedPeriod')}<InfoTooltip text={t('mortgage.fixedPeriodTooltip')} /></Label>
                   <Input type="number" placeholder="10" min="1" max="30" {...register('fixedPeriodYears')} />
                   {errors.fixedPeriodYears && <p className="text-xs text-destructive">{errors.fixedPeriodYears.message}</p>}
                 </div>
@@ -352,10 +354,10 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
           {isVariable && !region && (
             <div className="space-y-2">
               <p className="text-xs text-amber-600 p-2 rounded bg-amber-50 border border-amber-200">
-                Set your country when creating the house for reference rate details.
+                {t('mortgage.noCountryWarning')}
               </p>
               <div className="space-y-1">
-                <Label className="text-xs">Annual interest rate (%)</Label>
+                <Label className="text-xs">{t('mortgage.annualRate')}</Label>
                 <Input type="number" step="0.01" placeholder="3.5" {...register('annualRate')} />
               </div>
             </div>
@@ -365,11 +367,11 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
           {showVariableFields && (
             <div className="space-y-3 p-3 rounded-lg border bg-muted/30">
               <p className="text-xs font-medium text-muted-foreground">
-                {isMixed ? 'After the fixed period' : 'Variable rate breakdown'}
+                {isMixed ? t('mortgage.afterFixedPeriod') : t('mortgage.variableBreakdown')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Reference rate<InfoTooltip text="The base rate your bank uses (e.g., Euribor). Your bank adds a spread on top of this." /></Label>
+                  <Label className="text-xs">{t('mortgage.referenceRate')}<InfoTooltip text={t('mortgage.referenceRateTooltip')} /></Label>
                   <Select {...register('referenceRateId')} className="h-9 text-sm">
                     {availableRates.map((r) => (
                       <option key={r.id} value={r.id}>{r.label}</option>
@@ -377,55 +379,55 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Current value (%)</Label>
+                  <Label className="text-xs">{t('mortgage.currentValue')}</Label>
                   <Input type="number" step="0.01" placeholder="3.2" {...register('currentReferenceRate')} />
                   {errors.currentReferenceRate && <p className="text-xs text-destructive">{errors.currentReferenceRate.message}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Spread / Margin (%)<InfoTooltip text="Your bank's fixed markup above the reference rate. Set in your contract and doesn't change." /></Label>
+                  <Label className="text-xs">{t('mortgage.spreadMargin')}<InfoTooltip text={t('mortgage.spreadTooltip')} /></Label>
                   <Input type="number" step="0.01" placeholder="0.9" {...register('spread')} />
                   {errors.spread && <p className="text-xs text-destructive">{errors.spread.message}</p>}
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Review frequency<InfoTooltip text="How often your bank recalculates your rate based on the current reference rate value." /></Label>
+                  <Label className="text-xs">{t('mortgage.reviewFrequency')}<InfoTooltip text={t('mortgage.reviewFrequencyTooltip')} /></Label>
                   <Select {...register('reviewFrequencyMonths')} className="h-9 text-sm">
-                    <option value="0">Immediate</option>
-                    <option value="3">Every 3 months</option>
-                    <option value="6">Every 6 months</option>
-                    <option value="12">Every 12 months</option>
+                    <option value="0">{t('mortgage.immediate')}</option>
+                    <option value="3">{t('mortgage.every3Months')}</option>
+                    <option value="6">{t('mortgage.every6Months')}</option>
+                    <option value="12">{t('mortgage.every12Months')}</option>
                   </Select>
                 </div>
               </div>
               {computedRate !== null && (
                 <p className="text-sm font-medium p-2 rounded bg-background">
-                  Your rate: {currentReferenceRate}% + {spread}% = <span className="text-primary">{computedRate}%</span>
+                  {t('mortgage.yourRatePlain', { ref: currentReferenceRate, spread, effective: computedRate })}
                 </p>
               )}
               {region === 'usa' && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Fixed intro period<InfoTooltip text="Years at the initial fixed rate before adjustments begin (e.g., 5 in a 5/1 ARM)." /></Label>
+                      <Label className="text-xs">{t('mortgage.fixedIntroPeriod')}<InfoTooltip text={t('mortgage.fixedIntroPeriodTooltip')} /></Label>
                       <Input type="number" placeholder="5" {...register('fixedIntroPeriodYears')} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Rate floor (%)<InfoTooltip text="Minimum rate your bank can charge, even if the index drops lower." /></Label>
+                      <Label className="text-xs">{t('mortgage.rateFloor')}<InfoTooltip text={t('mortgage.rateFloorTooltipUSA')} /></Label>
                       <Input type="number" step="0.01" placeholder="Optional" {...register('rateFloor')} />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Initial cap (%)<InfoTooltip text="Max rate change at the first adjustment after the fixed period." /></Label>
+                      <Label className="text-xs">{t('mortgage.initialCap')}<InfoTooltip text={t('mortgage.initialCapTooltip')} /></Label>
                       <Input type="number" step="0.1" {...register('initialAdjustmentCap')} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Periodic cap (%)<InfoTooltip text="Max rate change at each subsequent adjustment." /></Label>
+                      <Label className="text-xs">{t('mortgage.periodicCap')}<InfoTooltip text={t('mortgage.periodicCapTooltip')} /></Label>
                       <Input type="number" step="0.1" {...register('periodicAdjustmentCap')} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Lifetime cap (%)<InfoTooltip text="Max total rate increase over the life of the loan above your initial rate." /></Label>
+                      <Label className="text-xs">{t('mortgage.lifetimeCap')}<InfoTooltip text={t('mortgage.lifetimeCapTooltip')} /></Label>
                       <Input type="number" step="0.1" {...register('lifetimeCap')} />
                     </div>
                   </div>
@@ -433,7 +435,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
               )}
               {region === 'europe' && (
                 <div className="space-y-1">
-                  <Label className="text-xs">Rate floor (%)<InfoTooltip text="Minimum rate your bank can charge. Common in Spain (cláusula suelo)." /> <span className="text-muted-foreground">optional</span></Label>
+                  <Label className="text-xs">{t('mortgage.rateFloor')}<InfoTooltip text={t('mortgage.rateFloorTooltipEurope')} /> <span className="text-muted-foreground">{t('common.optional')}</span></Label>
                   <Input type="number" step="0.01" placeholder="e.g. 0" {...register('rateFloor')} />
                 </div>
               )}
@@ -446,41 +448,41 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
       {/* ── Section 3: Payment ── */}
       {!isEditing && (
       <div>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Payment</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">{t('mortgage.payment')}</p>
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Installment type<InfoTooltip text="Fixed: same payment every month (most common). Decreasing: higher first payments that go down over time." /></Label>
+              <Label className="text-xs">{t('mortgage.installmentType')}<InfoTooltip text={t('mortgage.installmentTooltip')} /></Label>
               <Select {...register('amortizationType')} className="h-9">
-                <option value="french">Fixed installment</option>
-                <option value="italian">Decreasing installment</option>
+                <option value="french">{t('mortgage.fixedInstallment')}</option>
+                <option value="italian">{t('mortgage.decreasingInstallment')}</option>
               </Select>
             </div>
             {isItalianForm ? (
               <div className="space-y-1">
-                <Label className="text-xs">First payment</Label>
+                <Label className="text-xs">{t('mortgage.firstPayment')}</Label>
                 <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm">
                   {(() => {
                     const p = parseFloat(principal)
                     const r = effectiveRate
-                    const t = parseInt(termYears)
-                    if (p > 0 && r && r > 0 && t > 0) {
-                      const principalPortion = Math.round((p * 100) / (t * 12))
+                    const ty = parseInt(termYears)
+                    if (p > 0 && r && r > 0 && ty > 0) {
+                      const principalPortion = Math.round((p * 100) / (ty * 12))
                       const interestPortion = Math.round(p * (r / 100 / 12) * 100)
                       return formatCurrency(principalPortion + interestPortion)
                     }
                     return '—'
                   })()}
                 </div>
-                <p className="text-xs text-muted-foreground">Decreases each month as interest reduces</p>
+                <p className="text-xs text-muted-foreground">{t('mortgage.decreasesMonthly')}</p>
               </div>
             ) : (
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs">Monthly payment</Label>
+                  <Label className="text-xs">{t('mortgage.monthlyPayment')}</Label>
                   <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
                     <input type="checkbox" {...register('useCustomPayment')} className="rounded" />
-                    Custom
+                    {t('mortgage.customPayment')}
                   </label>
                 </div>
                 {useCustomPayment ? (
@@ -495,7 +497,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
           </div>
           {paymentTooLow && (
             <p className="text-xs text-amber-600">
-              Payment is less than monthly interest ({formatCurrency(monthlyInterest)}). The balance will never decrease.
+              {t('mortgage.paymentTooLow', { amount: formatCurrency(monthlyInterest) })}
             </p>
           )}
         </div>
@@ -504,12 +506,12 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
 
       {isEditing && (
         <p className="text-xs text-muted-foreground text-center">
-          To change loan amount, term, rate type, or start date — delete this mortgage and create a new one.
+          {t('mortgage.editModeNote')}
         </p>
       )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : defaultValues ? 'Update Mortgage' : 'Set Up Mortgage'}
+        {isSubmitting ? t('common.saving') : defaultValues ? t('mortgage.updateMortgage') : t('mortgage.setUpMortgageBtn')}
       </Button>
     </form>
   )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useHousehold } from '@/context/HouseholdContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { friendlyError } from '@/lib/utils'
 import { SUPPORTED_COUNTRIES } from '@/lib/mortgage-country'
 
 export function OnboardingPage() {
+  const { t } = useTranslation()
   const { userProfile, createHouse } = useHousehold()
   const [houseName, setHouseName] = useState('')
   const [country, setCountry] = useState('')
@@ -30,7 +32,7 @@ export function OnboardingPage() {
         selectedCountry?.currency
       )
     } catch (err) {
-      setError(friendlyError(err, 'Failed to create house. Please try again.'))
+      setError(friendlyError(err))
     } finally {
       setLoading(false)
     }
@@ -44,20 +46,20 @@ export function OnboardingPage() {
             <Home className="h-6 w-6 text-primary-foreground" />
           </div>
           <CardTitle className="text-xl">
-            Welcome{userProfile?.displayName ? `, ${userProfile.displayName}` : ''}!
+            {userProfile?.displayName ? t('onboarding.welcomeName', { name: userProfile.displayName }) : t('onboarding.welcome')}
           </CardTitle>
           <CardDescription>
-            Name your house to start tracking every purchase cost.
+            {t('onboarding.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="houseName">House name</Label>
+              <Label htmlFor="houseName">{t('onboarding.houseName')}</Label>
               <Input
                 id="houseName"
                 type="text"
-                placeholder="e.g. 123 Main St or Our Place"
+                placeholder={t('onboarding.houseNamePlaceholder')}
                 value={houseName}
                 onChange={(e) => setHouseName(e.target.value)}
                 autoFocus
@@ -66,20 +68,20 @@ export function OnboardingPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
+              <Label htmlFor="country">{t('onboarding.country')}</Label>
               <Select
                 id="country"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
               >
-                <option value="">Select country...</option>
+                <option value="">{t('onboarding.selectCountry')}</option>
                 {SUPPORTED_COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code}>{c.name}</option>
                 ))}
               </Select>
               {selectedCountry && (
                 <p className="text-xs text-muted-foreground">
-                  Currency: {selectedCountry.currency}
+                  {t('onboarding.currency', { code: selectedCountry.currency })}
                 </p>
               )}
             </div>
@@ -87,7 +89,7 @@ export function OnboardingPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={loading || !houseName.trim()}>
-              {loading ? 'Creating...' : 'Create House'}
+              {loading ? t('common.creating') : t('onboarding.createHouse')}
             </Button>
           </form>
         </CardContent>

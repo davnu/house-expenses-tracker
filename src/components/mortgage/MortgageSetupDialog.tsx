@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { MortgageSetupForm } from './MortgageSetupForm'
 import { useMortgage } from '@/context/MortgageContext'
@@ -11,6 +12,7 @@ interface MortgageSetupDialogProps {
 }
 
 export function MortgageSetupDialog({ open, onOpenChange }: MortgageSetupDialogProps) {
+  const { t } = useTranslation()
   const { mortgage, saveMortgage } = useMortgage()
   const [error, setError] = useState('')
 
@@ -20,7 +22,7 @@ export function MortgageSetupDialog({ open, onOpenChange }: MortgageSetupDialogP
       await saveMortgage(config)
       onOpenChange(false)
     } catch (err) {
-      setError(friendlyError(err, 'Failed to save mortgage. Please try again.'))
+      setError(friendlyError(err))
     }
   }
 
@@ -28,7 +30,7 @@ export function MortgageSetupDialog({ open, onOpenChange }: MortgageSetupDialogP
     <Dialog open={open} onOpenChange={(v) => { setError(''); onOpenChange(v) }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mortgage ? 'Edit Mortgage' : 'Set Up Your Mortgage'}</DialogTitle>
+          <DialogTitle>{mortgage ? t('mortgage.updateMortgage') : t('mortgage.setUpMortgageBtn')}</DialogTitle>
         </DialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <MortgageSetupForm defaultValues={mortgage} isEditing={!!mortgage} onSubmit={handleSubmit} />

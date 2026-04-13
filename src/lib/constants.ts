@@ -1,19 +1,36 @@
-export const EXPENSE_CATEGORIES = [
-  { value: 'down_payment', label: 'Down Payment', hint: 'Deposit paid to the seller' },
-  { value: 'taxes', label: 'Taxes & Stamp Duty', hint: 'Property transfer tax, stamp duty, VAT' },
-  { value: 'notary_legal', label: 'Notary & Legal', hint: 'Notary, solicitor, lawyer, conveyancing' },
-  { value: 'real_estate_agent', label: 'Real Estate Agent', hint: 'Agent or broker commission' },
-  { value: 'financial_advisor', label: 'Financial Advisor', hint: 'Independent financial advice' },
-  { value: 'valuation', label: 'Valuation & Appraisal', hint: 'Bank valuation, property appraisal' },
-  { value: 'home_inspection', label: 'Home Inspection & Survey', hint: 'Structural survey, pest inspection' },
-  { value: 'title_registry', label: 'Title & Registry', hint: 'Title insurance, title search, land registry' },
-  { value: 'mortgage_fees', label: 'Mortgage Fees', hint: 'Arrangement fee, origination fee, bank charges' },
-  { value: 'insurance', label: 'Insurance', hint: 'Homeowner\'s insurance, life insurance for mortgage' },
-  { value: 'renovations', label: 'Renovations', hint: 'Repairs, improvements, remodeling' },
-  { value: 'furniture', label: 'Furniture & Appliances', hint: 'Furnishing and equipping the home' },
-  { value: 'moving', label: 'Moving Costs', hint: 'Moving company, transport, storage' },
-  { value: 'other', label: 'Other', hint: 'Energy certificate, permits, miscellaneous' },
+import i18next from 'i18next'
+
+export const CATEGORY_VALUES = [
+  'down_payment', 'taxes', 'notary_legal', 'real_estate_agent', 'financial_advisor',
+  'valuation', 'home_inspection', 'title_registry', 'mortgage_fees', 'insurance',
+  'renovations', 'furniture', 'moving', 'other',
 ] as const
+
+/** Returns translated category objects -- call inside render so translations are reactive */
+export function getExpenseCategories() {
+  return CATEGORY_VALUES.map((value) => ({
+    value,
+    label: i18next.t(`categories.${value}.label`),
+    hint: i18next.t(`categories.${value}.hint`),
+  }))
+}
+
+/** Shorthand for getting a translated category label */
+export function getCategoryLabel(value: string): string {
+  return i18next.t(`categories.${value}.label`, { defaultValue: value })
+}
+
+/** Shorthand for getting a translated category hint */
+export function getCategoryHint(value: string): string {
+  return i18next.t(`categories.${value}.hint`, { defaultValue: '' })
+}
+
+// Keep EXPENSE_CATEGORIES as a static reference for backwards compatibility (values only)
+export const EXPENSE_CATEGORIES = CATEGORY_VALUES.map((value) => ({
+  value,
+  get label() { return i18next.t(`categories.${value}.label`) },
+  get hint() { return i18next.t(`categories.${value}.hint`) },
+}))
 
 export const CATEGORY_COLORS: Record<string, string> = {
   down_payment: '#dc2626',
@@ -58,6 +75,10 @@ export const ACCEPTED_FILE_TYPES = [
 export const SHARED_PAYER = 'shared' as const
 export const SHARED_PAYER_COLOR = '#6366f1'
 export const SHARED_PAYER_LABEL = 'Shared'
+/** Translated "Shared" label -- call during render */
+export function getSharedPayerLabel(): string { return i18next.t('common.shared') }
+/** Translated "Former member" label -- call during render */
+export function getFormerMemberLabel(): string { return i18next.t('common.formerMember') }
 
 export const MEMBER_COLOR_PALETTE = [
   '#2a9d90',

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Trash2, TrendingDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,11 +8,12 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useMortgage } from '@/context/MortgageContext'
 import { calculateMortgageImpact } from '@/lib/mortgage-utils'
-import { formatCurrency, cn } from '@/lib/utils'
+import { formatCurrency, cn, getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { MortgageConfig, ExtraRepayment, RepaymentMode } from '@/types/mortgage'
 
 export function ExtraRepaymentsCard() {
+  const { t } = useTranslation()
   const { mortgage, saveMortgage } = useMortgage()
   const [adding, setAdding] = useState(false)
   const [newDate, setNewDate] = useState('')
@@ -36,15 +38,15 @@ export function ExtraRepaymentsCard() {
     setAddError('')
     const amountVal = parseFloat(newAmount)
     if (isNaN(amountVal) || amountVal <= 0) {
-      setAddError('Amount must be greater than 0')
+      setAddError(t('mortgage.amountGreaterThanZero'))
       return
     }
     if (newDate < mortgage.startDate) {
-      setAddError('Date must be on or after the mortgage start date')
+      setAddError(t('mortgage.dateOnOrAfterStart'))
       return
     }
     if (newRecurring && newEndDate && newEndDate <= newDate) {
-      setAddError('End date must be after start date')
+      setAddError(t('mortgage.endDateAfterStart'))
       return
     }
     const entry: ExtraRepayment = {
@@ -80,11 +82,11 @@ export function ExtraRepaymentsCard() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Extra Repayments</CardTitle>
+        <CardTitle className="text-base">{t('mortgage.extraRepayments')}</CardTitle>
         {!adding && (
           <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
             <Plus className="h-3.5 w-3.5 mr-1" />
-            Add Payment
+            {t('mortgage.addPayment')}
           </Button>
         )}
       </CardHeader>
@@ -95,15 +97,15 @@ export function ExtraRepaymentsCard() {
             <TrendingDown className="h-5 w-5 text-green-600 shrink-0" />
             <div className="text-sm">
               <p className="font-medium text-green-800">
-                Save {formatCurrency(impact.interestSaved)} in interest
+                {t('mortgage.saveInterest', { amount: formatCurrency(impact.interestSaved) })}
               </p>
               {impact.monthsSaved > 0 ? (
                 <p className="text-green-600 text-xs">
-                  Pay off {impact.monthsSaved} months early ({format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy')} instead of {format(new Date(impact.originalPayoffDate + '-01'), 'MMM yyyy')})
+                  {t('mortgage.payOffEarly', { months: impact.monthsSaved, newDate: format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() }), oldDate: format(new Date(impact.originalPayoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() }) })}
                 </p>
               ) : (
                 <p className="text-green-600 text-xs">
-                  Same payoff date, lower monthly payments
+                  {t('mortgage.samePayoffLowerPayments')}
                 </p>
               )}
             </div>
@@ -117,15 +119,15 @@ export function ExtraRepaymentsCard() {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{formatCurrency(extra.amount)}</span>
                 <Badge variant={extra.recurring ? 'default' : 'outline'} className="text-xs">
-                  {extra.recurring ? 'Monthly' : 'One-time'}
+                  {extra.recurring ? t('mortgage.monthly') : t('mortgage.oneTime')}
                 </Badge>
                 <Badge variant="secondary" className="text-xs">
-                  {(extra.mode ?? 'reduce_term') === 'reduce_term' ? 'Reduce term' : 'Reduce payment'}
+                  {(extra.mode ?? 'reduce_term') === 'reduce_term' ? t('mortgage.reduceTerm') : t('mortgage.reducePayment')}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                {extra.recurring ? 'From' : 'On'} {format(new Date(extra.date), 'MMM yyyy')}
-                {extra.endDate && ` until ${format(new Date(extra.endDate), 'MMM yyyy')}`}
+                {extra.recurring ? t('common.from') : t('common.on')} {format(new Date(extra.date), 'MMM yyyy', { locale: getDateLocale() })}
+                {extra.endDate && ` ${t('mortgage.until', { date: format(new Date(extra.endDate), 'MMM yyyy', { locale: getDateLocale() }) })}`}
               </p>
             </div>
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(extra.id)}>
@@ -139,7 +141,7 @@ export function ExtraRepaymentsCard() {
           <div className="p-3 rounded-md border border-dashed space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Date</Label>
+                <Label className="text-xs">{t('common.date')}</Label>
                 <Input
                   type="date"
                   value={newDate}
@@ -148,7 +150,7 @@ export function ExtraRepaymentsCard() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Amount</Label>
+                <Label className="text-xs">{t('common.amount')}</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -172,7 +174,7 @@ export function ExtraRepaymentsCard() {
                     newMode === 'reduce_term' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
                   )}
                 >
-                  Reduce term
+                  {t('mortgage.reduceTerm')}
                 </button>
                 <button
                   type="button"
@@ -182,13 +184,13 @@ export function ExtraRepaymentsCard() {
                     newMode === 'reduce_payment' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'
                   )}
                 >
-                  Reduce payment
+                  {t('mortgage.reducePayment')}
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
                 {newMode === 'reduce_term'
-                  ? 'Keep same monthly payment, pay off sooner'
-                  : 'Keep same end date, lower monthly payment'}
+                  ? t('mortgage.keepSamePayment')
+                  : t('mortgage.keepSameEndDate')}
               </p>
             </div>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -198,32 +200,32 @@ export function ExtraRepaymentsCard() {
                 onChange={(e) => setNewRecurring(e.target.checked)}
                 className="rounded"
               />
-              Recurring every month from this date
+              {t('mortgage.recurringMonthly')}
             </label>
             {newRecurring && (
               <div className="space-y-1">
-                <Label className="text-xs">End date (optional)</Label>
+                <Label className="text-xs">{t('mortgage.endDateOptional')}</Label>
                 <Input
                   type="date"
                   value={newEndDate}
                   min={newDate || undefined}
                   onChange={(e) => setNewEndDate(e.target.value)}
                   className="sm:h-8 sm:text-sm"
-                  placeholder="Leave empty for no end date"
+                  placeholder={t('mortgage.endDateEmpty')}
                 />
               </div>
             )}
             {addError && <p className="text-xs text-destructive">{addError}</p>}
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd} disabled={!newDate || !newAmount}>Add</Button>
-              <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setAddError('') }}>Cancel</Button>
+              <Button size="sm" onClick={handleAdd} disabled={!newDate || !newAmount}>{t('common.add')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setAddError('') }}>{t('common.cancel')}</Button>
             </div>
           </div>
         )}
 
         {extras.length === 0 && !adding && (
           <p className="text-xs text-muted-foreground text-center py-2">
-            No extra payments. Add one to see how much you can save in interest.
+            {t('mortgage.noExtraPayments')}
           </p>
         )}
       </CardContent>

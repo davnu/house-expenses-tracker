@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, Plus, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -7,6 +8,7 @@ import { CreateHouseDialog } from './CreateHouseDialog'
 
 export function HouseSwitcher() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { house, houses, switchHouse } = useHousehold()
   const [open, setOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
@@ -90,7 +92,7 @@ export function HouseSwitcher() {
     try {
       await switchHouse(houseId)
       close()
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch {
       // Switch failed — stay on current house
       close()
@@ -108,7 +110,7 @@ export function HouseSwitcher() {
   if (!multiHouse) {
     return (
       <div className="px-3 py-4">
-        <h1 className="text-lg font-bold truncate">{house?.name ?? 'House Expenses'}</h1>
+        <h1 className="text-lg font-bold truncate">{house?.name ?? t('common.houseExpenses')}</h1>
       </div>
     )
   }
@@ -122,11 +124,11 @@ export function HouseSwitcher() {
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label={`Current house: ${house?.name ?? 'House Expenses'}. Switch house`}
+        aria-label={`Current house: ${house?.name ?? t('common.houseExpenses')}. Switch house`}
         className="flex items-center gap-1.5 text-lg font-bold w-full text-left cursor-pointer hover:text-primary transition-colors"
         onClick={handleOpen}
       >
-        <span className="truncate">{house?.name ?? 'House Expenses'}</span>
+        <span className="truncate">{house?.name ?? t('common.houseExpenses')}</span>
         <ChevronDown className={cn(
           'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
           open && 'rotate-180',
@@ -176,7 +178,7 @@ export function HouseSwitcher() {
               }}
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
-              <span>Create New House</span>
+              <span>{t('settings.createNewHouse')}</span>
             </button>
           </div>
         </div>

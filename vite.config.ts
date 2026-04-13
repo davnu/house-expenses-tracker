@@ -17,6 +17,7 @@ export default defineConfig({
           name: 'unit',
           include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
           environment: 'jsdom',
+          setupFiles: ['./src/test-setup.ts'],
         },
         resolve: {
           alias: {

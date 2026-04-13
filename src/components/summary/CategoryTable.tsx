@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
-import { EXPENSE_CATEGORIES } from '@/lib/constants'
+import { getCategoryLabel } from '@/lib/constants'
 import type { Expense } from '@/types/expense'
 
 interface CategoryTableProps {
@@ -9,10 +10,8 @@ interface CategoryTableProps {
   mortgagePaid?: number
 }
 
-const categoryLabel = (val: string) =>
-  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
-
 export function CategoryTable({ expenses, mortgagePaid = 0 }: CategoryTableProps) {
+  const { t } = useTranslation()
   const data = useMemo(() => {
     const byCat: Record<string, { total: number; count: number }> = {}
     const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0)
@@ -27,7 +26,7 @@ export function CategoryTable({ expenses, mortgagePaid = 0 }: CategoryTableProps
     const rows = Object.entries(byCat)
       .map(([cat, { total, count }]) => ({
         category: cat,
-        label: categoryLabel(cat),
+        label: getCategoryLabel(cat),
         total,
         count,
         percent: grandTotal > 0 ? (total / grandTotal) * 100 : 0,
@@ -42,17 +41,17 @@ export function CategoryTable({ expenses, mortgagePaid = 0 }: CategoryTableProps
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Category Breakdown</CardTitle>
+        <CardTitle>{t('summary.categoryBreakdown')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-muted-foreground">
-                <th className="text-left py-2 font-medium">Category</th>
-                <th className="text-right py-2 font-medium">Count</th>
-                <th className="text-right py-2 font-medium">Total</th>
-                <th className="text-right py-2 font-medium">%</th>
+                <th className="text-left py-2 font-medium">{t('filters.category')}</th>
+                <th className="text-right py-2 font-medium">{t('summary.count')}</th>
+                <th className="text-right py-2 font-medium">{t('common.total')}</th>
+                <th className="text-right py-2 font-medium">{t('summary.percent')}</th>
               </tr>
             </thead>
             <tbody>
@@ -66,8 +65,8 @@ export function CategoryTable({ expenses, mortgagePaid = 0 }: CategoryTableProps
               ))}
               {data.hasMortgage && (
                 <tr className="border-b">
-                  <td className="py-2 font-medium">Mortgage</td>
-                  <td className="py-2 text-right text-muted-foreground">—</td>
+                  <td className="py-2 font-medium">{t('nav.mortgage')}</td>
+                  <td className="py-2 text-right text-muted-foreground">&mdash;</td>
                   <td className="py-2 text-right font-medium">{formatCurrency(mortgagePaid)}</td>
                   <td className="py-2 text-right text-muted-foreground">
                     {data.grandTotal > 0 ? ((mortgagePaid / data.grandTotal) * 100).toFixed(1) : 0}%
@@ -77,7 +76,7 @@ export function CategoryTable({ expenses, mortgagePaid = 0 }: CategoryTableProps
             </tbody>
             <tfoot>
               <tr className="font-bold text-base border-t-2">
-                <td className="py-2" colSpan={2}>Total</td>
+                <td className="py-2" colSpan={2}>{t('common.total')}</td>
                 <td className="py-2 text-right">{formatCurrency(data.grandTotal)}</td>
                 <td className="py-2 text-right">100%</td>
               </tr>

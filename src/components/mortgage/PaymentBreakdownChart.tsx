@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { AmortizationRow } from '@/types/mortgage'
 
@@ -11,6 +13,7 @@ interface PaymentBreakdownChartProps {
 }
 
 export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdownChartProps) {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const data = useMemo(() => {
     // Sample every 3 months, but always include rate change months and extra payment months
@@ -32,7 +35,7 @@ export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdo
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment Breakdown Over Time</CardTitle>
+        <CardTitle>{t('mortgage.paymentBreakdownOverTime')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
@@ -42,11 +45,11 @@ export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdo
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
             <Tooltip
               formatter={(value, name) =>
-                [`€${Number(value).toLocaleString()}`, String(name) === 'principal' ? 'Principal' : 'Interest']
+                [`€${Number(value).toLocaleString()}`, String(name) === 'principal' ? t('mortgage.principal') : t('mortgage.interest')]
               }
-              labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy')}
+              labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() })}
             />
-            <Legend formatter={(value) => value === 'principal' ? 'Principal' : 'Interest'} />
+            <Legend formatter={(value) => value === 'principal' ? t('mortgage.principal') : t('mortgage.interest')} />
             <Area
               type="monotone"
               dataKey="interest"
@@ -69,7 +72,7 @@ export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdo
                 stroke="#171717"
                 strokeWidth={2}
                 strokeDasharray="4 4"
-                label={{ value: 'Now', position: 'top', fill: '#171717', fontSize: 12 }}
+                label={{ value: t('mortgage.nowMarker'), position: 'top', fill: '#171717', fontSize: 12 }}
               />
             )}
           </AreaChart>

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import { REFERENCE_RATES, getNextReviewDate } from '@/lib/mortgage-country'
 import { getMixedSwitchDate, isMixedInFixedPeriod } from '@/lib/mortgage-utils'
@@ -13,6 +14,7 @@ interface MortgageHeroProps {
 }
 
 export function MortgageHero({ config, stats }: MortgageHeroProps) {
+  const { t } = useTranslation()
   const vr = config.variableRate
   const mr = config.mixedRate
   const isItalian = (config.amortizationType ?? 'french') === 'italian'
@@ -62,25 +64,25 @@ export function MortgageHero({ config, stats }: MortgageHeroProps) {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-1">
-              {isItalian ? 'Current Payment' : 'Monthly Payment'}
+              {isItalian ? t('mortgage.currentPayment') : t('mortgage.monthlyPayment')}
             </p>
             <p className="text-4xl font-bold tracking-tight">
               {formatCurrency(isItalian ? (stats.currentMonthPrincipal + stats.currentMonthInterest) : config.monthlyPayment)}
             </p>
             {isItalian && (
-              <p className="text-xs text-muted-foreground mt-1">Decreasing installment — changes monthly</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('mortgage.decreasingNote')}</p>
             )}
           </div>
 
           {/* Current rate */}
           <div className="text-right">
-            <p className="text-sm text-muted-foreground mb-1">Current Rate</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('mortgage.currentRate')}</p>
             <div className="flex items-center gap-2 justify-end">
               <span className="text-2xl font-bold">{currentRate.rate}%</span>
               <Badge variant="secondary">
-                {mr ? (inFixedPeriod ? 'fixed' : 'variable') : currentRate.type}
+                {mr ? (inFixedPeriod ? t('common.fixed') : t('common.variable')) : t(`common.${currentRate.type}`)}
               </Badge>
-              {mr && <Badge variant="outline">mixed</Badge>}
+              {mr && <Badge variant="outline">{t('common.mixed')}</Badge>}
             </div>
             {/* Rate decomposition for variable period */}
             {!inFixedPeriod && currentRate.refRate !== undefined && currentRate.spread !== undefined && (
@@ -92,13 +94,13 @@ export function MortgageHero({ config, stats }: MortgageHeroProps) {
             {mr && switchDate && (
               <p className="text-xs text-muted-foreground mt-1">
                 {inFixedPeriod
-                  ? `Fixed until ${format(new Date(switchDate), 'MMM yyyy')}, then variable`
-                  : `Variable since ${format(new Date(switchDate), 'MMM yyyy')}`}
+                  ? t('mortgage.fixedUntil', { date: format(new Date(switchDate), 'MMM yyyy', { locale: getDateLocale() }) })
+                  : t('mortgage.variableSince', { date: format(new Date(switchDate), 'MMM yyyy', { locale: getDateLocale() }) })}
               </p>
             )}
             {nextReview && (
               <p className="text-xs text-muted-foreground mt-1">
-                Next review: <span className="font-medium text-foreground">{format(new Date(nextReview), 'MMM yyyy')}</span>
+                {t('mortgage.nextReview', { date: format(new Date(nextReview), 'MMM yyyy', { locale: getDateLocale() }) })}
               </p>
             )}
           </div>
@@ -109,10 +111,10 @@ export function MortgageHero({ config, stats }: MortgageHeroProps) {
           <div className="flex items-center justify-between text-sm">
             <span>
               <span className="font-medium">{formatCurrency(stats.principalPaidSoFar)}</span>
-              <span className="text-muted-foreground"> paid</span>
+              <span className="text-muted-foreground"> {t('mortgage.paid')}</span>
             </span>
             <span className="text-muted-foreground">
-              {formatCurrency(stats.remainingBalance)} remaining
+              {formatCurrency(stats.remainingBalance)} {t('mortgage.remaining')}
             </span>
           </div>
           <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -125,15 +127,16 @@ export function MortgageHero({ config, stats }: MortgageHeroProps) {
             />
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{stats.progressPercent.toFixed(1)}% of {formatCurrency(config.principal)}</span>
+            <span>{t('mortgage.percentOfPrincipal', { percent: stats.progressPercent.toFixed(1), principal: formatCurrency(config.principal) })}</span>
             <span>
-              {yearsRemaining > 0 && `${yearsRemaining}y `}{monthsRem}m remaining
+              {yearsRemaining > 0
+                ? t('mortgage.timeRemaining', { years: yearsRemaining, months: monthsRem })
+                : t('mortgage.timeRemainingMonths', { months: monthsRem })}
             </span>
           </div>
           {(stats.principalPaidSoFar > 0 || stats.interestPaidSoFar > 0) && (
             <p className="text-xs text-muted-foreground pt-1">
-              Total paid: <span className="font-medium text-foreground">{formatCurrency(stats.principalPaidSoFar + stats.interestPaidSoFar)}</span>
-              <span> ({formatCurrency(stats.principalPaidSoFar)} principal + {formatCurrency(stats.interestPaidSoFar)} interest)</span>
+              {t('mortgage.totalPaid', { total: formatCurrency(stats.principalPaidSoFar + stats.interestPaidSoFar), principal: formatCurrency(stats.principalPaidSoFar), interest: formatCurrency(stats.interestPaidSoFar) })}
             </p>
           )}
         </div>

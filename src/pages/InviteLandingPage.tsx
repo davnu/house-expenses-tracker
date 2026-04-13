@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router'
 import { doc, getDoc } from 'firebase/firestore'
+import { useTranslation } from 'react-i18next'
 import { db } from '@/data/firebase'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { LoginPage } from './LoginPage'
@@ -9,6 +10,7 @@ import { LoadingScreen } from '@/components/ui/loading'
 import type { Invite } from '@/types/expense'
 
 export function InviteLandingPage() {
+  const { t } = useTranslation()
   const { inviteId } = useParams<{ inviteId: string }>()
   const [invite, setInvite] = useState<Invite | null>(null)
   const [loading, setLoading] = useState(true)
@@ -35,8 +37,8 @@ export function InviteLandingPage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <AlertCircle className="h-10 w-10 mx-auto mb-2 text-destructive" />
-            <CardTitle>Invalid Invite</CardTitle>
-            <CardDescription>This invite link is invalid or has been removed.</CardDescription>
+            <CardTitle>{t('invite.invalidInvite')}</CardTitle>
+            <CardDescription>{t('invite.invalidInviteDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -49,8 +51,8 @@ export function InviteLandingPage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <AlertCircle className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-            <CardTitle>Invite Expired</CardTitle>
-            <CardDescription>This invite link has expired. Ask the house owner for a new one.</CardDescription>
+            <CardTitle>{t('invite.inviteExpired')}</CardTitle>
+            <CardDescription>{t('invite.inviteExpiredDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -63,13 +65,13 @@ export function InviteLandingPage() {
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <UserPlus className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-            <CardTitle>Invite Already Used</CardTitle>
-            <CardDescription>This invite has already been accepted.</CardDescription>
+            <CardTitle>{t('invite.inviteAlreadyUsed')}</CardTitle>
+            <CardDescription>{t('invite.inviteAlreadyUsedDesc')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
     )
   }
 
-  return <LoginPage subtitle={`Sign in or create an account to join "${invite.houseName}"`} />
+  return <LoginPage subtitle={t('invite.signInToJoin', { houseName: invite.houseName })} />
 }

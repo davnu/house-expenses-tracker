@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Filter, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useHousehold } from '@/context/HouseholdContext'
-import { EXPENSE_CATEGORIES, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { EXPENSE_CATEGORIES, SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { DashboardFilters as Filters } from '@/lib/expense-utils'
 import type { ExpenseCategory } from '@/types/expense'
@@ -14,14 +15,6 @@ interface DashboardFiltersProps {
   onChange: (filters: Filters) => void
   usedCategories: ExpenseCategory[]
 }
-
-const DATE_PRESETS = [
-  { label: 'All time', value: 'all' },
-  { label: 'This month', value: 'month' },
-  { label: 'Last 3 months', value: '3months' },
-  { label: 'This year', value: 'year' },
-  { label: 'Custom', value: 'custom' },
-]
 
 function getPresetDates(preset: string): { start?: string; end?: string } {
   const today = new Date()
@@ -39,9 +32,18 @@ function getPresetDates(preset: string): { start?: string; end?: string } {
 }
 
 export function DashboardFilters({ filters, onChange, usedCategories }: DashboardFiltersProps) {
+  const { t } = useTranslation()
   const { members } = useHousehold()
   const [expanded, setExpanded] = useState(false)
   const [datePreset, setDatePreset] = useState('all')
+
+  const DATE_PRESETS = [
+    { label: t('filters.allTime'), value: 'all' },
+    { label: t('filters.thisMonth'), value: 'month' },
+    { label: t('filters.last3Months'), value: '3months' },
+    { label: t('filters.thisYear'), value: 'year' },
+    { label: t('filters.custom'), value: 'custom' },
+  ]
 
   const activeCount = [filters.dateStart, filters.payer, filters.category].filter(Boolean).length
 
@@ -65,7 +67,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
       >
         <div className="flex items-center gap-2 text-muted-foreground">
           <Filter className="h-4 w-4" />
-          <span>Filters</span>
+          <span>{t('filters.filters')}</span>
           {activeCount > 0 && (
             <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 font-medium">
               {activeCount}
@@ -79,7 +81,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
         <div className="px-4 pb-4 space-y-3 border-t pt-3">
           {/* Date range */}
           <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Date range</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t('filters.dateRange')}</p>
             <div className="flex gap-1.5 flex-wrap">
               {DATE_PRESETS.map((p) => (
                 <button
@@ -106,7 +108,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
                   className="text-xs h-8"
                   aria-label="Start date"
                 />
-                <span className="text-xs text-muted-foreground hidden sm:block">to</span>
+                <span className="text-xs text-muted-foreground hidden sm:block">{t('common.to')}</span>
                 <Input
                   type="date"
                   value={filters.dateEnd ?? ''}
@@ -122,7 +124,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
           {/* Person */}
           {members.length > 1 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Person</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{t('filters.person')}</p>
               <div className="flex gap-1.5 flex-wrap">
                 <button
                   onClick={() => onChange({ ...filters, payer: undefined })}
@@ -133,7 +135,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
                       : 'border-input hover:bg-accent'
                   )}
                 >
-                  All
+                  {t('common.all')}
                 </button>
                 <button
                   onClick={() => onChange({ ...filters, payer: filters.payer === SHARED_PAYER ? undefined : SHARED_PAYER })}
@@ -146,7 +148,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
                   style={filters.payer === SHARED_PAYER ? { backgroundColor: SHARED_PAYER_COLOR } : undefined}
                 >
                   <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: SHARED_PAYER_COLOR }} />
-                  {SHARED_PAYER_LABEL}
+                  {getSharedPayerLabel()}
                 </button>
                 {members.map((m) => (
                   <button
@@ -171,7 +173,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
           {/* Category */}
           {usedCategories.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Category</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{t('filters.category')}</p>
               <div className="flex gap-1.5 flex-wrap">
                 <button
                   onClick={() => onChange({ ...filters, category: undefined })}
@@ -182,7 +184,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
                       : 'border-input hover:bg-accent'
                   )}
                 >
-                  All
+                  {t('common.all')}
                 </button>
                 {EXPENSE_CATEGORIES
                   .filter((c) => usedCategories.includes(c.value as ExpenseCategory))
@@ -208,7 +210,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
           {activeCount > 0 && (
             <Button size="sm" variant="ghost" onClick={clearAll} className="text-xs">
               <X className="h-3 w-3 mr-1" />
-              Clear all filters
+              {t('filters.clearAllFilters')}
             </Button>
           )}
         </div>

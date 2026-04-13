@@ -58,7 +58,6 @@ vi.mock('@/context/HouseholdContext', () => ({
   }),
 }))
 
-import React from 'react'
 import { FolderView } from './FolderView'
 import type { DocFolder } from '@/types/document'
 
@@ -211,7 +210,7 @@ describe('FolderView sorting', () => {
       }
       mockFolders.current = [testFolder, secondFolder]
 
-      const { rerender, container } = render(
+      const { rerender } = render(
         <FolderView folder={testFolder} onBack={vi.fn()} onNavigate={onNavigate} />
       )
 

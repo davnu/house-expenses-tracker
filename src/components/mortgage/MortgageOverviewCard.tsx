@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import { getMortgageStats, calculateMortgageImpact } from '@/lib/mortgage-utils'
 import type { MortgageConfig } from '@/types/mortgage'
@@ -10,30 +11,31 @@ interface MortgageOverviewCardProps {
 }
 
 export function MortgageOverviewCard({ config }: MortgageOverviewCardProps) {
+  const { t } = useTranslation()
   const stats = useMemo(() => getMortgageStats(config), [config])
   const impact = useMemo(() => calculateMortgageImpact(config), [config])
 
   const details = [
-    { label: 'Loan Amount', value: formatCurrency(config.principal) },
-    { label: 'Term', value: `${config.termYears} years` },
-    { label: 'Start', value: format(new Date(config.startDate), 'MMM yyyy') },
-    { label: 'Payoff', value: format(new Date(stats.payoffDate + '-01'), 'MMM yyyy') },
-    { label: 'Total Interest', value: formatCurrency(stats.totalInterest) },
-    { label: 'Total Cost (P+I)', value: formatCurrency(stats.totalPayments) },
+    { label: t('mortgage.loanAmount'), value: formatCurrency(config.principal) },
+    { label: t('mortgage.term'), value: `${config.termYears} ${t('mortgage.years')}` },
+    { label: t('mortgage.start'), value: format(new Date(config.startDate), 'MMM yyyy', { locale: getDateLocale() }) },
+    { label: t('mortgage.payoff'), value: format(new Date(stats.payoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() }) },
+    { label: t('mortgage.totalInterest'), value: formatCurrency(stats.totalInterest) },
+    { label: t('mortgage.totalCostPI'), value: formatCurrency(stats.totalPayments) },
   ]
 
   if (config.propertyValue) {
     details.push(
-      { label: 'Property Value', value: formatCurrency(config.propertyValue) },
-      { label: 'LTV', value: `${((stats.remainingBalance / config.propertyValue) * 100).toFixed(1)}%` },
-      { label: 'Equity', value: formatCurrency(config.propertyValue - stats.remainingBalance) },
+      { label: t('mortgage.propertyValue'), value: formatCurrency(config.propertyValue) },
+      { label: t('mortgage.ltv'), value: `${((stats.remainingBalance / config.propertyValue) * 100).toFixed(1)}%` },
+      { label: t('mortgage.equity'), value: formatCurrency(config.propertyValue - stats.remainingBalance) },
     )
   }
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm text-muted-foreground font-medium">Mortgage Details</CardTitle>
+        <CardTitle className="text-sm text-muted-foreground font-medium">{t('mortgage.mortgageDetails')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -49,24 +51,24 @@ export function MortgageOverviewCard({ config }: MortgageOverviewCardProps) {
         {impact && impact.interestSaved > 0 && (
           <div className="flex gap-4 p-3 rounded-lg bg-green-50 border border-green-200">
             <div>
-              <p className="text-xs text-green-700">Interest Saved</p>
+              <p className="text-xs text-green-700">{t('mortgage.interestSaved')}</p>
               <p className="text-sm font-bold text-green-700">{formatCurrency(impact.interestSaved)}</p>
             </div>
             {impact.monthsSaved > 0 ? (
               <>
                 <div>
-                  <p className="text-xs text-green-700">Time Saved</p>
-                  <p className="text-sm font-bold text-green-700">{impact.monthsSaved} months</p>
+                  <p className="text-xs text-green-700">{t('mortgage.timeSaved')}</p>
+                  <p className="text-sm font-bold text-green-700">{impact.monthsSaved} {t('mortgage.months')}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-green-700">New Payoff</p>
-                  <p className="text-sm font-bold text-green-700">{format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy')}</p>
+                  <p className="text-xs text-green-700">{t('mortgage.newPayoff')}</p>
+                  <p className="text-sm font-bold text-green-700">{format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() })}</p>
                 </div>
               </>
             ) : (
               <div>
-                <p className="text-xs text-green-700">Payoff Date</p>
-                <p className="text-sm font-bold text-green-700">Unchanged, lower payments</p>
+                <p className="text-xs text-green-700">{t('mortgage.payoff')}</p>
+                <p className="text-sm font-bold text-green-700">{t('mortgage.unchangedLowerPayments')}</p>
               </div>
             )}
           </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router'
 import { Plus, Landmark, Printer } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
@@ -20,6 +21,7 @@ import { applyFilters, type DashboardFilters as Filters } from '@/lib/expense-ut
 import type { ExpenseCategory } from '@/types/expense'
 
 export function DashboardPage() {
+  const { t } = useTranslation()
   const { expenses } = useExpenses()
   const { mortgage } = useMortgage()
   const { house } = useHousehold()
@@ -46,7 +48,7 @@ export function DashboardPage() {
       {/* Screen view */}
       <div className="space-y-6 print:hidden">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">{t('nav.dashboard')}</h1>
           {hasData && (
             <Button
               variant="outline"
@@ -54,7 +56,7 @@ export function DashboardPage() {
               onClick={() => window.print()}
             >
               <Printer className="h-4 w-4 mr-1.5" />
-              Print
+              {t('common.print')}
             </Button>
           )}
         </div>
@@ -70,9 +72,9 @@ export function DashboardPage() {
         {!hasData ? (
           <div className="max-w-md mx-auto py-12 space-y-6">
             <div className="text-center space-y-2">
-              <p className="text-lg font-medium text-foreground">Track every cost of your purchase</p>
+              <p className="text-lg font-medium text-foreground">{t('dashboard.trackEveryCost')}</p>
               <p className="text-sm text-muted-foreground">
-                This dashboard will show your total spend, breakdown by category, monthly timeline, and who paid what.
+                {t('dashboard.trackEveryCostDesc')}
               </p>
             </div>
 
@@ -89,21 +91,21 @@ export function DashboardPage() {
                     <Plus className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Log a cost</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Down payment, notary, taxes, renovations...</p>
+                    <p className="text-sm font-medium">{t('dashboard.logACost')}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t('dashboard.logACostHint')}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Link to="/mortgage">
+              <Link to="/app/mortgage">
                 <Card className="border-dashed hover:bg-accent/50 transition-colors h-full">
                   <CardContent className="p-4 flex flex-col items-center text-center gap-2.5">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <Landmark className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Set up mortgage</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Payments, interest, and payoff progress</p>
+                      <p className="text-sm font-medium">{t('dashboard.setUpMortgage')}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('dashboard.setUpMortgageHint')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -138,7 +140,7 @@ export function DashboardPage() {
         <DashboardPrintView
           expenses={expenses}
           mortgagePaid={mortgagePaid}
-          houseName={house?.name ?? 'House'}
+          houseName={house?.name ?? t('common.houseExpenses')}
         />
       )}
     </>

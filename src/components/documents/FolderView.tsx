@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Pencil, Trash2, Upload, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,7 @@ interface FolderViewProps {
 }
 
 export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
+  const { t } = useTranslation()
   const { folders, documents, pendingDocumentIds, totalStorageUsed, uploadDocuments, renameDocument, updateDocumentNotes, deleteFolder, moveDocument } = useDocuments()
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -140,7 +142,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
             <span className="text-xl">{folder.icon}</span>
             <h2 className="text-lg font-semibold truncate">{folder.name}</h2>
             <span className="text-sm text-muted-foreground shrink-0">
-              {folderDocs.length} file{folderDocs.length !== 1 ? 's' : ''}
+              {t('documents.fileCount', { count: folderDocs.length })}
             </span>
           </div>
           {folder.description && (
@@ -148,7 +150,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingFolder(true)} title="Edit folder">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingFolder(true)} title={t('documents.editFolder')}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
           <Button
@@ -157,7 +159,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
             className={`h-8 w-8 ${confirmDeleteFolder ? 'text-destructive' : ''}`}
             onClick={handleDeleteFolder}
             disabled={deletingFolder}
-            title={confirmDeleteFolder ? 'Click again to confirm' : 'Delete folder'}
+            title={confirmDeleteFolder ? t('common.confirm') : t('common.delete')}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -166,12 +168,12 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
 
       {confirmDeleteFolder && (
         <div className="text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
-          Delete "{folder.name}" and all {folderDocs.length} document{folderDocs.length !== 1 ? 's' : ''} inside?{' '}
+          {t('documents.deleteConfirmFolder', { name: folder.name, count: folderDocs.length })}{' '}
           <button className="font-medium underline cursor-pointer" onClick={handleDeleteFolder} disabled={deletingFolder}>
-            {deletingFolder ? 'Deleting...' : 'Yes, delete'}
+            {deletingFolder ? t('common.deleting') : t('documents.yesDelete')}
           </button>{' '}
           <button className="text-muted-foreground cursor-pointer" onClick={() => setConfirmDeleteFolder(false)}>
-            Cancel
+            {t('common.cancel')}
           </button>
         </div>
       )}
@@ -197,26 +199,26 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" onClick={() => setShowDropZone(true)} disabled={uploading}>
             <Upload className="h-4 w-4 mr-2" />
-            {uploading ? 'Uploading...' : 'Upload Files'}
+            {uploading ? t('common.uploading') : t('documents.uploadFiles')}
           </Button>
           <div className="ml-auto flex gap-1.5 items-center">
             <Select
               className="w-24"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              aria-label="Sort documents by"
+              aria-label={t('documents.sortBy')}
             >
-              <option value="date">Date</option>
-              <option value="name">Name</option>
-              <option value="size">Size</option>
-              <option value="type">Type</option>
+              <option value="date">{t('common.date')}</option>
+              <option value="name">{t('common.name')}</option>
+              <option value="size">{t('documents.size')}</option>
+              <option value="type">{t('common.type')}</option>
             </Select>
             <Button
               size="icon"
               variant="outline"
               className="h-9 w-9 shrink-0"
               onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
-              title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+              title={sortDir === 'asc' ? t('common.ascending') : t('common.descending')}
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
             </Button>
@@ -244,7 +246,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
       {/* Document list */}
       {folderDocs.length === 0 ? (
         <div className="text-center py-4">
-          <p className="text-sm text-muted-foreground">Drop files above or browse to get started</p>
+          <p className="text-sm text-muted-foreground">{t('documents.dropOrBrowse')}</p>
         </div>
       ) : (
         <div className="space-y-1.5">

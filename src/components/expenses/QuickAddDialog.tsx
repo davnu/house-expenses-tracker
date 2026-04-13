@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ExpenseForm } from './ExpenseForm'
 import { useExpenses } from '@/context/ExpenseContext'
@@ -11,6 +12,7 @@ interface QuickAddDialogProps {
 }
 
 export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
+  const { t } = useTranslation()
   const { addExpenseWithFiles } = useExpenses()
   const [error, setError] = useState('')
 
@@ -20,7 +22,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
       await addExpenseWithFiles(data, files)
       onOpenChange(false)
     } catch (err) {
-      setError(friendlyError(err, 'Failed to save expense. Please try again.'))
+      setError(friendlyError(err))
     }
   }
 
@@ -28,7 +30,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
     <Dialog open={open} onOpenChange={(v) => { setError(''); onOpenChange(v) }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Expense</DialogTitle>
+          <DialogTitle>{t('expenses.addExpense')}</DialogTitle>
         </DialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <ExpenseForm onSubmit={handleSubmit} />

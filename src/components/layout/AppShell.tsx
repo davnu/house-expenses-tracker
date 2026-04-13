@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink, Link, Outlet, useNavigate } from 'react-router'
 import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FolderOpen, Shield, ChevronDown, Plus, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -8,15 +9,8 @@ import { Button } from '@/components/ui/button'
 import { HouseSwitcher } from './HouseSwitcher'
 import { CreateHouseDialog } from './CreateHouseDialog'
 
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/mortgage', icon: Landmark, label: 'Mortgage' },
-  { to: '/expenses', icon: Receipt, label: 'Expenses' },
-  { to: '/documents', icon: FolderOpen, label: 'Documents' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
-]
-
 function MobileHouseBar() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { house, houses, switchHouse } = useHousehold()
   const [open, setOpen] = useState(false)
@@ -32,16 +26,14 @@ function MobileHouseBar() {
     try {
       await switchHouse(houseId)
       setOpen(false)
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch {
-      // Switch failed — stay on current house
       setOpen(false)
     } finally {
       setSwitching(false)
     }
   }
 
-  // Single house — no mobile bar needed
   if (houses.length <= 1) return null
 
   return (
@@ -53,7 +45,7 @@ function MobileHouseBar() {
         className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold w-full border-b bg-card cursor-pointer"
         onClick={() => setOpen(!open)}
       >
-        <span className="truncate">{house?.name ?? 'House Expenses'}</span>
+        <span className="truncate">{house?.name ?? t('common.houseExpenses')}</span>
         <ChevronDown className={cn(
           'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
           open && 'rotate-180',
@@ -63,11 +55,10 @@ function MobileHouseBar() {
 
       {open && (
         <>
-          {/* Backdrop: z-45 sits between bottom nav (z-40) and dropdown (z-50) */}
           <div className="fixed inset-0 z-[45]" onClick={() => setOpen(false)} />
           <div
             role="listbox"
-            aria-label="Select a house"
+            aria-label={t('common.houseExpenses')}
             className="absolute left-2 right-2 top-full z-50 mt-0.5 rounded-lg border bg-card shadow-lg overflow-hidden"
           >
             <div className="py-1">
@@ -104,7 +95,7 @@ function MobileHouseBar() {
                 }}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                <span>Create New House</span>
+                <span>{t('settings.createNewHouse')}</span>
               </button>
             </div>
           </div>
@@ -117,8 +108,17 @@ function MobileHouseBar() {
 }
 
 export function AppShell() {
+  const { t } = useTranslation()
   const { logout } = useAuth()
   const { userProfile } = useHousehold()
+
+  const navItems = [
+    { to: '/app', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/app/mortgage', icon: Landmark, label: t('nav.mortgage') },
+    { to: '/app/expenses', icon: Receipt, label: t('nav.expenses') },
+    { to: '/app/documents', icon: FolderOpen, label: t('nav.documents') },
+    { to: '/app/settings', icon: Settings, label: t('nav.settings') },
+  ]
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -129,7 +129,7 @@ export function AppShell() {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/'}
+            end={item.to === '/app'}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -158,14 +158,14 @@ export function AppShell() {
             onClick={logout}
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Sign out
+            {t('common.signOut')}
           </Button>
           <Link
             to="/privacy"
             className="flex items-center gap-2 px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <Shield className="h-3 w-3" />
-            Privacy Policy
+            {t('common.privacyPolicy')}
           </Link>
         </div>
       </aside>
@@ -184,7 +184,7 @@ export function AppShell() {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/'}
+            end={item.to === '/app'}
             className={({ isActive }) =>
               cn(
                 'flex flex-col items-center gap-1 flex-1 min-w-0 py-1 text-xs font-medium transition-colors',

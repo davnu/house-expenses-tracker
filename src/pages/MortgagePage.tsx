@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LoadingInline } from '@/components/ui/loading'
 import { useMortgage } from '@/context/MortgageContext'
 import { generateAmortizationSchedule, getMortgageStats } from '@/lib/mortgage-utils'
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Landmark, Edit2, Trash2 } from 'lucide-react'
 
 export function MortgagePage() {
+  const { t } = useTranslation()
   const { mortgage, loading, deleteMortgage } = useMortgage()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -38,18 +40,18 @@ export function MortgagePage() {
   if (!mortgage || !stats) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Mortgage</h1>
+        <h1 className="text-2xl font-bold">{t('nav.mortgage')}</h1>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
             <Landmark className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold mb-2">Add Your Mortgage</h2>
+          <h2 className="text-lg font-semibold mb-2">{t('mortgage.addYourMortgage')}</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            See how your mortgage fits into the total cost of your home — payment schedule, interest breakdown, and payoff progress.
+            {t('mortgage.addMortgageDesc')}
           </p>
           <Button onClick={() => setDialogOpen(true)}>
             <Landmark className="h-4 w-4 mr-2" />
-            Configure Mortgage
+            {t('mortgage.configureMortgage')}
           </Button>
         </div>
         <MortgageSetupDialog open={dialogOpen} onOpenChange={setDialogOpen} />
@@ -61,20 +63,20 @@ export function MortgagePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mortgage</h1>
+        <h1 className="text-2xl font-bold">{t('nav.mortgage')}</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
             <Edit2 className="h-3.5 w-3.5 mr-1.5" />
-            Edit
+            {t('common.edit')}
           </Button>
           {confirmDelete ? (
             <div className="flex gap-1.5 items-center">
-              <span className="text-xs text-muted-foreground">Delete?</span>
+              <span className="text-xs text-muted-foreground">{t('mortgage.deleteMortgage')}</span>
               <Button size="sm" variant="destructive" onClick={async () => { await deleteMortgage(); setConfirmDelete(false) }}>
-                Yes
+                {t('common.yes')}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
-                No
+                {t('common.no')}
               </Button>
             </div>
           ) : (

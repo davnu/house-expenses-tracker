@@ -1,7 +1,8 @@
 import { useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getDateLocale } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ArrowDown, Download } from 'lucide-react'
 import type { AmortizationRow } from '@/types/mortgage'
@@ -13,6 +14,7 @@ interface AmortizationTableProps {
 }
 
 export function AmortizationTable({ schedule, currentMonth, showRateColumn }: AmortizationTableProps) {
+  const { t } = useTranslation()
   const currentRowRef = useRef<HTMLTableRowElement>(null)
 
   const scrollToCurrent = useCallback(() => {
@@ -20,10 +22,10 @@ export function AmortizationTable({ schedule, currentMonth, showRateColumn }: Am
   }, [])
 
   const exportCSV = useCallback(() => {
-    const headers = ['Month', 'Date', 'Payment', 'Principal', 'Interest', 'Extra', 'Rate', 'Balance']
+    const headers = [t('summary.month'), t('common.date'), t('mortgage.payment'), t('mortgage.principal'), t('mortgage.interest'), t('mortgage.extra'), t('mortgage.rate'), t('mortgage.balance')]
     const rows = schedule.map((r) => [
       r.month,
-      format(new Date(r.date + '-01'), 'MMM yyyy'),
+      format(new Date(r.date + '-01'), 'MMM yyyy', { locale: getDateLocale() }),
       (r.payment / 100).toFixed(2),
       (r.principalPortion / 100).toFixed(2),
       (r.interestPortion / 100).toFixed(2),
@@ -48,16 +50,16 @@ export function AmortizationTable({ schedule, currentMonth, showRateColumn }: Am
   return (
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <CardTitle>Amortization Schedule</CardTitle>
+        <CardTitle>{t('mortgage.amortizationSchedule')}</CardTitle>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={exportCSV}>
             <Download className="h-3 w-3 mr-1" />
-            CSV
+            {t('mortgage.csv')}
           </Button>
           {currentMonth > 0 && (
             <Button size="sm" variant="outline" onClick={scrollToCurrent}>
               <ArrowDown className="h-3 w-3 mr-1" />
-              Current month
+              {t('mortgage.currentMonth')}
             </Button>
           )}
         </div>
@@ -68,13 +70,13 @@ export function AmortizationTable({ schedule, currentMonth, showRateColumn }: Am
             <thead className="sticky top-0 bg-card border-b">
               <tr className="text-muted-foreground">
                 <th className="text-left py-2 px-3 font-medium">#</th>
-                <th className="text-left py-2 px-3 font-medium">Date</th>
-                {showRateColumn && <th className="text-right py-2 px-3 font-medium">Rate</th>}
-                <th className="text-right py-2 px-3 font-medium">Payment</th>
-                <th className="text-right py-2 px-3 font-medium">Principal</th>
-                <th className="text-right py-2 px-3 font-medium">Interest</th>
-                {hasExtras && <th className="text-right py-2 px-3 font-medium">Extra</th>}
-                <th className="text-right py-2 px-3 font-medium">Balance</th>
+                <th className="text-left py-2 px-3 font-medium">{t('common.date')}</th>
+                {showRateColumn && <th className="text-right py-2 px-3 font-medium">{t('mortgage.rate')}</th>}
+                <th className="text-right py-2 px-3 font-medium">{t('mortgage.payment')}</th>
+                <th className="text-right py-2 px-3 font-medium">{t('mortgage.principal')}</th>
+                <th className="text-right py-2 px-3 font-medium">{t('mortgage.interest')}</th>
+                {hasExtras && <th className="text-right py-2 px-3 font-medium">{t('mortgage.extra')}</th>}
+                <th className="text-right py-2 px-3 font-medium">{t('mortgage.balance')}</th>
               </tr>
             </thead>
             <tbody>
@@ -93,7 +95,7 @@ export function AmortizationTable({ schedule, currentMonth, showRateColumn }: Am
                     }
                   >
                     <td className="py-1.5 px-3 text-muted-foreground">{row.month}</td>
-                    <td className="py-1.5 px-3">{format(new Date(row.date + '-01'), 'MMM yyyy')}</td>
+                    <td className="py-1.5 px-3">{format(new Date(row.date + '-01'), 'MMM yyyy', { locale: getDateLocale() })}</td>
                     {showRateColumn && (
                       <td className="py-1.5 px-3 text-right">
                         {row.isRateChange ? (

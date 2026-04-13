@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
 import { DollarSign, Landmark, Home } from 'lucide-react'
@@ -9,18 +10,19 @@ interface CostOverviewProps {
 }
 
 export function CostOverview({ expenses, mortgagePaid = 0 }: CostOverviewProps) {
+  const { t } = useTranslation()
   const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0)
   const grandTotal = expenseTotal + mortgagePaid
 
   const cards = [
-    { title: 'Total Expenses', value: formatCurrency(expenseTotal), icon: DollarSign },
+    { title: t('summary.totalExpenses'), value: formatCurrency(expenseTotal), icon: DollarSign },
   ]
 
   if (mortgagePaid > 0) {
-    cards.push({ title: 'Mortgage Paid', value: formatCurrency(mortgagePaid), icon: Landmark })
+    cards.push({ title: t('summary.mortgagePaid'), value: formatCurrency(mortgagePaid), icon: Landmark })
   }
 
-  cards.push({ title: 'Grand Total', value: formatCurrency(grandTotal), icon: Home })
+  cards.push({ title: t('summary.grandTotal'), value: formatCurrency(grandTotal), icon: Home })
 
   return (
     <div className={`grid gap-4 ${cards.length === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>

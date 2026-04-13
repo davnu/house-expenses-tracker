@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { EXPENSE_CATEGORIES, CATEGORY_COLORS } from '@/lib/constants'
+import { CATEGORY_COLORS, getCategoryLabel } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import type { Expense } from '@/types/expense'
 
@@ -9,9 +10,6 @@ interface CategoryBreakdownProps {
   expenses: Expense[]
   title?: string
 }
-
-const categoryLabel = (val: string) =>
-  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderActiveShape(props: any) {
@@ -29,8 +27,11 @@ function renderActiveShape(props: any) {
   )
 }
 
-export function CategoryBreakdown({ expenses, title = 'By Category' }: CategoryBreakdownProps) {
+export function CategoryBreakdown({ expenses, title }: CategoryBreakdownProps) {
+  const { t } = useTranslation()
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined)
+
+  const displayTitle = title ?? t('dashboard.byCategory')
 
   const { data, total } = useMemo(() => {
     const byCat: Record<string, number> = {}
@@ -40,7 +41,7 @@ export function CategoryBreakdown({ expenses, title = 'By Category' }: CategoryB
     const total = Object.values(byCat).reduce((s, v) => s + v, 0)
     const data = Object.entries(byCat)
       .map(([cat, amount]) => ({
-        name: categoryLabel(cat),
+        name: getCategoryLabel(cat),
         category: cat,
         amount,
         percent: total > 0 ? (amount / total) * 100 : 0,
@@ -55,7 +56,7 @@ export function CategoryBreakdown({ expenses, title = 'By Category' }: CategoryB
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{displayTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center">
@@ -84,7 +85,7 @@ export function CategoryBreakdown({ expenses, title = 'By Category' }: CategoryB
             </ResponsiveContainer>
             {/* Center label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-xs text-muted-foreground">{t('common.total')}</span>
               <span className="text-lg font-bold">{formatCurrency(total)}</span>
             </div>
           </div>

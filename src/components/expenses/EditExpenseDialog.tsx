@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ExpenseForm } from './ExpenseForm'
 import { useExpenses } from '@/context/ExpenseContext'
@@ -11,6 +12,7 @@ interface EditExpenseDialogProps {
 }
 
 export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogProps) {
+  const { t } = useTranslation()
   const { updateExpense } = useExpenses()
   const [error, setError] = useState('')
 
@@ -27,7 +29,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
       })
       onOpenChange(false)
     } catch (err) {
-      setError(friendlyError(err, 'Failed to update expense. Please try again.'))
+      setError(friendlyError(err))
     }
   }
 
@@ -37,7 +39,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
     <Dialog open={!!expense} onOpenChange={(v) => { setError(''); onOpenChange(v) }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Expense</DialogTitle>
+          <DialogTitle>{t('expenses.editExpense')}</DialogTitle>
         </DialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <ExpenseForm
@@ -50,7 +52,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
             date: expense.date,
           }}
           hideAttachments
-          submitLabel="Save Changes"
+          submitLabel={t('expenses.saveChanges')}
         />
       </DialogContent>
     </Dialog>

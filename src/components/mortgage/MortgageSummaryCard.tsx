@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProgressRing } from '@/components/ui/progress-ring'
 import { useMortgage } from '@/context/MortgageContext'
 import { getMortgageStats } from '@/lib/mortgage-utils'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getDateLocale } from '@/lib/utils'
 import { Landmark, ArrowRight, Calendar, TrendingDown, Percent, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 
 export function MortgageSummaryCard() {
+  const { t } = useTranslation()
   const { mortgage, loading } = useMortgage()
 
   const stats = useMemo(
@@ -20,13 +22,13 @@ export function MortgageSummaryCard() {
 
   if (!mortgage || !stats) {
     return (
-      <Link to="/mortgage">
+      <Link to="/app/mortgage">
         <Card className="border-dashed hover:bg-accent/50 transition-colors cursor-pointer">
           <CardContent className="p-4 flex items-center gap-3">
             <Landmark className="h-5 w-5 text-muted-foreground" />
             <div className="flex-1">
-              <p className="text-sm font-medium">Set up your mortgage</p>
-              <p className="text-xs text-muted-foreground">Track payments, interest, and progress</p>
+              <p className="text-sm font-medium">{t('mortgage.setUpYourMortgage')}</p>
+              <p className="text-xs text-muted-foreground">{t('mortgage.trackPayments')}</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
           </CardContent>
@@ -37,7 +39,7 @@ export function MortgageSummaryCard() {
 
   const payoffFormatted = (() => {
     try {
-      return format(new Date(stats.payoffDate + '-01'), 'MMM yyyy')
+      return format(new Date(stats.payoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() })
     } catch {
       return stats.payoffDate
     }
@@ -50,12 +52,12 @@ export function MortgageSummaryCard() {
     : `${monthsRemainder}m`
 
   return (
-    <Link to="/mortgage">
+    <Link to="/app/mortgage">
       <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Landmark className="h-4 w-4" />
-            <span>Mortgage</span>
+            <span>{t('nav.mortgage')}</span>
             <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground" />
           </CardTitle>
         </CardHeader>
@@ -66,7 +68,7 @@ export function MortgageSummaryCard() {
               <ProgressRing percent={stats.progressPercent} size={100} strokeWidth={7} />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-lg font-bold">{stats.progressPercent.toFixed(1)}%</span>
-                <span className="text-[10px] text-muted-foreground">paid off</span>
+                <span className="text-[10px] text-muted-foreground">{t('mortgage.paidOff')}</span>
               </div>
             </div>
 
@@ -75,28 +77,28 @@ export function MortgageSummaryCard() {
               <div className="flex items-start gap-1.5">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Remaining</p>
+                  <p className="text-xs text-muted-foreground">{t('mortgage.remaining')}</p>
                   <p className="text-sm font-semibold">{timeLeft}</p>
                 </div>
               </div>
               <div className="flex items-start gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Payoff</p>
+                  <p className="text-xs text-muted-foreground">{t('mortgage.payoff')}</p>
                   <p className="text-sm font-semibold">{payoffFormatted}</p>
                 </div>
               </div>
               <div className="flex items-start gap-1.5">
                 <TrendingDown className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Balance</p>
+                  <p className="text-xs text-muted-foreground">{t('mortgage.balance')}</p>
                   <p className="text-sm font-semibold">{formatCurrency(stats.remainingBalance)}</p>
                 </div>
               </div>
               <div className="flex items-start gap-1.5">
                 <Percent className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Rate</p>
+                  <p className="text-xs text-muted-foreground">{t('mortgage.rate')}</p>
                   <p className="text-sm font-semibold">{mortgage.annualRate}%</p>
                 </div>
               </div>
@@ -107,8 +109,8 @@ export function MortgageSummaryCard() {
           {mortgage.propertyValue && mortgage.propertyValue > 0 && (
             <div className="mt-3 pt-3 border-t">
               <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                <span>Equity: {formatCurrency(mortgage.propertyValue - stats.remainingBalance)}</span>
-                <span>LTV: {((stats.remainingBalance / mortgage.propertyValue) * 100).toFixed(1)}%</span>
+                <span>{t('mortgage.equityLabel', { amount: formatCurrency(mortgage.propertyValue - stats.remainingBalance) })}</span>
+                <span>{t('mortgage.ltvLabel', { percent: ((stats.remainingBalance / mortgage.propertyValue) * 100).toFixed(1) })}</span>
               </div>
               <div className="h-1.5 bg-muted rounded-full overflow-hidden flex">
                 <div

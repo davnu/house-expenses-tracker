@@ -1,17 +1,19 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, getDateLocale } from '@/lib/utils'
 import { useMortgage } from '@/context/MortgageContext'
 import { REFERENCE_RATES, computeEffectiveRate } from '@/lib/mortgage-country'
 import { format } from 'date-fns'
 import type { MortgageConfig, RatePeriod, RateType } from '@/types/mortgage'
 
 export function RatePeriodsCard() {
+  const { t } = useTranslation()
   const { mortgage, saveMortgage } = useMortgage()
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -98,25 +100,25 @@ export function RatePeriodsCard() {
       refRate = parseFloat(newRefRate)
       spread = parseFloat(newSpread || String(activeSpread ?? 0))
       if (isNaN(refRate) || isNaN(spread)) {
-        setAddError('Please enter valid numbers')
+        setAddError(t('mortgage.invalidNumbers'))
         return
       }
       rateVal = computeEffectiveRate(refRate, spread, { rateFloor: vr?.rateFloor ?? mr?.rateFloor })
     } else {
       rateVal = parseFloat(newRate)
       if (isNaN(rateVal) || rateVal <= 0 || rateVal >= 50) {
-        setAddError('Rate must be between 0.01% and 50%')
+        setAddError(t('mortgage.rateBetween'))
         return
       }
     }
 
     if (newDate <= mortgage.startDate) {
-      setAddError('Date must be after the mortgage start date')
+      setAddError(t('mortgage.dateAfterStart'))
       return
     }
     const newMonth = newDate.substring(0, 7)
     if (periods.some((p) => p.startDate.substring(0, 7) === newMonth)) {
-      setAddError('A rate change already exists for this month')
+      setAddError(t('mortgage.rateChangeExists'))
       return
     }
 
@@ -147,19 +149,19 @@ export function RatePeriodsCard() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Rate History</CardTitle>
+        <CardTitle className="text-base">{t('mortgage.rateHistory')}</CardTitle>
         <div className="flex gap-2">
           {periods.length > 0 && !adding && (
             <Button size="sm" variant="ghost" className="text-muted-foreground text-xs" onClick={async () => {
               await saveMortgage({ ...mortgage, ratePeriods: [] })
             }}>
-              Clear all
+              {t('common.clearAll')}
             </Button>
           )}
           {!adding && (
             <Button size="sm" variant="outline" onClick={startAdding}>
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Add Rate Change
+              {t('mortgage.addRateChange')}
             </Button>
           )}
         </div>
@@ -171,11 +173,11 @@ export function RatePeriodsCard() {
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{mortgage.annualRate}%</span>
-              <Badge variant="secondary" className="text-xs">{mortgage.rateType}</Badge>
-              <Badge variant="outline" className="text-xs">Initial</Badge>
+              <Badge variant="secondary" className="text-xs">{t(`common.${mortgage.rateType}`)}</Badge>
+              <Badge variant="outline" className="text-xs">{t('mortgage.initial')}</Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              From {format(new Date(mortgage.startDate), 'MMM yyyy')}
+              {t('mortgage.fromDate', { date: format(new Date(mortgage.startDate), 'MMM yyyy', { locale: getDateLocale() }) })}
               {(vr || mr) && <span> ({refRateLabel} {(vr?.currentReferenceRate ?? mr?.currentReferenceRate)}% + {activeSpread}%)</span>}
             </p>
           </div>
@@ -196,7 +198,7 @@ export function RatePeriodsCard() {
                   <Input type="number" step="0.01" value={editRate} onChange={(e) => setEditRate(e.target.value)} className="sm:h-7 sm:text-xs" placeholder="Rate %" />
                 )}
                 <div className="flex gap-1">
-                  <Button size="sm" className="h-6 text-xs px-2" onClick={saveEdit}><Check className="h-3 w-3 mr-1" />Save</Button>
+                  <Button size="sm" className="h-6 text-xs px-2" onClick={saveEdit}><Check className="h-3 w-3 mr-1" />{t('common.save')}</Button>
                   <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setEditingId(null)}><X className="h-3 w-3" /></Button>
                 </div>
               </div>
@@ -205,10 +207,10 @@ export function RatePeriodsCard() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{period.annualRate}%</span>
-                    <Badge variant="secondary" className="text-xs">{period.rateType}</Badge>
+                    <Badge variant="secondary" className="text-xs">{t(`common.${period.rateType}`)}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    From {format(new Date(period.startDate), 'MMM yyyy')}
+                    {t('mortgage.fromDate', { date: format(new Date(period.startDate), 'MMM yyyy', { locale: getDateLocale() }) })}
                     {period.referenceRate !== undefined && period.spread !== undefined && (
                       <span> ({refRateLabel} {period.referenceRate}% + {period.spread}%)</span>
                     )}
@@ -228,8 +230,8 @@ export function RatePeriodsCard() {
         {periods.length === 0 && !adding && (
           <p className="text-xs text-muted-foreground text-center py-2">
             {hasVariableConfig && new Date(mortgage.startDate) < new Date()
-              ? 'Loading historical rates...'
-              : 'No rate changes yet. Add one if your rate changes in the future.'}
+              ? t('mortgage.loadingHistoricalRates')
+              : t('mortgage.noRateChanges')}
           </p>
         )}
         </div>
@@ -238,7 +240,7 @@ export function RatePeriodsCard() {
         {adding && (
           <div className="p-3 rounded-md border border-dashed space-y-3">
             <div className="space-y-1">
-              <Label className="text-xs">Start date</Label>
+              <Label className="text-xs">{t('mortgage.startDate')}</Label>
               <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="sm:h-8 sm:text-sm" />
             </div>
 
@@ -246,31 +248,31 @@ export function RatePeriodsCard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">New {refRateLabel} (%)</Label>
+                    <Label className="text-xs">{t('mortgage.newRefRate', { label: refRateLabel })}</Label>
                     <Input type="number" step="0.01" placeholder="3.5" value={newRefRate} onChange={(e) => setNewRefRate(e.target.value)} className="sm:h-8 sm:text-sm" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Spread (%)</Label>
+                    <Label className="text-xs">{t('mortgage.spread')}</Label>
                     <Input type="number" step="0.01" value={newSpread} onChange={(e) => setNewSpread(e.target.value)} className="sm:h-8 sm:text-sm" />
                   </div>
                 </div>
                 {newRefRate && newSpread && (
                   <p className="text-sm font-medium p-2 rounded bg-background">
-                    Effective rate: {newRefRate}% + {newSpread}% = {computeEffectiveRate(parseFloat(newRefRate), parseFloat(newSpread), { rateFloor: vr?.rateFloor ?? mr?.rateFloor })}%
+                    {t('mortgage.effectiveRate', { ref: newRefRate, spread: newSpread, effective: computeEffectiveRate(parseFloat(newRefRate), parseFloat(newSpread), { rateFloor: vr?.rateFloor ?? mr?.rateFloor }) })}
                   </p>
                 )}
               </>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Annual rate (%)</Label>
+                  <Label className="text-xs">{t('mortgage.annualRatePercent')}</Label>
                   <Input type="number" step="0.01" placeholder="3.5" min="0.01" max="50" value={newRate} onChange={(e) => setNewRate(e.target.value)} className="sm:h-8 sm:text-sm" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Type</Label>
+                  <Label className="text-xs">{t('common.type')}</Label>
                   <div className="flex rounded-lg border bg-muted p-0.5 gap-0.5">
-                    <button type="button" onClick={() => setNewType('fixed')} className={cn('flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer', newType === 'fixed' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>Fixed</button>
-                    <button type="button" onClick={() => setNewType('variable')} className={cn('flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer', newType === 'variable' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>Variable</button>
+                    <button type="button" onClick={() => setNewType('fixed')} className={cn('flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer', newType === 'fixed' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>{t('common.fixed')}</button>
+                    <button type="button" onClick={() => setNewType('variable')} className={cn('flex-1 rounded-md px-3 py-1 text-xs font-medium transition-all cursor-pointer', newType === 'variable' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>{t('common.variable')}</button>
                   </div>
                 </div>
               </div>
@@ -278,8 +280,8 @@ export function RatePeriodsCard() {
 
             {addError && <p className="text-xs text-destructive">{addError}</p>}
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd} disabled={!newDate || (!hasVariableConfig && !newRate) || (hasVariableConfig && !newRefRate)}>Add</Button>
-              <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setAddError('') }}>Cancel</Button>
+              <Button size="sm" onClick={handleAdd} disabled={!newDate || (!hasVariableConfig && !newRate) || (hasVariableConfig && !newRefRate)}>{t('common.add')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setAddError('') }}>{t('common.cancel')}</Button>
             </div>
           </div>
         )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ interface CreateFolderDialogProps {
 }
 
 export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogProps) {
+  const { t } = useTranslation()
   const { addFolder } = useDocuments()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -53,37 +55,35 @@ export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Folder</DialogTitle>
+          <DialogTitle>{t('documents.newFolder')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="folder-name">Name</Label>
+            <Label htmlFor="folder-name">{t('documents.folderName')}</Label>
             <Input
               id="folder-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Warranties"
+              placeholder={t('documents.folderNamePlaceholder')}
               autoFocus
               maxLength={50}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="folder-desc">
-              Description <span className="text-muted-foreground font-normal">(optional)</span>
-            </Label>
+            <Label htmlFor="folder-desc">{t('documents.descriptionOptional')}</Label>
             <Input
               id="folder-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What goes in this folder?"
+              placeholder={t('documents.descriptionPlaceholder')}
               maxLength={100}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Icon</Label>
+            <Label>{t('documents.icon')}</Label>
             <div className="flex flex-wrap gap-1.5">
               {FOLDER_ICONS.map((emoji) => (
                 <button
@@ -106,10 +106,10 @@ export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogPro
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={!name.trim() || saving}>
-              {saving ? 'Creating...' : 'Create Folder'}
+              {saving ? t('common.creating') : t('documents.createFolder')}
             </Button>
           </div>
         </form>

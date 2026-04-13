@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, type DragEvent } from 'react'
 import { Plus, Search, X, Upload, ChevronDown, Paperclip, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,7 +17,7 @@ import { useDocuments } from '@/context/DocumentContext'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { searchUnified, getRecentDocuments, attachmentToHouseDocument, type UnifiedSearchItem } from '@/lib/document-utils'
-import { EXPENSE_CATEGORIES } from '@/lib/constants'
+import { getCategoryLabel } from '@/lib/constants'
 import { cn, formatCurrency } from '@/lib/utils'
 import { getFolderIconBg } from '@/lib/file-type-info'
 import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
@@ -29,10 +30,8 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const categoryLabel = (val: string) =>
-  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
-
 export function DocumentsPage() {
+  const { t } = useTranslation()
   const { folders, documents, loading, totalStorageUsed, pendingDocumentIds, moveDocument, uploadDocuments, updateDocumentNotes } = useDocuments()
   const { expenses } = useExpenses()
   const isMobile = useIsMobile()
@@ -101,8 +100,8 @@ export function DocumentsPage() {
       .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url }))
   }, [unifiedResults, recentDocs])
 
-  const getFolderName = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.name ?? 'Unknown', [folders])
-  const getFolderIcon = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.icon ?? '📁', [folders])
+  const getFolderName = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.name ?? '—', [folders])
+  const getFolderIcon = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.icon ?? '\uD83D\uDCC1', [folders])
 
   // --- DnD handlers ---
   const handleFolderDragOver = useCallback((e: DragEvent, folderId: string) => {
@@ -157,13 +156,13 @@ export function DocumentsPage() {
 
   const renderReceiptBadge = (item: Extract<UnifiedSearchItem, { source: 'expense' }>) => (
     <Link
-      to={`/expenses?highlight=${item.expense.id}`}
+      to={`/app/expenses?highlight=${item.expense.id}`}
       className="shrink-0"
       onClick={(e) => e.stopPropagation()}
     >
       <Badge variant="outline" className="text-xs font-normal cursor-pointer hover:bg-accent gap-1">
         <Paperclip className="h-3 w-3" />
-        {categoryLabel(item.expense.category)} &middot; {formatCurrency(item.expense.amount)}
+        {getCategoryLabel(item.expense.category)} &middot; {formatCurrency(item.expense.amount)}
         <ArrowRight className="h-3 w-3 text-muted-foreground" />
       </Badge>
     </Link>
@@ -213,7 +212,7 @@ export function DocumentsPage() {
   if (liveFolder && !search.trim()) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Documents</h1>
+        <h1 className="text-2xl font-bold">{t('documents.title')}</h1>
         <FolderView
           folder={liveFolder}
           onBack={() => setSelectedFolder(null)}
@@ -230,17 +229,17 @@ export function DocumentsPage() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Documents</h1>
+        <h1 className="text-2xl font-bold">{t('documents.title')}</h1>
         <div className="flex items-center gap-2">
           {folders.length > 0 && (
             <Button size="sm" variant="outline" onClick={() => setQuickUploadOpen(true)}>
               <Upload className="h-4 w-4 mr-1.5" />
-              Upload
+              {t('documents.upload')}
             </Button>
           )}
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-1.5" />
-            New Folder
+            {t('documents.newFolder')}
           </Button>
         </div>
       </div>
@@ -252,7 +251,7 @@ export function DocumentsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search documents & receipts..."
+            placeholder={t('documents.searchPlaceholder')}
             aria-label="Search documents and receipts"
             className="pl-9 pr-8"
           />
@@ -273,8 +272,8 @@ export function DocumentsPage() {
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             {unifiedResults?.length === 0
-              ? 'No results found'
-              : `${unifiedResults?.length} result${unifiedResults?.length !== 1 ? 's' : ''}`
+              ? t('documents.noResults')
+              : t('documents.resultCount', { count: unifiedResults?.length ?? 0 })
             }
           </p>
           {unifiedResults && unifiedResults.length > 0 && (
@@ -288,7 +287,7 @@ export function DocumentsPage() {
           {/* Storage bar */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Storage used</span>
+              <span>{t('documents.storageUsed')}</span>
               <span>{formatSize(totalStorageUsed)} / {formatSize(MAX_HOUSEHOLD_STORAGE)}</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -308,7 +307,7 @@ export function DocumentsPage() {
                 onClick={toggleRecent}
               >
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${recentCollapsed ? '-rotate-90' : ''}`} />
-                Recent
+                {t('documents.recent')}
                 {recentCollapsed && (
                   <span className="text-xs font-normal ml-1">({recentDocs.length})</span>
                 )}
@@ -324,18 +323,18 @@ export function DocumentsPage() {
           {/* Folder grid */}
           {sortedFolders.length === 0 ? (
             <div className="text-center py-12 space-y-3">
-              <p className="text-lg font-medium">Organize your house documents</p>
+              <p className="text-lg font-medium">{t('documents.organizeTitle')}</p>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                Store contracts, inspection reports, insurance policies, and anything else related to your house purchase.
+                {t('documents.organizeDesc')}
               </p>
               <Button onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4 mr-1.5" />
-                Create First Folder
+                {t('documents.createFirstFolder')}
               </Button>
             </div>
           ) : (
             <div>
-              <h2 className="text-sm font-medium text-muted-foreground mb-2">Folders</h2>
+              <h2 className="text-sm font-medium text-muted-foreground mb-2">{t('documents.folders')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {sortedFolders.map((folder) => {
                   const docCount = documents.filter((d) => d.folderId === folder.id).length
@@ -370,7 +369,7 @@ export function DocumentsPage() {
                             {folder.description}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {isDropTarget ? 'Drop here' : docCount === 0 ? 'Empty' : `${docCount} file${docCount !== 1 ? 's' : ''}`}
+                            {isDropTarget ? t('documents.dropHere') : docCount === 0 ? t('documents.empty') : t('documents.fileCount', { count: docCount })}
                           </p>
                         </div>
                       </CardContent>
@@ -388,7 +387,7 @@ export function DocumentsPage() {
                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                       <Plus className="h-5 w-5 text-primary" />
                     </div>
-                    <p className="text-sm text-muted-foreground">New Folder</p>
+                    <p className="text-sm text-muted-foreground">{t('documents.newFolder')}</p>
                   </CardContent>
                 </Card>
               </div>

@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useHousehold } from '@/context/HouseholdContext'
-import { formatCurrency } from '@/lib/utils'
-import { EXPENSE_CATEGORIES } from '@/lib/constants'
+import { formatCurrency, getDateLocale } from '@/lib/utils'
+import { getCategoryLabel } from '@/lib/constants'
 import { ArrowRight } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Expense } from '@/types/expense'
@@ -13,10 +14,8 @@ interface RecentExpensesProps {
   expenses: Expense[]
 }
 
-const categoryLabel = (val: string) =>
-  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
-
 export function RecentExpenses({ expenses }: RecentExpensesProps) {
+  const { t } = useTranslation()
   const { members, getMemberName, getMemberColor } = useHousehold()
   const isMultiMember = members.length > 1
 
@@ -31,12 +30,12 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Recent Expenses</CardTitle>
+          <CardTitle className="text-base">{t('dashboard.recentExpenses')}</CardTitle>
           <Link
-            to="/expenses"
+            to="/app/expenses"
             className="flex items-center gap-1 text-xs text-primary hover:underline"
           >
-            View all
+            {t('dashboard.viewAll')}
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
@@ -56,7 +55,7 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{formatCurrency(expense.amount)}</span>
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                    {categoryLabel(expense.category)}
+                    {getCategoryLabel(expense.category)}
                   </Badge>
                 </div>
                 {expense.description && (
@@ -64,7 +63,7 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                 )}
               </div>
               <span className="text-xs text-muted-foreground shrink-0">
-                {format(new Date(expense.date), 'MMM d')}
+                {format(new Date(expense.date), 'MMM d', { locale: getDateLocale() })}
               </span>
             </div>
           ))}

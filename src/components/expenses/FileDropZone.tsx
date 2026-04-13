@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, type DragEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -26,6 +27,7 @@ interface FileDropZoneProps {
 }
 
 export function FileDropZone({ files, onChange, existingCount = 0, householdStorageUsed = 0 }: FileDropZoneProps) {
+  const { t } = useTranslation()
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -43,32 +45,32 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
       for (const file of Array.from(newFiles)) {
         // File type check
         if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
-          setError(`"${file.name}" is not a supported file type`)
+          setError(t('files.unsupportedType', { name: file.name }))
           continue
         }
         // Per-file size check
         if (file.size > MAX_FILE_SIZE) {
-          setError(`"${file.name}" exceeds 10 MB limit`)
+          setError(t('files.exceedsLimit', { name: file.name }))
           continue
         }
         // Duplicate check
         if (files.some((f) => f.name === file.name && f.size === file.size)) continue
         // Per-expense file count
         if (totalCount + valid.length >= MAX_FILES_PER_EXPENSE) {
-          setError(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
+          setError(t('files.maxFilesPerExpense', { max: MAX_FILES_PER_EXPENSE }))
           break
         }
         // Household storage quota
         const pendingSize = valid.reduce((s, f) => s + f.size, 0)
         if (storageAfterNew + pendingSize + file.size > MAX_HOUSEHOLD_STORAGE) {
-          setError(`Household storage limit reached (${formatSize(MAX_HOUSEHOLD_STORAGE)})`)
+          setError(t('files.householdStorageLimit', { size: formatSize(MAX_HOUSEHOLD_STORAGE) }))
           break
         }
         valid.push(file)
       }
       if (valid.length > 0) onChange([...files, ...valid])
     },
-    [files, onChange, totalCount, storageAfterNew]
+    [files, onChange, totalCount, storageAfterNew, t]
   )
 
   const handleDragOver = (e: DragEvent) => {
@@ -116,15 +118,15 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
         <Upload className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           {disabled
-            ? atFileLimit ? 'File limit reached' : 'Storage limit reached'
-            : <>Drop files here or <span className="text-primary font-medium">browse</span></>
+            ? atFileLimit ? t('files.fileLimitReached') : t('files.storageLimitReached')
+            : <>{t('files.dropOrBrowsePlain').split('browse')[0]}<span className="text-primary font-medium">browse</span>{t('files.dropOrBrowsePlain').split('browse')[1]}</>
           }
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Images, PDF, Word, Excel &middot; Max 10 MB each &middot; {totalCount}/{MAX_FILES_PER_EXPENSE} files
+          {t('files.fileInfo', { count: totalCount, max: MAX_FILES_PER_EXPENSE })}
         </p>
         <p className="text-xs text-muted-foreground">
-          {formatSize(storageAfterNew)} / {formatSize(MAX_HOUSEHOLD_STORAGE)} used
+          {t('files.storageUsed', { used: formatSize(storageAfterNew), total: formatSize(MAX_HOUSEHOLD_STORAGE) })}
         </p>
         <input
           ref={inputRef}

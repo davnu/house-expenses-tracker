@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
 import type { Expense } from '@/types/expense'
@@ -8,6 +9,7 @@ interface MonthlyTableProps {
 }
 
 export function MonthlyTable({ expenses }: MonthlyTableProps) {
+  const { t } = useTranslation()
   const data = useMemo(() => {
     const byMonth: Record<string, number> = {}
 
@@ -30,16 +32,16 @@ export function MonthlyTable({ expenses }: MonthlyTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly Breakdown</CardTitle>
+        <CardTitle>{t('summary.monthlyBreakdown')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-muted-foreground">
-                <th className="text-left py-2 font-medium">Month</th>
-                <th className="text-right py-2 font-medium">Amount</th>
-                <th className="text-right py-2 font-medium">Cumulative</th>
+                <th className="text-left py-2 font-medium">{t('summary.month')}</th>
+                <th className="text-right py-2 font-medium">{t('common.amount')}</th>
+                <th className="text-right py-2 font-medium">{t('summary.cumulative')}</th>
               </tr>
             </thead>
             <tbody>

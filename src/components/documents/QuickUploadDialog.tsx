@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { DocumentDropZone } from './DocumentDropZone'
@@ -12,6 +13,7 @@ interface QuickUploadDialogProps {
 }
 
 export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: QuickUploadDialogProps) {
+  const { t } = useTranslation()
   const { folders, totalStorageUsed, uploadDocuments } = useDocuments()
   const [files, setFiles] = useState<File[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
@@ -39,7 +41,7 @@ export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: Quick
   const handleUpload = async () => {
     if (!selectedFolderId || files.length === 0) return
     if (!folders.some((f) => f.id === selectedFolderId)) {
-      setError('Selected folder was deleted. Please pick another.')
+      setError(t('documents.folderDeleted'))
       setSelectedFolderId(null)
       return
     }
@@ -62,7 +64,7 @@ export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: Quick
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upload Documents</DialogTitle>
+          <DialogTitle>{t('documents.uploadDocuments')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -76,13 +78,13 @@ export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: Quick
           {/* Selected files preview */}
           {files.length > 0 && (
             <div className="text-sm text-muted-foreground">
-              {files.length} file{files.length !== 1 ? 's' : ''} selected
+              {t('documents.filesSelected', { count: files.length })}
             </div>
           )}
 
           {/* Folder picker */}
           <div className="space-y-2">
-            <p className="text-sm font-medium">Save to folder</p>
+            <p className="text-sm font-medium">{t('documents.saveToFolder')}</p>
             <div className="flex flex-wrap gap-1.5">
               {sortedFolders.map((folder) => (
                 <button
@@ -110,13 +112,13 @@ export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: Quick
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleUpload}
               disabled={!selectedFolderId || files.length === 0 || uploading}
             >
-              {uploading ? 'Uploading...' : `Upload to ${selectedFolder?.name ?? 'folder'}`}
+              {uploading ? t('common.uploading') : t('documents.uploadTo', { folder: selectedFolder?.name ?? 'folder' })}
             </Button>
           </div>
         </div>

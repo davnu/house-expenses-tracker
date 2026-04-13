@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatCurrency } from '@/lib/utils'
-import { SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
 import type { Expense } from '@/types/expense'
 
 interface MonthlyTrendProps {
@@ -12,10 +13,13 @@ interface MonthlyTrendProps {
   title?: string
 }
 
-export function MonthlyTrend({ expenses, title = 'Spending by Month' }: MonthlyTrendProps) {
+export function MonthlyTrend({ expenses, title }: MonthlyTrendProps) {
+  const { t } = useTranslation()
   const { members, getMemberColor } = useHousehold()
   const isMobile = useIsMobile()
   const isMultiMember = members.length > 1
+
+  const displayTitle = title ?? t('dashboard.spendingByMonth')
 
   // Build the list of payer segments for chart bars
   const segments = useMemo(() => {
@@ -23,7 +27,7 @@ export function MonthlyTrend({ expenses, title = 'Spending by Month' }: MonthlyT
     const knownKeys = new Set<string>()
 
     if (expenses.some((e) => e.payer === SHARED_PAYER)) {
-      segs.push({ key: SHARED_PAYER, label: SHARED_PAYER_LABEL, color: SHARED_PAYER_COLOR })
+      segs.push({ key: SHARED_PAYER, label: getSharedPayerLabel(), color: SHARED_PAYER_COLOR })
       knownKeys.add(SHARED_PAYER)
     }
     for (const m of members) {
@@ -33,11 +37,11 @@ export function MonthlyTrend({ expenses, title = 'Spending by Month' }: MonthlyT
 
     // Former members — include if any expenses have unknown payer uids
     if (expenses.some((e) => !knownKeys.has(e.payer))) {
-      segs.push({ key: '__former__', label: 'Former member', color: '#6b7280' })
+      segs.push({ key: '__former__', label: t('common.formerMember'), color: '#6b7280' })
     }
 
     return segs
-  }, [expenses, members, getMemberColor])
+  }, [expenses, members, getMemberColor, t])
 
   const data = useMemo(() => {
     const knownKeys = new Set(segments.map((s) => s.key))
@@ -67,7 +71,7 @@ export function MonthlyTrend({ expenses, title = 'Spending by Month' }: MonthlyT
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{displayTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
