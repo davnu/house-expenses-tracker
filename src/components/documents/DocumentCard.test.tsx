@@ -37,11 +37,11 @@ const baseDoc: HouseDocument = {
   name: 'contract.pdf',
   type: 'application/pdf',
   size: 102400,
-  folder: 'contracts',
+  folderId: 'contracts',
   url: 'https://example.com/contract.pdf',
-  storagePath: 'houses/h1/attachments/doc1/contract.pdf',
   uploadedBy: 'alice',
   uploadedAt: '2026-04-01T00:00:00Z',
+  updatedAt: '2026-04-01T00:00:00Z',
 }
 
 const defaultProps = {
