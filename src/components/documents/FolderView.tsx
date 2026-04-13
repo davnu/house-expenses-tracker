@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { ArrowLeft, Pencil, Trash2, Upload } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Upload, ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { DocumentCard } from './DocumentCard'
 import { DocumentDropZone } from './DocumentDropZone'
 import { MoveDocumentDialog } from './MoveDocumentDialog'
@@ -31,6 +32,8 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
   const [confirmDeleteFolder, setConfirmDeleteFolder] = useState(false)
   const [deletingFolder, setDeletingFolder] = useState(false)
 
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size' | 'type'>('date')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [viewerOpen, setViewerOpen] = useState(false)
   const [viewerIndex, setViewerIndex] = useState(0)
 
@@ -45,6 +48,8 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
     setEditingFolder(false)
     setConfirmDeleteFolder(false)
     setDeletingFolder(false)
+    setSortBy('date')
+    setSortDir('desc')
     setViewerOpen(false)
     setViewerIndex(0)
   }, [folder.id])
@@ -52,8 +57,16 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
   const folderDocs = useMemo(
     () => documents
       .filter((d) => d.folderId === folder.id)
-      .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt)),
-    [documents, folder.id]
+      .sort((a, b) => {
+        const dir = sortDir === 'asc' ? 1 : -1
+        switch (sortBy) {
+          case 'name': return a.name.localeCompare(b.name) * dir
+          case 'size': return (a.size - b.size) * dir
+          case 'type': return a.type.localeCompare(b.type) * dir
+          default: return a.uploadedAt.localeCompare(b.uploadedAt) * dir
+        }
+      }),
+    [documents, folder.id, sortBy, sortDir]
   )
 
   const imageAttachments = useMemo(
@@ -173,7 +186,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
         />
       )}
 
-      {/* Upload area */}
+      {/* Upload area + sort controls */}
       {showDropZone || folderDocs.length === 0 ? (
         <DocumentDropZone
           onFilesSelected={handleFilesSelected}
@@ -181,10 +194,34 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
           disabled={uploading}
         />
       ) : (
-        <Button variant="outline" size="sm" onClick={() => setShowDropZone(true)} disabled={uploading}>
-          <Upload className="h-4 w-4 mr-2" />
-          {uploading ? 'Uploading...' : 'Upload Files'}
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => setShowDropZone(true)} disabled={uploading}>
+            <Upload className="h-4 w-4 mr-2" />
+            {uploading ? 'Uploading...' : 'Upload Files'}
+          </Button>
+          <div className="ml-auto flex gap-1.5 items-center">
+            <Select
+              className="w-24"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              aria-label="Sort documents by"
+            >
+              <option value="date">Date</option>
+              <option value="name">Name</option>
+              <option value="size">Size</option>
+              <option value="type">Type</option>
+            </Select>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-9 w-9 shrink-0"
+              onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+              title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}

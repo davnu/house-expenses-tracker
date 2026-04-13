@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { searchUnified, getRecentDocuments, attachmentToHouseDocument, type UnifiedSearchItem } from '@/lib/document-utils'
 import { EXPENSE_CATEGORIES } from '@/lib/constants'
 import { cn, formatCurrency } from '@/lib/utils'
+import { getFolderIconBg } from '@/lib/file-type-info'
 import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { Attachment } from '@/types/expense'
@@ -343,8 +344,10 @@ export function DocumentsPage() {
                     <Card
                       key={folder.id}
                       className={cn(
-                        'transition-all cursor-pointer',
-                        isDropTarget ? 'bg-primary/10 ring-2 ring-primary scale-[1.02]' : 'hover:bg-accent/50',
+                        'transition-[transform,box-shadow] duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                        isDropTarget
+                          ? 'bg-primary/10 ring-2 ring-primary scale-[1.02] shadow-lg'
+                          : 'hover:shadow-md hover:-translate-y-0.5',
                       )}
                       onClick={() => setSelectedFolder(folder)}
                       role="button"
@@ -354,14 +357,19 @@ export function DocumentsPage() {
                       onDragLeave={isMobile ? undefined : handleFolderDragLeave}
                       onDrop={isMobile ? undefined : (e) => handleFolderDrop(e, folder.id)}
                     >
-                      <CardContent className="p-4 flex flex-col items-center text-center gap-1.5">
-                        <span className="text-3xl">{folder.icon}</span>
+                      <CardContent className="p-5 flex flex-col items-center text-center gap-2.5">
+                        <div className={cn(
+                          'h-12 w-12 rounded-2xl flex items-center justify-center',
+                          getFolderIconBg(folder.icon)
+                        )}>
+                          <span className="text-2xl leading-none">{folder.icon}</span>
+                        </div>
                         <div className="min-w-0 w-full">
                           <p className="text-sm font-medium truncate">{folder.name}</p>
-                          {folder.description && (
-                            <p className="text-[11px] text-muted-foreground line-clamp-1">{folder.description}</p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 min-h-[1em]">
+                            {folder.description}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
                             {isDropTarget ? 'Drop here' : docCount === 0 ? 'Empty' : `${docCount} file${docCount !== 1 ? 's' : ''}`}
                           </p>
                         </div>
@@ -370,15 +378,15 @@ export function DocumentsPage() {
                   )
                 })}
                 <Card
-                  className="border-dashed hover:bg-accent/50 transition-colors cursor-pointer"
+                  className="border-dashed transition-[transform,box-shadow] duration-200 cursor-pointer hover:shadow-md hover:-translate-y-0.5 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   onClick={() => setCreateOpen(true)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCreateOpen(true) } }}
                 >
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2 justify-center h-full">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Plus className="h-4 w-4 text-primary" />
+                  <CardContent className="p-5 flex flex-col items-center text-center gap-2.5 justify-center h-full">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Plus className="h-5 w-5 text-primary" />
                     </div>
                     <p className="text-sm text-muted-foreground">New Folder</p>
                   </CardContent>

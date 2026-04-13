@@ -167,9 +167,12 @@ describe('getFolderIconBg', () => {
     expect(getFolderIconBg('🔍')).toContain('violet')
     expect(getFolderIconBg('🔨')).toContain('orange')
     expect(getFolderIconBg('📁')).toContain('slate')
+    expect(getFolderIconBg('📦')).toContain('yellow')
     expect(getFolderIconBg('🏠')).toContain('sky')
     expect(getFolderIconBg('💰')).toContain('lime')
+    expect(getFolderIconBg('📄')).toContain('gray')
     expect(getFolderIconBg('🔑')).toContain('rose')
+    expect(getFolderIconBg('⚡')).toContain('yellow')
   })
 
   it('returns slate fallback for unknown emoji', () => {
@@ -180,11 +183,48 @@ describe('getFolderIconBg', () => {
     expect(getFolderIconBg('')).toContain('slate')
   })
 
+  it('returns slate fallback for non-emoji strings', () => {
+    expect(getFolderIconBg('hello')).toContain('slate')
+    expect(getFolderIconBg('123')).toContain('slate')
+  })
+
   it('all known emojis include dark mode variant', () => {
     const emojis = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁', '📦', '🏠', '💰', '📄', '🔑', '⚡']
     for (const emoji of emojis) {
       expect(getFolderIconBg(emoji)).toContain('dark:')
     }
+  })
+
+  it('all known emojis return a valid Tailwind bg- class', () => {
+    const emojis = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁', '📦', '🏠', '💰', '📄', '🔑', '⚡']
+    for (const emoji of emojis) {
+      expect(getFolderIconBg(emoji)).toMatch(/^bg-/)
+    }
+  })
+
+  it('covers every DEFAULT_FOLDERS icon with a non-fallback color', () => {
+    // DEFAULT_FOLDERS icons must NOT fall back to generic slate
+    const defaultIcons = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁']
+    const fallback = getFolderIconBg('🎉') // unknown → fallback
+    for (const icon of defaultIcons) {
+      const result = getFolderIconBg(icon)
+      // 📁 legitimately uses slate, so just verify it returns something
+      expect(result.length).toBeGreaterThan(0)
+      // All non-📁 defaults should differ from the unknown-emoji fallback
+      if (icon !== '📁') {
+        expect(result).not.toBe(fallback)
+      }
+    }
+  })
+
+  it('handles emoji without variation selector (🛡 vs 🛡️)', () => {
+    // 🛡️ (U+1F6E1 U+FE0F) is in the map; 🛡 (U+1F6E1 alone) is not
+    // This is expected: Firestore preserves the exact string from FOLDER_ICONS
+    const withSelector = getFolderIconBg('🛡️')
+    const withoutSelector = getFolderIconBg('🛡')
+    expect(withSelector).toContain('emerald')
+    // Without the selector, it's a different string key → falls back
+    expect(withoutSelector).toContain('slate')
   })
 })
 
