@@ -170,7 +170,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
         <div className="relative shrink-0">
           <div className={cn(
             'flex items-center gap-0.5',
-            menuOpen ? 'visible' : 'invisible group-hover:visible'
+            menuOpen ? '' : 'sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'
           )}>
             <Button
               variant="ghost"
