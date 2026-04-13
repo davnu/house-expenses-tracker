@@ -97,21 +97,23 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
               ))}
             </div>
             {datePreset === 'custom' && (
-              <div className="flex gap-2 mt-2 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 mt-2 sm:items-center">
                 <Input
                   type="date"
                   value={filters.dateStart ?? ''}
                   max={filters.dateEnd ?? undefined}
                   onChange={(e) => onChange({ ...filters, dateStart: e.target.value })}
                   className="text-xs h-8"
+                  aria-label="Start date"
                 />
-                <span className="text-xs text-muted-foreground">to</span>
+                <span className="text-xs text-muted-foreground hidden sm:block">to</span>
                 <Input
                   type="date"
                   value={filters.dateEnd ?? ''}
                   min={filters.dateStart ?? undefined}
                   onChange={(e) => onChange({ ...filters, dateEnd: e.target.value })}
                   className="text-xs h-8"
+                  aria-label="End date"
                 />
               </div>
             )}

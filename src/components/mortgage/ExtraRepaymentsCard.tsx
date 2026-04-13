@@ -137,7 +137,7 @@ export function ExtraRepaymentsCard() {
         {/* Add form */}
         {adding && (
           <div className="p-3 rounded-md border border-dashed space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Date</Label>
                 <Input

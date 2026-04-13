@@ -179,7 +179,7 @@ export function AppShell() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="lg:hidden print:!hidden fixed bottom-0 inset-x-0 bg-card border-t flex justify-around py-2 z-40" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <nav className="lg:hidden print:!hidden fixed bottom-0 inset-x-0 bg-card border-t flex py-2 z-40" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -187,13 +187,13 @@ export function AppShell() {
             end={item.to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center gap-1 px-3 py-1 text-xs font-medium transition-colors',
+                'flex flex-col items-center gap-1 flex-1 min-w-0 py-1 text-xs font-medium transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground'
               )
             }
           >
-            <item.icon className="h-5 w-5" />
-            {item.label}
+            <item.icon className="h-5 w-5 shrink-0" />
+            <span className="truncate">{item.label}</span>
           </NavLink>
         ))}
       </nav>

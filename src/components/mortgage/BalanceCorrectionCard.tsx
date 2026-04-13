@@ -101,7 +101,7 @@ export function BalanceCorrectionCard() {
 
   const formContent = (
     <div className="space-y-3 p-3 rounded-md border border-dashed">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label className="text-xs">Date (from bank statement)</Label>
           <Input

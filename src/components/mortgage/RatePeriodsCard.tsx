@@ -188,7 +188,7 @@ export function RatePeriodsCard() {
               <div className="flex-1 space-y-2">
                 <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="sm:h-7 sm:text-xs" />
                 {hasVariableConfig ? (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Input type="number" step="0.01" value={editRefRate} onChange={(e) => setEditRefRate(e.target.value)} className="sm:h-7 sm:text-xs" placeholder="Ref rate" />
                     <Input type="number" step="0.01" value={editSpread} onChange={(e) => setEditSpread(e.target.value)} className="sm:h-7 sm:text-xs" placeholder="Spread" />
                   </div>
@@ -244,7 +244,7 @@ export function RatePeriodsCard() {
 
             {hasVariableConfig ? (
               <>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">New {refRateLabel} (%)</Label>
                     <Input type="number" step="0.01" placeholder="3.5" value={newRefRate} onChange={(e) => setNewRefRate(e.target.value)} className="sm:h-8 sm:text-sm" />
@@ -261,7 +261,7 @@ export function RatePeriodsCard() {
                 )}
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Annual rate (%)</Label>
                   <Input type="number" step="0.01" placeholder="3.5" min="0.01" max="50" value={newRate} onChange={(e) => setNewRate(e.target.value)} className="sm:h-8 sm:text-sm" />
