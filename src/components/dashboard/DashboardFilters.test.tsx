@@ -62,7 +62,7 @@ describe('DashboardFilters responsive layout', () => {
   })
 
   it('"to" label is hidden on mobile (sm:block)', async () => {
-    const { container } = render(<DashboardFilters {...defaultProps} />)
+    render(<DashboardFilters {...defaultProps} />)
 
     await userEvent.click(screen.getByText('Filters'))
     await userEvent.click(screen.getByText('Custom'))
