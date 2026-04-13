@@ -68,7 +68,7 @@ const STORAGE_PATH = 'houses/house1/attachments/att-1/test.png'
 describe('Storage: upload (create)', () => {
   it('member can upload file with valid type', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref(STORAGE_PATH)
     await assertSucceeds(
       ref.put(makeTestFile(), { contentType: 'image/png' })
@@ -77,7 +77,7 @@ describe('Storage: upload (create)', () => {
 
   it('member can upload PDF', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-2/doc.pdf')
     await assertSucceeds(
       ref.put(makeTestFile(), { contentType: 'application/pdf' })
@@ -86,7 +86,7 @@ describe('Storage: upload (create)', () => {
 
   it('member can upload Word doc', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-3/doc.docx')
     await assertSucceeds(
       ref.put(makeTestFile(), { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
@@ -95,7 +95,7 @@ describe('Storage: upload (create)', () => {
 
   it('member cannot upload file with disallowed MIME type', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-4/hack.exe')
     await assertFails(
       ref.put(makeTestFile(), { contentType: 'application/x-msdownload' })
@@ -104,7 +104,7 @@ describe('Storage: upload (create)', () => {
 
   it('member cannot upload zip file', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-5/archive.zip')
     await assertFails(
       ref.put(makeTestFile(), { contentType: 'application/zip' })
@@ -113,7 +113,7 @@ describe('Storage: upload (create)', () => {
 
   it('member cannot upload file exceeding 10MB', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-6/big.png')
     const bigFile = makeTestFile(10 * 1024 * 1024 + 1) // 10MB + 1 byte
     await assertFails(
@@ -123,7 +123,7 @@ describe('Storage: upload (create)', () => {
 
   it('non-member cannot upload to house storage', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     const ref = outsider.storage().ref(STORAGE_PATH)
     await assertFails(
       ref.put(makeTestFile(), { contentType: 'image/png' })
@@ -149,7 +149,7 @@ describe('Storage: read', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(STORAGE_PATH).put(makeTestFile(), { contentType: 'image/png' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.storage().ref(STORAGE_PATH).getDownloadURL())
   })
 
@@ -158,7 +158,7 @@ describe('Storage: read', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(STORAGE_PATH).put(makeTestFile(), { contentType: 'image/png' })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.storage().ref(STORAGE_PATH).getDownloadURL())
   })
 
@@ -181,7 +181,7 @@ describe('Storage: delete', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(STORAGE_PATH).put(makeTestFile(), { contentType: 'image/png' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.storage().ref(STORAGE_PATH).delete())
   })
 
@@ -190,7 +190,7 @@ describe('Storage: delete', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(STORAGE_PATH).put(makeTestFile(), { contentType: 'image/png' })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.storage().ref(STORAGE_PATH).delete())
   })
 
@@ -213,7 +213,7 @@ const DOC_STORAGE_PATH = 'houses/house1/documents/doc-1/test.pdf'
 describe('Document Storage: upload (create)', () => {
   it('member can upload a document file with valid type', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref(DOC_STORAGE_PATH)
     await assertSucceeds(
       ref.put(makeTestFile(), { contentType: 'application/pdf' })
@@ -222,7 +222,7 @@ describe('Document Storage: upload (create)', () => {
 
   it('member can upload an image document', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/documents/doc-2/photo.png')
     await assertSucceeds(
       ref.put(makeTestFile(), { contentType: 'image/png' })
@@ -231,7 +231,7 @@ describe('Document Storage: upload (create)', () => {
 
   it('member cannot upload document with disallowed MIME type', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/documents/doc-3/hack.exe')
     await assertFails(
       ref.put(makeTestFile(), { contentType: 'application/x-msdownload' })
@@ -240,7 +240,7 @@ describe('Document Storage: upload (create)', () => {
 
   it('member cannot upload document exceeding 10MB', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/documents/doc-4/big.pdf')
     const bigFile = makeTestFile(10 * 1024 * 1024 + 1)
     await assertFails(
@@ -250,7 +250,7 @@ describe('Document Storage: upload (create)', () => {
 
   it('non-member cannot upload to house documents', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     const ref = outsider.storage().ref(DOC_STORAGE_PATH)
     await assertFails(
       ref.put(makeTestFile(), { contentType: 'application/pdf' })
@@ -264,7 +264,7 @@ describe('Document Storage: read', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(DOC_STORAGE_PATH).put(makeTestFile(), { contentType: 'application/pdf' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.storage().ref(DOC_STORAGE_PATH).getDownloadURL())
   })
 
@@ -273,7 +273,7 @@ describe('Document Storage: read', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(DOC_STORAGE_PATH).put(makeTestFile(), { contentType: 'application/pdf' })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.storage().ref(DOC_STORAGE_PATH).getDownloadURL())
   })
 })
@@ -284,7 +284,7 @@ describe('Document Storage: delete', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(DOC_STORAGE_PATH).put(makeTestFile(), { contentType: 'application/pdf' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.storage().ref(DOC_STORAGE_PATH).delete())
   })
 
@@ -293,7 +293,7 @@ describe('Document Storage: delete', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.storage().ref(DOC_STORAGE_PATH).put(makeTestFile(), { contentType: 'application/pdf' })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.storage().ref(DOC_STORAGE_PATH).delete())
   })
 })
@@ -308,7 +308,7 @@ describe('Document Storage: cross-house isolation', () => {
         .put(makeTestFile(), { contentType: 'application/pdf' })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.storage().ref('houses/house2/documents/doc-1/secret.pdf').getDownloadURL()
     )
@@ -318,7 +318,7 @@ describe('Document Storage: cross-house isolation', () => {
     await seedHouseWithMember('house1', 'alice')
     await seedHouseWithMember('house2', 'bob')
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.storage().ref('houses/house2/documents/doc-1/hack.pdf')
         .put(makeTestFile(), { contentType: 'application/pdf' })
@@ -340,7 +340,7 @@ describe('Storage: cross-house isolation', () => {
     })
 
     // Alice (house1 member) tries to read house2's file
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.storage().ref('houses/house2/attachments/att-1/secret.png').getDownloadURL()
     )
@@ -350,7 +350,7 @@ describe('Storage: cross-house isolation', () => {
     await seedHouseWithMember('house1', 'alice')
     await seedHouseWithMember('house2', 'bob')
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.storage().ref('houses/house2/attachments/att-1/hack.png')
         .put(makeTestFile(), { contentType: 'image/png' })
@@ -366,9 +366,41 @@ describe('Storage: cross-house isolation', () => {
         .put(makeTestFile(), { contentType: 'image/png' })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.storage().ref('houses/house2/attachments/att-1/file.png').delete()
     )
   })
+})
+
+// ── Email Verification Rules (Storage) ─────────────────────────────
+
+describe('Storage: email verification enforcement', () => {
+  it('unverified member cannot upload file', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    const ref = unverified.storage().ref(STORAGE_PATH)
+    await assertFails(
+      ref.put(makeTestFile(), { contentType: 'image/png' })
+    )
+  })
+
+  it('unverified member cannot delete file', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.storage().ref(STORAGE_PATH).put(makeTestFile(), { contentType: 'image/png' })
+    })
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertFails(unverified.storage().ref(STORAGE_PATH).delete())
+  })
+
+  it('unverified member can still READ file', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.storage().ref(STORAGE_PATH).put(makeTestFile(), { contentType: 'image/png' })
+    })
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertSucceeds(unverified.storage().ref(STORAGE_PATH).getDownloadURL())
+  })
+
 })

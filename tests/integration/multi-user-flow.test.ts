@@ -34,8 +34,8 @@ describe('Full house creation and invite flow', () => {
   const INVITE_ID = 'invite-xyz'
 
   it('user A creates house, user B joins via invite, both share expenses', async () => {
-    const alice = testEnv.authenticatedContext('alice')
-    const bob = testEnv.authenticatedContext('bob')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const aliceDb = alice.firestore()
     const bobDb = bob.firestore()
 
@@ -186,7 +186,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const charlie = testEnv.authenticatedContext('charlie')
+    const charlie = testEnv.authenticatedContext('charlie', { email_verified: true })
     const db = charlie.firestore()
 
     // Charlie can read house doc (by design — needed for invite flow)
@@ -213,8 +213,8 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const attacker = testEnv.authenticatedContext('attacker')
-    const bob = testEnv.authenticatedContext('bob')
+    const attacker = testEnv.authenticatedContext('attacker', { email_verified: true })
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
 
     // Cannot redirect invite to a different house
     await assertFails(
@@ -241,7 +241,7 @@ describe('Full house creation and invite flow', () => {
 
   it('user belongs to multiple houses simultaneously', async () => {
     // Alice creates house 1
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     await assertSucceeds(
@@ -310,7 +310,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     // Alice marks invite as used and joins house-2
@@ -345,7 +345,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const bobDb = bob.firestore()
 
     // Bob leaves: removes self from memberIds, deletes own member doc, clears houseId
@@ -356,7 +356,7 @@ describe('Full house creation and invite flow', () => {
     await assertSucceeds(bobDb.doc('users/bob').update({ houseId: null }))
 
     // Alice's data is intact
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
     const houseSnap = await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).get())
     expect(houseSnap.data()?.memberIds).toEqual(['alice'])
@@ -390,7 +390,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     // Cascading delete: subcollections first, then house doc
@@ -402,7 +402,7 @@ describe('Full house creation and invite flow', () => {
 
     // House is gone — outsider reads should still work for top-level (by-design)
     // but subcollections will fail or return empty
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const bobDb = bob.firestore()
     const houseSnap = await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}`).get())
     expect(houseSnap.exists).toBe(false)
@@ -430,7 +430,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     // Delete one house
@@ -466,7 +466,7 @@ describe('Full house creation and invite flow', () => {
       await db.doc(`houses/${HOUSE_ID}/meta/mortgage`).set({ principal: 30000000 })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     // Simulate account deletion cascade: delete subcollections, members, then house
@@ -481,7 +481,7 @@ describe('Full house creation and invite flow', () => {
     await assertSucceeds(aliceDb.doc('users/alice').delete())
 
     // House is completely gone
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const bobDb = bob.firestore()
     const houseSnap = await assertSucceeds(bobDb.doc(`houses/${HOUSE_ID}`).get())
     expect(houseSnap.exists).toBe(false)
@@ -518,7 +518,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     // Cascade delete house-1
@@ -535,7 +535,7 @@ describe('Full house creation and invite flow', () => {
     await assertSucceeds(aliceDb.doc('users/alice').delete())
 
     // Both houses are gone
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const bobDb = bob.firestore()
     const h1 = await assertSucceeds(bobDb.doc('houses/house-1').get())
     expect(h1.exists).toBe(false)
@@ -572,7 +572,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const bobDb = bob.firestore()
 
     // Bob deletes his own member doc
@@ -582,7 +582,7 @@ describe('Full house creation and invite flow', () => {
     await assertSucceeds(bobDb.doc('users/bob').delete())
 
     // Alice's data is untouched
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
     const aliceProfile = await assertSucceeds(aliceDb.doc('users/alice').get())
     expect(aliceProfile.data()?.displayName).toBe('Alice')
@@ -616,7 +616,7 @@ describe('Full house creation and invite flow', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const aliceDb = alice.firestore()
 
     // Step 1: Owner soft-deletes (sets deletedAt)
@@ -635,7 +635,7 @@ describe('Full house creation and invite flow', () => {
     await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).delete())
 
     // House is completely gone
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     const afterSnap = await assertSucceeds(bob.firestore().doc(`houses/${HOUSE_ID}`).get())
     expect(afterSnap.exists).toBe(false)
   })

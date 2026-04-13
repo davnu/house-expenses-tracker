@@ -71,7 +71,13 @@
     "dontHaveAccount": "Heb je nog geen account?",
     "signInLink": "Inloggen",
     "signUpLink": "Registreren",
-    "joinHouseSubtitle": "Log in of registreer om lid te worden van \"{{houseName}}\""
+    "joinHouseSubtitle": "Log in of registreer om lid te worden van \"{{houseName}}\"",
+    "verifyEmailTitle": "Controleer je e-mail",
+    "verifyEmailDesc": "We hebben een verificatielink gestuurd naar {{email}}. Klik op de link om je account te verifiëren.",
+    "resendEmail": "Verificatie-e-mail opnieuw versturen",
+    "resendEmailCooldown": "Opnieuw versturen in {{seconds}}s",
+    "emailSent": "Verificatie-e-mail verzonden!",
+    "checkSpam": "Niet gevonden? Controleer je spammap."
   },
   "onboarding": {
     "welcome": "Welkom!",

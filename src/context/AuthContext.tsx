@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react'
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -8,6 +8,7 @@ import {
   signOut,
   updateProfile,
   deleteUser,
+  sendEmailVerification,
   type User,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, deleteDoc, updateDoc, arrayRemove, collection, query, where, getDocs, writeBatch } from 'firebase/firestore'
@@ -18,11 +19,14 @@ import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
 interface AuthContextValue {
   user: User | null
   loading: boolean
+  emailVerified: boolean
   signInEmail: (email: string, password: string) => Promise<void>
   signUpEmail: (email: string, password: string, displayName: string) => Promise<void>
   signInGoogle: () => Promise<void>
   logout: () => Promise<void>
   deleteAccount: (onProgress?: CascadeProgressCallback) => Promise<void>
+  resendVerificationEmail: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -50,10 +54,12 @@ let deletingAccount = false
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [emailVerified, setEmailVerified] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u)
+      setEmailVerified(u?.emailVerified ?? false)
       setLoading(false)
       // Ensure profile exists in the background — don't block the auth gate
       if (u && !deletingAccount) ensureUserProfile(u).catch(() => {})
@@ -68,12 +74,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpEmail = async (email: string, password: string, displayName: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(cred.user, { displayName })
+    // Best-effort: if this fails, the verify page lets them resend
+    sendEmailVerification(cred.user).catch(() => {})
     await ensureUserProfile(cred.user, displayName, new Date().toISOString())
   }
 
   const signInGoogle = async () => {
     await signInWithPopup(auth, googleProvider)
   }
+
+  const resendVerificationEmail = useCallback(async () => {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser)
+    }
+  }, [])
+
+  const refreshUser = useCallback(async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload()
+      setEmailVerified(auth.currentUser.emailVerified)
+    }
+  }, [])
 
   const logout = async () => {
     await signOut(auth)
@@ -228,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInEmail, signUpEmail, signInGoogle, logout, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, emailVerified, signInEmail, signUpEmail, signInGoogle, logout, deleteAccount, resendVerificationEmail, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

@@ -71,7 +71,13 @@
     "dontHaveAccount": "Du hast noch kein Konto?",
     "signInLink": "Anmelden",
     "signUpLink": "Registrieren",
-    "joinHouseSubtitle": "Melde dich an oder registriere dich, um \"{{houseName}}\" beizutreten"
+    "joinHouseSubtitle": "Melde dich an oder registriere dich, um \"{{houseName}}\" beizutreten",
+    "verifyEmailTitle": "Überprüfe deine E-Mail",
+    "verifyEmailDesc": "Wir haben einen Bestätigungslink an {{email}} gesendet. Klicke auf den Link, um dein Konto zu bestätigen.",
+    "resendEmail": "Bestätigungs-E-Mail erneut senden",
+    "resendEmailCooldown": "Erneut senden in {{seconds}}s",
+    "emailSent": "Bestätigungs-E-Mail gesendet!",
+    "checkSpam": "Nicht gefunden? Überprüfe deinen Spam-Ordner."
   },
   "onboarding": {
     "welcome": "Willkommen!",

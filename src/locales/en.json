@@ -71,7 +71,13 @@
     "dontHaveAccount": "Don't have an account?",
     "signInLink": "Sign in",
     "signUpLink": "Sign up",
-    "joinHouseSubtitle": "Sign in or sign up to join \"{{houseName}}\""
+    "joinHouseSubtitle": "Sign in or sign up to join \"{{houseName}}\"",
+    "verifyEmailTitle": "Check your email",
+    "verifyEmailDesc": "We sent a verification link to {{email}}. Click the link to verify your account.",
+    "resendEmail": "Resend verification email",
+    "resendEmailCooldown": "Resend in {{seconds}}s",
+    "emailSent": "Verification email sent!",
+    "checkSpam": "Don't see it? Check your spam folder."
   },
   "onboarding": {
     "welcome": "Welcome!",

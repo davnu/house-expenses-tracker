@@ -62,19 +62,19 @@ describe('User profiles (/users/{userId})', () => {
       await ctx.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
     })
 
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertSucceeds(bob.firestore().doc('users/alice').get())
   })
 
   it('user can write their own profile', async () => {
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
     )
   })
 
   it('user cannot write another user profile', async () => {
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(
       bob.firestore().doc('users/alice').set({ displayName: 'Hacked', email: 'h@t.com' })
     )
@@ -93,7 +93,7 @@ describe('User profiles (/users/{userId})', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('users/alice').set({ displayName: 'Alice', email: 'a@t.com' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('users/alice').delete())
   })
 
@@ -101,7 +101,7 @@ describe('User profiles (/users/{userId})', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(alice.firestore().doc('users/bob').delete())
   })
 
@@ -110,7 +110,7 @@ describe('User profiles (/users/{userId})', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: 'house1' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('users/bob').update({ houseId: null }))
   })
 
@@ -119,7 +119,7 @@ describe('User profiles (/users/{userId})', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('users/bob').set({ displayName: 'Bob', email: 'b@t.com', houseId: 'house1' })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(alice.firestore().doc('users/bob').update({ houseId: null, displayName: 'Hacked' }))
   })
 
@@ -132,7 +132,7 @@ describe('User profiles (/users/{userId})', () => {
       await ctx.firestore().doc('users/charlie').set({ displayName: 'Charlie', email: 'c@t.com', houseId: 'house1' })
     })
     // Bob is a member but not the owner — cannot clear Charlie's houseId
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(bob.firestore().doc('users/charlie').update({ houseId: null }))
   })
 })
@@ -141,7 +141,7 @@ describe('User profiles (/users/{userId})', () => {
 
 describe('Houses (/houses/{houseId})', () => {
   it('owner can create a house with their uid as ownerId', async () => {
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1').set({
         name: 'Our House',
@@ -153,7 +153,7 @@ describe('Houses (/houses/{houseId})', () => {
   })
 
   it('cannot create a house with someone else as ownerId', async () => {
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(
       bob.firestore().doc('houses/house1').set({
         name: 'Fake House',
@@ -166,25 +166,25 @@ describe('Houses (/houses/{houseId})', () => {
 
   it('any authenticated user can read a house (needed for invite flow)', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertSucceeds(outsider.firestore().doc('houses/house1').get())
   })
 
   it('member can update house', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1').update({ name: 'Renamed' }))
   })
 
   it('non-member cannot update house', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1').update({ name: 'Hacked' }))
   })
 
   it('joining user can add themselves to memberIds', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertSucceeds(
       bob.firestore().doc('houses/house1').update({
         memberIds: firebase.firestore.FieldValue.arrayUnion('bob'),
@@ -194,7 +194,7 @@ describe('Houses (/houses/{houseId})', () => {
 
   it('joining user cannot change house name while adding to memberIds', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(
       bob.firestore().doc('houses/house1').update({
         memberIds: firebase.firestore.FieldValue.arrayUnion('bob'),
@@ -205,13 +205,13 @@ describe('Houses (/houses/{houseId})', () => {
 
   it('non-member cannot update house name', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1').update({ name: 'Hacked' }))
   })
 
   it('owner can delete a house', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1').delete())
   })
 
@@ -222,19 +222,19 @@ describe('Houses (/houses/{houseId})', () => {
         displayName: 'Bob', email: 'bob@test.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
       })
     })
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(bob.firestore().doc('houses/house1').delete())
   })
 
   it('non-member cannot delete a house', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1').delete())
   })
 
   it('owner can soft-delete a house (set deletedAt)', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1').update({ deletedAt: new Date().toISOString() })
     )
@@ -247,7 +247,7 @@ describe('Houses (/houses/{houseId})', () => {
         displayName: 'Bob', email: 'bob@test.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
       })
     })
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(
       bob.firestore().doc('houses/house1').update({ deletedAt: new Date().toISOString() })
     )
@@ -270,19 +270,19 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1/members/bob').get())
   })
 
   it('non-member cannot read members', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1/members/alice').get())
   })
 
   it('user can create their own member doc when joining', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertSucceeds(
       bob.firestore().doc('houses/house1/members/bob').set({
         displayName: 'Bob',
@@ -298,7 +298,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
     // Create a house but don't add outsider as member
     await seedHouseWithMember('house1', 'alice')
     // Outsider who is NOT a member and NOT creating their own doc
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(
       outsider.firestore().doc('houses/house1/members/charlie').set({
         displayName: 'Charlie',
@@ -312,7 +312,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
 
   it('user can update only their own member doc', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/members/alice').update({ displayName: 'Alice Updated' })
     )
@@ -329,7 +329,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
         joinedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.firestore().doc('houses/house1/members/bob').update({ displayName: 'Hacked' })
     )
@@ -337,7 +337,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
 
   it('user can delete their own member doc (account deletion)', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1/members/alice').delete())
   })
 
@@ -352,7 +352,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
       })
     })
     // Bob (non-owner) cannot delete Charlie
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertFails(bob.firestore().doc('houses/house1/members/charlie').delete())
   })
 
@@ -363,7 +363,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
         displayName: 'Bob', email: 'b@t.com', color: '#ef4444', role: 'member', joinedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1/members/bob').delete())
   })
 })
@@ -373,7 +373,7 @@ describe('Members (/houses/{houseId}/members/{memberId})', () => {
 describe('Expenses (/houses/{houseId}/expenses/{expenseId})', () => {
   it('member can create an expense', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().collection('houses/house1/expenses').add({
         amount: 150000,
@@ -400,19 +400,19 @@ describe('Expenses (/houses/{houseId}/expenses/{expenseId})', () => {
       })
     })
 
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().collection('houses/house1/expenses').get())
   })
 
   it('non-member cannot read expenses', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().collection('houses/house1/expenses').get())
   })
 
   it('non-member cannot create an expense', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(
       outsider.firestore().collection('houses/house1/expenses').add({
         amount: 100,
@@ -444,7 +444,7 @@ describe('Invites (/invites/{inviteId})', () => {
   })
 
   it('authenticated user can create an invite', async () => {
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('invites/invite2').set({
         houseId: 'house1',
@@ -480,7 +480,7 @@ describe('Invites (/invites/{inviteId})', () => {
       })
     })
 
-    const bob = testEnv.authenticatedContext('bob')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
     await assertSucceeds(
       bob.firestore().doc('invites/invite1').update({
         usedBy: 'bob',
@@ -500,7 +500,7 @@ describe('Invites (/invites/{inviteId})', () => {
       })
     })
 
-    const attacker = testEnv.authenticatedContext('attacker')
+    const attacker = testEnv.authenticatedContext('attacker', { email_verified: true })
     await assertFails(
       attacker.firestore().doc('invites/invite1').update({
         houseId: 'attacker-house',
@@ -521,7 +521,7 @@ describe('Invites (/invites/{inviteId})', () => {
       })
     })
 
-    const attacker = testEnv.authenticatedContext('attacker')
+    const attacker = testEnv.authenticatedContext('attacker', { email_verified: true })
     await assertFails(
       attacker.firestore().doc('invites/invite1').update({
         houseName: 'Phishing House',
@@ -535,7 +535,7 @@ describe('Invites (/invites/{inviteId})', () => {
 describe('Recurring (/houses/{houseId}/recurring/{recurringId})', () => {
   it('member can create and read recurring entries', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/recurring/rec1').set({
         amount: 50000,
@@ -548,7 +548,7 @@ describe('Recurring (/houses/{houseId}/recurring/{recurringId})', () => {
 
   it('member can update and delete recurring entries', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await alice.firestore().doc('houses/house1/recurring/rec1').set({ amount: 50000 })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/recurring/rec1').update({ amount: 60000 })
@@ -563,13 +563,13 @@ describe('Recurring (/houses/{houseId}/recurring/{recurringId})', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('houses/house1/recurring/rec1').set({ amount: 50000 })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1/recurring/rec1').get())
   })
 
   it('non-member cannot write recurring entries', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(
       outsider.firestore().doc('houses/house1/recurring/rec1').set({ amount: 50000 })
     )
@@ -581,7 +581,7 @@ describe('Recurring (/houses/{houseId}/recurring/{recurringId})', () => {
 describe('Meta docs (/houses/{houseId}/meta/{docId})', () => {
   it('member can read and write mortgage config', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/meta/mortgage').set({
         principal: 30000000,
@@ -598,7 +598,7 @@ describe('Meta docs (/houses/{houseId}/meta/{docId})', () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await ctx.firestore().doc('houses/house1/meta/mortgage').set({ principal: 30000000 })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1/meta/mortgage').get())
   })
 })
@@ -616,7 +616,7 @@ describe('Reference rates (/reference_rates/{rateId})', () => {
   })
 
   it('nobody can write reference rates (admin SDK only)', async () => {
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.firestore().doc('reference_rates/euribor_12m').set({ values: {}, source: 'Hacked' })
     )
@@ -628,7 +628,7 @@ describe('Reference rates (/reference_rates/{rateId})', () => {
 describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
   it('member can create a folder', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/folders/folder1').set({
         name: 'Purchase & Legal',
@@ -647,7 +647,7 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
         name: 'Insurance', icon: '🛡️', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().collection('houses/house1/folders').get())
   })
 
@@ -658,7 +658,7 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
         name: 'Old Name', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/folders/folder1').update({ name: 'New Name', icon: '📋' })
     )
@@ -671,7 +671,7 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
         name: 'To Delete', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1/folders/folder1').delete())
   })
 
@@ -682,13 +682,13 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
         name: 'Secret', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
       })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().collection('houses/house1/folders').get())
   })
 
   it('non-member cannot create a folder', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(
       outsider.firestore().doc('houses/house1/folders/folder2').set({
         name: 'Sneaky', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'outsider',
@@ -704,7 +704,7 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
 
   it('member can create a folder with description', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/folders/folder-desc').set({
         name: 'Insurance',
@@ -724,7 +724,7 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
         name: 'Test', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/folders/folder1').update({ description: 'Updated description' })
     )
@@ -736,7 +736,7 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
 describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
   it('member can create a document', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/documents/doc1').set({
         folderId: 'folder1',
@@ -760,7 +760,7 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().collection('houses/house1/documents').get())
   })
 
@@ -773,7 +773,7 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/documents/doc1').update({
         name: 'new-name.pdf',
@@ -793,7 +793,7 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(alice.firestore().doc('houses/house1/documents/doc1').delete())
   })
 
@@ -806,13 +806,13 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().collection('houses/house1/documents').get())
   })
 
   it('non-member cannot create a document', async () => {
     await seedHouseWithMember('house1', 'alice')
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(
       outsider.firestore().doc('houses/house1/documents/doc2').set({
         folderId: 'folder1', name: 'hack.pdf', type: 'application/pdf',
@@ -831,7 +831,7 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const outsider = testEnv.authenticatedContext('outsider')
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1/documents/doc1').delete())
   })
 
@@ -844,7 +844,7 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/documents/doc-notes').update({
         notes: 'Final signed version - expires Dec 2026',
@@ -863,7 +863,7 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertSucceeds(
       alice.firestore().doc('houses/house1/documents/doc-clear').update({
         notes: firebase.firestore.FieldValue.delete(),
@@ -882,7 +882,102 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
         uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       })
     })
-    const alice = testEnv.authenticatedContext('alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(alice.firestore().doc('houses/house2/documents/doc1').get())
   })
+})
+
+// ── Email Verification Rules ────────────────────────────────────────
+
+describe('Email verification enforcement', () => {
+  it('unverified user cannot create a house', async () => {
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertFails(
+      unverified.firestore().doc('houses/house1').set({
+        name: 'My House',
+        ownerId: 'alice',
+        memberIds: ['alice'],
+        createdAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('unverified member cannot create an expense', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertFails(
+      unverified.firestore().collection('houses/house1/expenses').add({
+        amount: 150000,
+        category: 'notary_legal',
+        payer: 'alice',
+        description: 'Notary fees',
+        date: '2025-07-15',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('unverified member cannot update house', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertFails(
+      unverified.firestore().doc('houses/house1').update({ name: 'Renamed' })
+    )
+  })
+
+  it('unverified user cannot create an invite', async () => {
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertFails(
+      unverified.firestore().doc('invites/invite1').set({
+        houseId: 'house1',
+        houseName: 'Test House',
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      })
+    )
+  })
+
+  it('unverified user cannot create a member doc', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unverified = testEnv.authenticatedContext('bob', { email_verified: false })
+    await assertFails(
+      unverified.firestore().doc('houses/house1/members/bob').set({
+        displayName: 'Bob',
+        email: 'bob@example.com',
+        color: '#ef4444',
+        role: 'member',
+        joinedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('unverified member can still READ expenses', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().collection('houses/house1/expenses').add({
+        amount: 50000,
+        category: 'other',
+        payer: 'alice',
+        description: 'Test',
+        date: '2025-07-15',
+      })
+    })
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertSucceeds(unverified.firestore().collection('houses/house1/expenses').get())
+  })
+
+  it('unverified user CAN write their own profile (exception)', async () => {
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertSucceeds(
+      unverified.firestore().doc('users/alice').set({
+        displayName: 'Alice',
+        email: 'alice@example.com',
+        houseId: null,
+        createdAt: new Date().toISOString(),
+      })
+    )
+  })
+
 })

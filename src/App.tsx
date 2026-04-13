@@ -17,6 +17,7 @@ import { InviteLandingPage } from '@/pages/InviteLandingPage'
 import { DocumentsPage } from '@/pages/DocumentsPage'
 import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
+import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 
 /* ── App routes (inside /app/*, requires house) ── */
 
@@ -67,10 +68,11 @@ function AppRoutes() {
 /* ── Auth guard for /app/* ── */
 
 function ProtectedApp() {
-  const { user, loading } = useAuth()
+  const { user, loading, emailVerified } = useAuth()
 
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace />
+  if (!emailVerified) return <VerifyEmailPage />
 
   return (
     <HouseholdProvider>
@@ -93,10 +95,11 @@ function LoginGate() {
 /* ── Invite route: landing if not logged in, join flow if logged in ── */
 
 function InviteGate() {
-  const { user, loading } = useAuth()
+  const { user, loading, emailVerified } = useAuth()
 
   if (loading) return <LoadingScreen />
   if (!user) return <InviteLandingPage />
+  if (!emailVerified) return <VerifyEmailPage />
 
   return (
     <HouseholdProvider>

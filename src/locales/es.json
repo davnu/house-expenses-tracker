@@ -71,7 +71,13 @@
     "dontHaveAccount": "¿No tienes cuenta?",
     "signInLink": "Inicia sesión",
     "signUpLink": "Regístrate",
-    "joinHouseSubtitle": "Inicia sesión o regístrate para unirte a \"{{houseName}}\""
+    "joinHouseSubtitle": "Inicia sesión o regístrate para unirte a \"{{houseName}}\"",
+    "verifyEmailTitle": "Revisa tu correo",
+    "verifyEmailDesc": "Enviamos un enlace de verificación a {{email}}. Haz clic en el enlace para verificar tu cuenta.",
+    "resendEmail": "Reenviar correo de verificación",
+    "resendEmailCooldown": "Reenviar en {{seconds}}s",
+    "emailSent": "¡Correo de verificación enviado!",
+    "checkSpam": "¿No lo ves? Revisa tu carpeta de spam."
   },
   "onboarding": {
     "welcome": "¡Bienvenido!",
