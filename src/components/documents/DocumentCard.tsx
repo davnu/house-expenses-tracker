@@ -1,16 +1,12 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { FileText, Image, FileSpreadsheet, Download, Trash2, MoreVertical, Pencil, FolderInput, Loader2, StickyNote } from 'lucide-react'
+import { Download, Trash2, MoreVertical, Pencil, FolderInput, Loader2, StickyNote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useDocuments } from '@/context/DocumentContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { cn } from '@/lib/utils'
+import { getFileTypeInfo, isImageType } from '@/lib/file-type-info'
+import { formatDistanceToNow, differenceInDays, format } from 'date-fns'
 import type { HouseDocument } from '@/types/document'
-
-function fileIcon(type: string) {
-  if (type.startsWith('image/')) return Image
-  if (type.includes('spreadsheet') || type.includes('excel')) return FileSpreadsheet
-  return FileText
-}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -18,8 +14,18 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function isImageType(type: string): boolean {
-  return type.startsWith('image/')
+function formatSmartDate(isoDate: string): string {
+  try {
+    const date = new Date(isoDate)
+    const days = differenceInDays(new Date(), date)
+    // Recent uploads: "2 hours ago", "yesterday"
+    // Older documents: exact date (more useful for financial records)
+    return days < 7
+      ? formatDistanceToNow(date, { addSuffix: true })
+      : format(date, 'MMM d, yyyy')
+  } catch {
+    return ''
+  }
 }
 
 interface DocumentCardProps {
@@ -47,7 +53,8 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
     if (!editingNotes) setNotesValue(document.notes ?? '')
   }, [document.notes, editingNotes])
 
-  const Icon = fileIcon(document.type)
+  const typeInfo = getFileTypeInfo(document.type)
+  const Icon = typeInfo.icon
   const uploaderName = getMemberName(document.uploadedBy)
 
   const handleOpen = () => {
@@ -107,29 +114,46 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
   return (
     <div
       className={cn(
-        'group relative flex items-center gap-3 p-3 rounded-lg border bg-card transition-colors',
-        isPending ? 'opacity-60' : 'hover:bg-accent/50 cursor-pointer'
+        'group relative flex items-center gap-3 p-3 rounded-xl border bg-card transition-all',
+        isPending ? 'opacity-60' : 'hover:bg-accent/50 hover:shadow-sm cursor-pointer'
       )}
       onClick={handleOpen}
     >
-      {/* Thumbnail or icon */}
-      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+      {/* Thumbnail or color-coded icon */}
+      <div className={cn(
+        'h-11 w-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden transition-colors',
+        isPending ? 'bg-muted' : typeInfo.bgColor
+      )}>
         {isPending ? (
           <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
-        ) : isImageType(document.type) && document.url ? (
-          <img src={document.url} alt="" className="h-10 w-10 object-cover rounded-lg" />
+        ) : document.thumbnailUrl ? (
+          <img src={document.thumbnailUrl} alt="" className="h-11 w-11 object-cover rounded-xl" />
         ) : (
-          <Icon className="h-5 w-5 text-muted-foreground" />
+          <Icon className={cn('h-5 w-5', typeInfo.iconColor)} />
         )}
       </div>
 
       {/* File info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{document.name}</p>
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-medium truncate">{document.name}</p>
+          {/* Extension badge — hidden when thumbnail provides visual context */}
+          {typeInfo.label && !document.thumbnailUrl && (
+            <span className={cn(
+              'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide shrink-0 leading-none',
+              typeInfo.bgColor, typeInfo.iconColor
+            )}>
+              {typeInfo.label}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
           <span className="text-xs text-muted-foreground">
             {formatSize(document.size)}
             {uploaderName && <> &middot; {uploaderName}</>}
+            {document.uploadedAt && (
+              <> &middot; {formatSmartDate(document.uploadedAt)}</>
+            )}
           </span>
           {folderBadge}
         </div>
@@ -200,7 +224,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setConfirmDelete(false) }} />
-              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border bg-card shadow-lg py-1">
+              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border bg-card shadow-lg py-1">
                 {onRename && (
                   <button
                     type="button"

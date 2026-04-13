@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal, Loader2 } from 'lucide-react'
+import { getFileTypeInfo, getExtensionBadgeClasses } from '@/lib/file-type-info'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -235,6 +236,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {expense.attachments!.map((att, i) => {
                 const isPendingAtt = pendingAttachmentIds.has(att.id)
+                const typeInfo = getFileTypeInfo(att.type)
                 return (
                   <div
                     key={att.id}
@@ -242,13 +244,22 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
                     tabIndex={isPendingAtt ? undefined : 0}
                     onClick={isPendingAtt ? undefined : () => handleAttachmentClick(expense, i)}
                     onKeyDown={isPendingAtt ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleAttachmentClick(expense, i); } }}
-                    className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-muted transition-colors group ${isPendingAtt ? 'opacity-60' : 'hover:bg-muted-foreground/10 cursor-pointer'}`}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 text-xs rounded-lg transition-colors group overflow-hidden',
+                      isPendingAtt ? 'opacity-60 bg-muted px-2 py-1' : 'hover:ring-1 hover:ring-primary/30 cursor-pointer',
+                      !att.thumbnailUrl || isPendingAtt ? 'bg-muted px-2 py-1' : ''
+                    )}
                     title={att.name}
                   >
-                    {isPendingAtt
-                      ? <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
-                      : <Paperclip className="h-3 w-3 text-muted-foreground" />
-                    }
+                    {isPendingAtt ? (
+                      <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
+                    ) : att.thumbnailUrl ? (
+                      <img src={att.thumbnailUrl} alt="" className="h-7 w-7 object-cover rounded-md shrink-0" />
+                    ) : (
+                      <span className={cn('inline-flex items-center px-1 py-0.5 rounded text-[10px] font-semibold leading-none', getExtensionBadgeClasses(att.type))}>
+                        {typeInfo.label}
+                      </span>
+                    )}
                     <span className="truncate max-w-[100px]">{att.name}</span>
                     {!isPendingAtt && (
                       <button
@@ -265,7 +276,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
               {!isPendingExpense && (
                 <button
                   onClick={() => handleAddAttachment(expense.id)}
-                  className="inline-flex items-center text-xs px-1.5 py-0.5 rounded border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"
+                  className="inline-flex items-center text-xs px-1.5 py-1 rounded-lg border border-dashed border-input hover:border-primary/50 transition-colors cursor-pointer text-muted-foreground"
                   title="Add attachment"
                 >
                   <Plus className="h-3 w-3" />

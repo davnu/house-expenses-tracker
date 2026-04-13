@@ -31,7 +31,7 @@ const mockExpenses: Expense[] = [
   },
 ]
 
-const { mockRepo, mockUploadAttachment, mockDeleteAttachment, mockDeleteAttachments } = vi.hoisted(() => {
+const { mockRepo, mockUploadAttachment, mockUploadAttachmentThumbnail, mockDeleteAttachment, mockDeleteAttachments, mockGenerateThumbnail } = vi.hoisted(() => {
   const mockRepo = {
     getExpenses: vi.fn(),
     addExpense: vi.fn(),
@@ -46,8 +46,10 @@ const { mockRepo, mockUploadAttachment, mockDeleteAttachment, mockDeleteAttachme
   return {
     mockRepo,
     mockUploadAttachment: vi.fn(),
+    mockUploadAttachmentThumbnail: vi.fn(),
     mockDeleteAttachment: vi.fn(),
     mockDeleteAttachments: vi.fn(),
+    mockGenerateThumbnail: vi.fn(),
   }
 })
 
@@ -59,8 +61,13 @@ vi.mock('@/data/firebase', () => ({ db: {}, storage: {} }))
 
 vi.mock('@/data/firebase-attachment-store', () => ({
   uploadAttachment: mockUploadAttachment,
+  uploadAttachmentThumbnail: mockUploadAttachmentThumbnail,
   deleteAttachment: mockDeleteAttachment,
   deleteAttachments: mockDeleteAttachments,
+}))
+
+vi.mock('@/lib/thumbnail', () => ({
+  generateThumbnail: mockGenerateThumbnail,
 }))
 
 vi.mock('./HouseholdContext', () => ({
@@ -90,6 +97,7 @@ async function setupHook() {
 describe('ExpenseContext', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockGenerateThumbnail.mockResolvedValue(null) // No thumbnail by default
     mockRepo.getExpenses.mockResolvedValue(mockExpenses.map((e) => ({ ...e, attachments: e.attachments?.map((a) => ({ ...a })) })))
     mockRepo.addExpense.mockImplementation(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => ({
       id: 'real-id-from-firestore',
@@ -421,6 +429,48 @@ describe('ExpenseContext', () => {
       expect(result.current.expenses).toHaveLength(2)
       expect(result.current.pendingExpenseIds.size).toBe(0)
       expect(result.current.pendingAttachmentIds.size).toBe(0)
+    })
+
+    it('generates and uploads thumbnail for image files', async () => {
+      const fakeBlob = new Blob(['thumb'], { type: 'image/jpeg' })
+      mockGenerateThumbnail.mockResolvedValueOnce(fakeBlob)
+      mockUploadAttachmentThumbnail.mockResolvedValueOnce('https://example.com/thumb.jpg')
+
+      const { result } = await setupHook()
+      const file = new File(['image'], 'photo.png', { type: 'image/png' })
+
+      await act(async () => {
+        await result.current.addExpenseWithFiles(
+          { amount: 5000, category: 'other' as const, payer: 'alice', description: 'Photo', date: '2026-04-01' },
+          [file],
+        )
+      })
+
+      // generateThumbnail was called with the file
+      expect(mockGenerateThumbnail).toHaveBeenCalledWith(file)
+      // uploadAttachmentThumbnail was called with the blob
+      expect(mockUploadAttachmentThumbnail).toHaveBeenCalledWith('house-1', expect.any(String), fakeBlob)
+      // The persisted expense should include thumbnailUrl
+      const addCall = mockRepo.addExpense.mock.calls[0][0]
+      expect(addCall.attachments[0].thumbnailUrl).toBe('https://example.com/thumb.jpg')
+    })
+
+    it('skips thumbnail upload when generateThumbnail returns null (non-image file)', async () => {
+      mockGenerateThumbnail.mockResolvedValueOnce(null)
+
+      const { result } = await setupHook()
+      const file = new File(['pdf'], 'doc.pdf', { type: 'application/pdf' })
+
+      await act(async () => {
+        await result.current.addExpenseWithFiles(
+          { amount: 5000, category: 'other' as const, payer: 'alice', description: 'PDF', date: '2026-04-01' },
+          [file],
+        )
+      })
+
+      expect(mockUploadAttachmentThumbnail).not.toHaveBeenCalled()
+      const addCall = mockRepo.addExpense.mock.calls[0][0]
+      expect(addCall.attachments[0].thumbnailUrl).toBeUndefined()
     })
   })
 

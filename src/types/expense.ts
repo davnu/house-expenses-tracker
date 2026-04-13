@@ -20,6 +20,7 @@ export interface Attachment {
   type: string // MIME type
   size: number // bytes
   url?: string // Firebase Storage download URL
+  thumbnailUrl?: string // Small JPEG thumbnail URL (generated client-side at upload)
 }
 
 export interface Expense {

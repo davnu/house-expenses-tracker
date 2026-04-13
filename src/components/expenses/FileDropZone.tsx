@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, type DragEvent } from 'react'
-import { Upload, X, FileText, Image, FileSpreadsheet } from 'lucide-react'
+import { Upload, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getFileTypeInfo } from '@/lib/file-type-info'
 import {
   ACCEPTED_FILE_TYPES,
   MAX_FILE_SIZE,
@@ -10,12 +11,6 @@ import {
 } from '@/lib/constants'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
-
-function fileIcon(type: string) {
-  if (type.startsWith('image/')) return Image
-  if (type.includes('spreadsheet') || type.includes('excel')) return FileSpreadsheet
-  return FileText
-}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -150,14 +145,23 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
       {files.length > 0 && (
         <div className="space-y-1">
           {files.map((file, i) => {
-            const Icon = fileIcon(file.type)
+            const typeInfo = getFileTypeInfo(file.type)
+            const Icon = typeInfo.icon
             return (
               <div
                 key={`${file.name}-${i}`}
-                className="flex items-center gap-2 text-sm p-2 rounded-md bg-muted"
+                className="flex items-center gap-2.5 text-sm p-2 rounded-lg bg-muted"
               >
-                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className={cn('h-7 w-7 rounded-md flex items-center justify-center shrink-0', typeInfo.bgColor)}>
+                  <Icon className={cn('h-3.5 w-3.5', typeInfo.iconColor)} />
+                </div>
                 <span className="truncate flex-1">{file.name}</span>
+                <span className={cn(
+                  'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide shrink-0 leading-none',
+                  typeInfo.bgColor, typeInfo.iconColor
+                )}>
+                  {typeInfo.label}
+                </span>
                 <span className="text-xs text-muted-foreground shrink-0">
                   {formatSize(file.size)}
                 </span>

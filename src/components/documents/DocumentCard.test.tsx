@@ -140,4 +140,92 @@ describe('DocumentCard', () => {
       expect(screen.queryByTitle('More')).toBeNull()
     })
   })
+
+  describe('thumbnail rendering', () => {
+    it('renders thumbnail image when thumbnailUrl is present', () => {
+      const docWithThumb = { ...baseDoc, type: 'image/jpeg', thumbnailUrl: 'https://example.com/thumb.jpg' }
+      const { container } = render(<DocumentCard {...defaultProps} document={docWithThumb} />)
+
+      const img = container.querySelector('img')
+      expect(img).toBeDefined()
+      expect(img?.getAttribute('src')).toBe('https://example.com/thumb.jpg')
+    })
+
+    it('renders file-type icon when thumbnailUrl is absent on an image document', () => {
+      const imageDocNoThumb = { ...baseDoc, type: 'image/jpeg', name: 'photo.jpg' }
+      const { container } = render(<DocumentCard {...defaultProps} document={imageDocNoThumb} />)
+
+      // Should NOT render an <img> element (no full-URL download)
+      const img = container.querySelector('img')
+      expect(img).toBeNull()
+    })
+
+    it('renders file-type icon for non-image documents regardless of thumbnailUrl', () => {
+      // PDF without thumbnailUrl — should show icon, not image
+      const { container } = render(<DocumentCard {...defaultProps} />)
+
+      const img = container.querySelector('img')
+      expect(img).toBeNull()
+    })
+
+    it('always applies background color on icon container (loading placeholder)', () => {
+      const docWithThumb = { ...baseDoc, type: 'image/jpeg', thumbnailUrl: 'https://example.com/thumb.jpg' }
+      const { container } = render(<DocumentCard {...defaultProps} document={docWithThumb} />)
+
+      // The icon container should have a bg color even when thumbnail is present (acts as loading backdrop)
+      const iconContainer = container.querySelector('.h-11.w-11')
+      const classes = iconContainer?.getAttribute('class') ?? ''
+      expect(classes).toContain('bg-')
+    })
+
+    it('hides extension badge when thumbnailUrl is present', () => {
+      const docWithThumb = { ...baseDoc, type: 'image/jpeg', name: 'photo.jpg', thumbnailUrl: 'https://example.com/thumb.jpg' }
+      render(<DocumentCard {...defaultProps} document={docWithThumb} />)
+
+      // "JPG" badge should NOT be rendered when thumbnail is visible
+      expect(screen.queryByText('JPG')).toBeNull()
+    })
+
+    it('shows extension badge when thumbnailUrl is absent', () => {
+      render(<DocumentCard {...defaultProps} />)
+
+      // "PDF" badge should be shown for PDF without thumbnail
+      expect(screen.getByText('PDF')).toBeDefined()
+    })
+  })
+
+  describe('smart date formatting', () => {
+    it('shows relative date for recent uploads', () => {
+      const recentDoc = { ...baseDoc, uploadedAt: new Date().toISOString() }
+      render(<DocumentCard {...defaultProps} document={recentDoc} />)
+
+      // Should show "less than a minute ago" or similar
+      expect(screen.getByText(/ago/)).toBeDefined()
+    })
+
+    it('shows exact date for older uploads', () => {
+      // baseDoc.uploadedAt is '2026-04-01T00:00:00Z' — more than 7 days ago from "today" (2026-04-13)
+      render(<DocumentCard {...defaultProps} />)
+
+      // Should show "Apr 1, 2026" format
+      expect(screen.getByText(/Apr 1, 2026/)).toBeDefined()
+    })
+  })
+
+  describe('file metadata display', () => {
+    it('shows file size', () => {
+      render(<DocumentCard {...defaultProps} />)
+      expect(screen.getByText(/100\.0 KB/)).toBeDefined()
+    })
+
+    it('shows uploader name', () => {
+      render(<DocumentCard {...defaultProps} />)
+      expect(screen.getByText(/Alice/)).toBeDefined()
+    })
+
+    it('shows filename', () => {
+      render(<DocumentCard {...defaultProps} />)
+      expect(screen.getByText('contract.pdf')).toBeDefined()
+    })
+  })
 })

@@ -105,6 +105,7 @@ export function attachmentToHouseDocument(attachment: Attachment, expense: Expen
     type: attachment.type,
     size: attachment.size,
     url: attachment.url ?? '',
+    thumbnailUrl: attachment.thumbnailUrl,
     uploadedBy: expense.payer,
     uploadedAt: expense.date,
     updatedAt: expense.updatedAt,

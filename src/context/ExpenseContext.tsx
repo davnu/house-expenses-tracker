@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, u
 import type { Expense, Attachment } from '@/types/expense'
 import type { ExpenseRepository } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
-import { uploadAttachment, deleteAttachment, deleteAttachments } from '@/data/firebase-attachment-store'
+import { uploadAttachment, uploadAttachmentThumbnail, deleteAttachment, deleteAttachments } from '@/data/firebase-attachment-store'
+import { generateThumbnail } from '@/lib/thumbnail'
 import { db } from '@/data/firebase'
 import { useHousehold } from './HouseholdContext'
 import { MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
@@ -130,8 +131,16 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       const uploaded: Attachment[] = await Promise.all(
         files.map(async (file, i) => {
           const id = placeholderAtts[i].id
-          const url = await uploadAttachment(houseId, id, file)
-          return { id, name: file.name, type: file.type, size: file.size, url }
+          // Generate thumbnail first (~50ms), then upload both in true parallel
+          const thumbnailBlob = await generateThumbnail(file)
+          const uploads: [Promise<string>, Promise<string | undefined>] = [
+            uploadAttachment(houseId, id, file),
+            thumbnailBlob
+              ? uploadAttachmentThumbnail(houseId, id, thumbnailBlob)
+              : Promise.resolve(undefined),
+          ]
+          const [url, thumbnailUrl] = await Promise.all(uploads)
+          return { id, name: file.name, type: file.type, size: file.size, url, thumbnailUrl }
         })
       )
       const real = await repo.addExpense({ ...input, attachments: uploaded.length > 0 ? uploaded : undefined })
@@ -230,8 +239,15 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       const uploaded: Attachment[] = await Promise.all(
         files.map(async (file, i) => {
           const id = placeholders[i].id
-          const url = await uploadAttachment(houseId, id, file)
-          return { id, name: file.name, type: file.type, size: file.size, url }
+          const thumbnailBlob = await generateThumbnail(file)
+          const uploads: [Promise<string>, Promise<string | undefined>] = [
+            uploadAttachment(houseId, id, file),
+            thumbnailBlob
+              ? uploadAttachmentThumbnail(houseId, id, thumbnailBlob)
+              : Promise.resolve(undefined),
+          ]
+          const [url, thumbnailUrl] = await Promise.all(uploads)
+          return { id, name: file.name, type: file.type, size: file.size, url, thumbnailUrl }
         })
       )
 

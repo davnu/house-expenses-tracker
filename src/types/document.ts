@@ -15,6 +15,7 @@ export interface HouseDocument {
   type: string // MIME type
   size: number // bytes
   url: string // Firebase Storage download URL
+  thumbnailUrl?: string // Small JPEG thumbnail URL (generated client-side at upload)
   notes?: string
   uploadedBy: string // uid
   uploadedAt: string

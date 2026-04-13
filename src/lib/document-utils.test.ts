@@ -252,6 +252,18 @@ describe('attachmentToHouseDocument', () => {
     expect(doc.updatedAt).toBe('2026-05-01T12:00:00.000Z')
   })
 
+  it('passes through thumbnailUrl when present', () => {
+    const att = makeAttachment({ thumbnailUrl: 'https://example.com/thumb.jpg' })
+    const doc = attachmentToHouseDocument(att, makeExpense())
+    expect(doc.thumbnailUrl).toBe('https://example.com/thumb.jpg')
+  })
+
+  it('passes through undefined thumbnailUrl when absent', () => {
+    const att = makeAttachment()
+    const doc = attachmentToHouseDocument(att, makeExpense())
+    expect(doc.thumbnailUrl).toBeUndefined()
+  })
+
   it('uses __expense__ sentinel folderId', () => {
     const doc = attachmentToHouseDocument(makeAttachment(), makeExpense())
     expect(doc.folderId).toBe('__expense__')

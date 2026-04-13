@@ -5,6 +5,10 @@ function documentRef(houseId: string, documentId: string, fileName: string) {
   return ref(storage, `houses/${houseId}/documents/${documentId}/${fileName}`)
 }
 
+function thumbnailRef(houseId: string, documentId: string) {
+  return ref(storage, `houses/${houseId}/documents/${documentId}/thumb.jpg`)
+}
+
 export async function uploadDocument(
   houseId: string,
   documentId: string,
@@ -15,17 +19,28 @@ export async function uploadDocument(
   return getDownloadURL(storageRef)
 }
 
+export async function uploadDocumentThumbnail(
+  houseId: string,
+  documentId: string,
+  thumbnailBlob: Blob,
+): Promise<string> {
+  const storageRef = thumbnailRef(houseId, documentId)
+  await uploadBytes(storageRef, thumbnailBlob, {
+    cacheControl: 'private, max-age=86400',
+    contentType: 'image/jpeg',
+  })
+  return getDownloadURL(storageRef)
+}
+
 export async function deleteDocumentFile(
   houseId: string,
   documentId: string,
   fileName: string
 ): Promise<void> {
-  const storageRef = documentRef(houseId, documentId, fileName)
-  try {
-    await deleteObject(storageRef)
-  } catch {
-    // File may already be deleted
-  }
+  await Promise.all([
+    deleteObject(documentRef(houseId, documentId, fileName)).catch(() => {}),
+    deleteObject(thumbnailRef(houseId, documentId)).catch(() => {}),
+  ])
 }
 
 export async function deleteDocumentFiles(

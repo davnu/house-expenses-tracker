@@ -4,7 +4,8 @@ import type { DocFolder, HouseDocument } from '@/types/document'
 import { DEFAULT_FOLDERS } from '@/types/document'
 import type { ExpenseRepository } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
-import { uploadDocument, deleteDocumentFile } from '@/data/firebase-document-store'
+import { uploadDocument, uploadDocumentThumbnail, deleteDocumentFile } from '@/data/firebase-document-store'
+import { generateThumbnail } from '@/lib/thumbnail'
 import { db } from '@/data/firebase'
 import { useAuth } from './AuthContext'
 import { useHousehold } from './HouseholdContext'
@@ -225,13 +226,22 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       await Promise.all(
         files.map(async (file) => {
           const docId = crypto.randomUUID()
-          const url = await uploadDocument(houseId, docId, file)
+          // Generate thumbnail first (~50ms), then upload both in true parallel
+          const thumbnailBlob = await generateThumbnail(file)
+          const uploads: [Promise<string>, Promise<string | undefined>] = [
+            uploadDocument(houseId, docId, file),
+            thumbnailBlob
+              ? uploadDocumentThumbnail(houseId, docId, thumbnailBlob)
+              : Promise.resolve(undefined),
+          ]
+          const [url, thumbnailUrl] = await Promise.all(uploads)
           await repo.addDocument(docId, {
             folderId,
             name: file.name,
             type: file.type,
             size: file.size,
             url,
+            thumbnailUrl,
             uploadedBy: user?.uid ?? '',
           })
           // onSnapshot will pick up the real document
