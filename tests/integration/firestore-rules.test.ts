@@ -701,6 +701,34 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
     const unauthed = testEnv.unauthenticatedContext()
     await assertFails(unauthed.firestore().collection('houses/house1/folders').get())
   })
+
+  it('member can create a folder with description', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/folders/folder-desc').set({
+        name: 'Insurance',
+        icon: '🛡️',
+        description: 'Homeowner, title, and life insurance policies',
+        order: 2,
+        createdAt: new Date().toISOString(),
+        createdBy: 'alice',
+      })
+    )
+  })
+
+  it('member can update folder description', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/folders/folder1').set({
+        name: 'Test', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/folders/folder1').update({ description: 'Updated description' })
+    )
+  })
 })
 
 // ── Documents ───────────────────────────────────────────────────────
@@ -805,6 +833,43 @@ describe('Documents (/houses/{houseId}/documents/{documentId})', () => {
     })
     const outsider = testEnv.authenticatedContext('outsider')
     await assertFails(outsider.firestore().doc('houses/house1/documents/doc1').delete())
+  })
+
+  it('member can add notes to a document', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc-notes').set({
+        folderId: 'folder1', name: 'contract.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/documents/doc-notes').update({
+        notes: 'Final signed version - expires Dec 2026',
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('member can clear notes from a document', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/documents/doc-clear').set({
+        folderId: 'folder1', name: 'test.pdf', type: 'application/pdf',
+        size: 500, url: 'https://example.com', uploadedBy: 'alice',
+        notes: 'Old note',
+        uploadedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice')
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/documents/doc-clear').update({
+        notes: firebase.firestore.FieldValue.delete(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
   })
 
   it('cross-house isolation: member of house1 cannot access house2 documents', async () => {

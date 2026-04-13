@@ -46,20 +46,29 @@ export function MortgageOverviewCard({ config }: MortgageOverviewCardProps) {
         </div>
 
         {/* Savings from extra repayments */}
-        {impact && impact.monthsSaved > 0 && (
+        {impact && impact.interestSaved > 0 && (
           <div className="flex gap-4 p-3 rounded-lg bg-green-50 border border-green-200">
             <div>
               <p className="text-xs text-green-700">Interest Saved</p>
               <p className="text-sm font-bold text-green-700">{formatCurrency(impact.interestSaved)}</p>
             </div>
-            <div>
-              <p className="text-xs text-green-700">Time Saved</p>
-              <p className="text-sm font-bold text-green-700">{impact.monthsSaved} months</p>
-            </div>
-            <div>
-              <p className="text-xs text-green-700">New Payoff</p>
-              <p className="text-sm font-bold text-green-700">{format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy')}</p>
-            </div>
+            {impact.monthsSaved > 0 ? (
+              <>
+                <div>
+                  <p className="text-xs text-green-700">Time Saved</p>
+                  <p className="text-sm font-bold text-green-700">{impact.monthsSaved} months</p>
+                </div>
+                <div>
+                  <p className="text-xs text-green-700">New Payoff</p>
+                  <p className="text-sm font-bold text-green-700">{format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy')}</p>
+                </div>
+              </>
+            ) : (
+              <div>
+                <p className="text-xs text-green-700">Payoff Date</p>
+                <p className="text-sm font-bold text-green-700">Unchanged, lower payments</p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

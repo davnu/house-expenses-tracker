@@ -110,7 +110,7 @@ export function BalanceCorrectionCard() {
             max={today}
             min={mortgage.startDate}
             onChange={(e) => setCorrDate(e.target.value)}
-            className="h-8 text-sm"
+            className="sm:h-8 sm:text-sm"
           />
         </div>
         <div className="space-y-1">
@@ -122,7 +122,7 @@ export function BalanceCorrectionCard() {
             placeholder="142350.00"
             value={corrBalance}
             onChange={(e) => setCorrBalance(e.target.value)}
-            className="h-8 text-sm"
+            className="sm:h-8 sm:text-sm"
           />
         </div>
       </div>

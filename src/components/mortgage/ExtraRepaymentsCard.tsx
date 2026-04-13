@@ -90,16 +90,22 @@ export function ExtraRepaymentsCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Impact summary */}
-        {impact && impact.monthsSaved > 0 && (
+        {impact && impact.interestSaved > 0 && (
           <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200">
             <TrendingDown className="h-5 w-5 text-green-600 shrink-0" />
             <div className="text-sm">
               <p className="font-medium text-green-800">
                 Save {formatCurrency(impact.interestSaved)} in interest
               </p>
-              <p className="text-green-600 text-xs">
-                Pay off {impact.monthsSaved} months early ({format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy')} instead of {format(new Date(impact.originalPayoffDate + '-01'), 'MMM yyyy')})
-              </p>
+              {impact.monthsSaved > 0 ? (
+                <p className="text-green-600 text-xs">
+                  Pay off {impact.monthsSaved} months early ({format(new Date(impact.newPayoffDate + '-01'), 'MMM yyyy')} instead of {format(new Date(impact.originalPayoffDate + '-01'), 'MMM yyyy')})
+                </p>
+              ) : (
+                <p className="text-green-600 text-xs">
+                  Same payoff date, lower monthly payments
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -138,7 +144,7 @@ export function ExtraRepaymentsCard() {
                   type="date"
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
-                  className="h-8 text-sm"
+                  className="sm:h-8 sm:text-sm"
                 />
               </div>
               <div className="space-y-1">
@@ -150,7 +156,7 @@ export function ExtraRepaymentsCard() {
                   min="0.01"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
-                  className="h-8 text-sm"
+                  className="sm:h-8 sm:text-sm"
                 />
               </div>
             </div>
@@ -202,7 +208,7 @@ export function ExtraRepaymentsCard() {
                   value={newEndDate}
                   min={newDate || undefined}
                   onChange={(e) => setNewEndDate(e.target.value)}
-                  className="h-8 text-sm"
+                  className="sm:h-8 sm:text-sm"
                   placeholder="Leave empty for no end date"
                 />
               </div>

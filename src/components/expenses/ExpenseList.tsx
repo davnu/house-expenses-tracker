@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +8,7 @@ import { AttachmentViewer } from './AttachmentViewer'
 import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { formatCurrency, friendlyError } from '@/lib/utils'
+import { cn, formatCurrency, friendlyError } from '@/lib/utils'
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SHARED_PAYER_LABEL } from '@/lib/constants'
 import { groupExpensesByMonth } from '@/lib/expense-utils'
 import { format } from 'date-fns'
@@ -24,7 +24,12 @@ function monthLabel(key: string): string {
   return format(new Date(y, m - 1, 1), 'MMMM yyyy')
 }
 
-export function ExpenseList() {
+interface ExpenseListProps {
+  highlightExpenseId?: string | null
+  onHighlightDone?: () => void
+}
+
+export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseListProps) {
   const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
   const isMultiMember = members.length > 1
@@ -46,6 +51,62 @@ export function ExpenseList() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attachTargetId, setAttachTargetId] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
+
+  // ── Deep-link highlight ──
+  const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const setRowRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
+    if (el) rowRefs.current.set(id, el)
+    else rowRefs.current.delete(id)
+  }, [])
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null)
+  const onHighlightDoneRef = useRef(onHighlightDone)
+  onHighlightDoneRef.current = onHighlightDone
+  const didHighlightRef = useRef<string | null>(null)
+
+  // Reset completion guard and clear filters when a new highlight arrives
+  useEffect(() => {
+    didHighlightRef.current = null
+    if (highlightExpenseId) {
+      setFilterCategory('')
+      setFilterPayer('')
+      setFilterFrom('')
+      setFilterTo('')
+      setSearch('')
+    }
+  }, [highlightExpenseId])
+
+  // Scroll to and highlight the target expense
+  useEffect(() => {
+    if (!highlightExpenseId || didHighlightRef.current === highlightExpenseId) return
+
+    const fallbackTimeout = setTimeout(() => {
+      // Expense not found after 5s (deleted or stale link) — clean up
+      onHighlightDoneRef.current?.()
+    }, 5000)
+
+    let fadeTimeout: ReturnType<typeof setTimeout>
+    const raf = requestAnimationFrame(() => {
+      const el = rowRefs.current.get(highlightExpenseId)
+      if (!el) return
+
+      clearTimeout(fallbackTimeout)
+      didHighlightRef.current = highlightExpenseId
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setActiveHighlight(highlightExpenseId)
+
+      // 3s total: ~800ms for smooth scroll to settle + ~2.2s visible highlight
+      fadeTimeout = setTimeout(() => {
+        setActiveHighlight(null)
+        onHighlightDoneRef.current?.()
+      }, 3000)
+    })
+
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(fallbackTimeout)
+      clearTimeout(fadeTimeout)
+    }
+  }, [highlightExpenseId, expenses]) // re-run when expenses load
 
   const withErrorHandling = useCallback(async (fn: () => Promise<void>) => {
     setActionError('')
@@ -130,11 +191,18 @@ export function ExpenseList() {
 
   const renderExpenseRow = (expense: Expense) => {
     const isPendingExpense = pendingExpenseIds.has(expense.id)
+    const isHighlighted = activeHighlight === expense.id
     const categoryColor = CATEGORY_COLORS[expense.category] || '#6b7280'
     return (
       <div
         key={expense.id}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border border-l-[3px] bg-card transition-colors group/row ${isPendingExpense ? 'opacity-60' : 'hover:bg-accent/50'}`}
+        ref={setRowRef(expense.id)}
+        className={cn(
+          'flex items-center gap-3 px-3 py-2.5 rounded-lg border border-l-[3px] bg-card group/row',
+          'transition-[background-color,box-shadow] duration-500',
+          isPendingExpense ? 'opacity-60' : 'hover:bg-accent/50',
+          isHighlighted && 'ring-2 ring-primary bg-primary/5',
+        )}
         style={{ borderLeftColor: categoryColor }}
       >
         <div className="flex-1 min-w-0">

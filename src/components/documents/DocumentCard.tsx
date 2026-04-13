@@ -25,14 +25,15 @@ function isImageType(type: string): boolean {
 interface DocumentCardProps {
   document: HouseDocument
   isPending: boolean
+  readOnly?: boolean
   onRename?: () => void
-  onMove: () => void
+  onMove?: () => void
   onPreview: () => void
   onNotesChange?: (notes: string) => void
   folderBadge?: ReactNode
 }
 
-export function DocumentCard({ document, isPending, onRename, onMove, onPreview, onNotesChange, folderBadge }: DocumentCardProps) {
+export function DocumentCard({ document, isPending, readOnly, onRename, onMove, onPreview, onNotesChange, folderBadge }: DocumentCardProps) {
   const { deleteDocument } = useDocuments()
   const { getMemberName } = useHousehold()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -133,8 +134,8 @@ export function DocumentCard({ document, isPending, onRename, onMove, onPreview,
           {folderBadge}
         </div>
 
-        {/* Notes display / edit */}
-        {editingNotes ? (
+        {/* Notes display / edit (not shown in readOnly mode) */}
+        {!readOnly && editingNotes ? (
           <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
             <input
               value={notesValue}
@@ -150,7 +151,7 @@ export function DocumentCard({ document, isPending, onRename, onMove, onPreview,
               maxLength={200}
             />
           </div>
-        ) : document.notes ? (
+        ) : !readOnly && document.notes ? (
           <p
             className="text-xs text-muted-foreground/70 truncate mt-0.5 hover:text-foreground cursor-text italic"
             onClick={(e) => {
@@ -180,18 +181,20 @@ export function DocumentCard({ document, isPending, onRename, onMove, onPreview,
             >
               <Download className="h-3.5 w-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation()
-                setMenuOpen(!menuOpen)
-              }}
-              title="More"
-            >
-              <MoreVertical className="h-3.5 w-3.5" />
-            </Button>
+            {!readOnly && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setMenuOpen(!menuOpen)
+                }}
+                title="More"
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
 
           {menuOpen && (
@@ -227,18 +230,20 @@ export function DocumentCard({ document, isPending, onRename, onMove, onPreview,
                     {document.notes ? 'Edit note' : 'Add note'}
                   </button>
                 )}
-                <button
-                  type="button"
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent transition-colors cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setMenuOpen(false)
-                    onMove()
-                  }}
-                >
-                  <FolderInput className="h-3.5 w-3.5" />
-                  Move to...
-                </button>
+                {onMove && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpen(false)
+                      onMove()
+                    }}
+                  >
+                    <FolderInput className="h-3.5 w-3.5" />
+                    Move to...
+                  </button>
+                )}
                 <button
                   type="button"
                   className={cn(

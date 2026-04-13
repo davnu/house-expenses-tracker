@@ -186,14 +186,14 @@ export function RatePeriodsCard() {
           <div key={period.id} className="flex items-center gap-3 p-2 rounded-md border">
             {editingId === period.id ? (
               <div className="flex-1 space-y-2">
-                <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-7 text-xs" />
+                <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="sm:h-7 sm:text-xs" />
                 {hasVariableConfig ? (
                   <div className="grid grid-cols-2 gap-2">
-                    <Input type="number" step="0.01" value={editRefRate} onChange={(e) => setEditRefRate(e.target.value)} className="h-7 text-xs" placeholder="Ref rate" />
-                    <Input type="number" step="0.01" value={editSpread} onChange={(e) => setEditSpread(e.target.value)} className="h-7 text-xs" placeholder="Spread" />
+                    <Input type="number" step="0.01" value={editRefRate} onChange={(e) => setEditRefRate(e.target.value)} className="sm:h-7 sm:text-xs" placeholder="Ref rate" />
+                    <Input type="number" step="0.01" value={editSpread} onChange={(e) => setEditSpread(e.target.value)} className="sm:h-7 sm:text-xs" placeholder="Spread" />
                   </div>
                 ) : (
-                  <Input type="number" step="0.01" value={editRate} onChange={(e) => setEditRate(e.target.value)} className="h-7 text-xs" placeholder="Rate %" />
+                  <Input type="number" step="0.01" value={editRate} onChange={(e) => setEditRate(e.target.value)} className="sm:h-7 sm:text-xs" placeholder="Rate %" />
                 )}
                 <div className="flex gap-1">
                   <Button size="sm" className="h-6 text-xs px-2" onClick={saveEdit}><Check className="h-3 w-3 mr-1" />Save</Button>
@@ -239,7 +239,7 @@ export function RatePeriodsCard() {
           <div className="p-3 rounded-md border border-dashed space-y-3">
             <div className="space-y-1">
               <Label className="text-xs">Start date</Label>
-              <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="h-8 text-sm" />
+              <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="sm:h-8 sm:text-sm" />
             </div>
 
             {hasVariableConfig ? (
@@ -247,11 +247,11 @@ export function RatePeriodsCard() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">New {refRateLabel} (%)</Label>
-                    <Input type="number" step="0.01" placeholder="3.5" value={newRefRate} onChange={(e) => setNewRefRate(e.target.value)} className="h-8 text-sm" />
+                    <Input type="number" step="0.01" placeholder="3.5" value={newRefRate} onChange={(e) => setNewRefRate(e.target.value)} className="sm:h-8 sm:text-sm" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Spread (%)</Label>
-                    <Input type="number" step="0.01" value={newSpread} onChange={(e) => setNewSpread(e.target.value)} className="h-8 text-sm" />
+                    <Input type="number" step="0.01" value={newSpread} onChange={(e) => setNewSpread(e.target.value)} className="sm:h-8 sm:text-sm" />
                   </div>
                 </div>
                 {newRefRate && newSpread && (
@@ -264,7 +264,7 @@ export function RatePeriodsCard() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Annual rate (%)</Label>
-                  <Input type="number" step="0.01" placeholder="3.5" min="0.01" max="50" value={newRate} onChange={(e) => setNewRate(e.target.value)} className="h-8 text-sm" />
+                  <Input type="number" step="0.01" placeholder="3.5" min="0.01" max="50" value={newRate} onChange={(e) => setNewRate(e.target.value)} className="sm:h-8 sm:text-sm" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Type</Label>

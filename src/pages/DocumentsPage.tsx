@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, type DragEvent } from 'react'
-import { Plus, Search, X, Upload, ChevronDown } from 'lucide-react'
+import { Plus, Search, X, Upload, ChevronDown, Paperclip, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,9 +13,11 @@ import { DocumentCard } from '@/components/documents/DocumentCard'
 import { MoveDocumentDialog } from '@/components/documents/MoveDocumentDialog'
 import { AttachmentViewer } from '@/components/expenses/AttachmentViewer'
 import { useDocuments } from '@/context/DocumentContext'
+import { useExpenses } from '@/context/ExpenseContext'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { searchDocuments, getRecentDocuments } from '@/lib/document-utils'
-import { cn } from '@/lib/utils'
+import { searchUnified, getRecentDocuments, attachmentToHouseDocument, type UnifiedSearchItem } from '@/lib/document-utils'
+import { EXPENSE_CATEGORIES } from '@/lib/constants'
+import { cn, formatCurrency } from '@/lib/utils'
 import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { Attachment } from '@/types/expense'
@@ -25,8 +28,12 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+const categoryLabel = (val: string) =>
+  EXPENSE_CATEGORIES.find((c) => c.value === val)?.label ?? val
+
 export function DocumentsPage() {
   const { folders, documents, loading, totalStorageUsed, pendingDocumentIds, moveDocument, uploadDocuments, updateDocumentNotes } = useDocuments()
+  const { expenses } = useExpenses()
   const isMobile = useIsMobile()
   const [selectedFolder, setSelectedFolder] = useState<DocFolder | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
@@ -35,7 +42,7 @@ export function DocumentsPage() {
   const [recentCollapsed, setRecentCollapsed] = useState(() => {
     const stored = localStorage.getItem('docs:recent-collapsed')
     if (stored !== null) return stored === 'true'
-    return isMobile // default: collapsed on mobile, open on desktop
+    return isMobile
   })
 
   const toggleRecent = () => {
@@ -45,39 +52,58 @@ export function DocumentsPage() {
     })
   }
 
-  // DnD state for folder card drop targets
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
-
-  // Search/recent result actions
   const [movingDoc, setMovingDoc] = useState<HouseDocument | null>(null)
   const [viewerOpen, setViewerOpen] = useState(false)
   const [viewerIndex, setViewerIndex] = useState(0)
 
-  // Clear stale selection if folder was deleted
   const liveFolder = selectedFolder ? folders.find((f) => f.id === selectedFolder.id) ?? null : null
   useEffect(() => {
     if (selectedFolder && !liveFolder) setSelectedFolder(null)
   }, [selectedFolder, liveFolder])
 
-  // Search results
-  const searchResults = useMemo(() => searchDocuments(documents, search), [documents, search])
+  // Unified search (documents + expense attachments)
+  const unifiedResults = useMemo(
+    () => searchUnified(documents, expenses, search),
+    [documents, expenses, search]
+  )
 
-  // Recent documents (last 5, for the main page)
+  // Recent standalone documents only (expense receipts stay in Expenses)
   const recentDocs = useMemo(() => getRecentDocuments(documents), [documents])
 
-  // Image attachments for viewer
-  const viewerSource = searchResults ?? recentDocs
-  const viewerImageAttachments = useMemo(
-    () => viewerSource
-      .filter((d) => d.type.startsWith('image/') && d.url)
-      .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url })),
-    [viewerSource]
+  // Whether any expense has attachments (for search bar visibility)
+  const hasExpenseAttachments = useMemo(
+    () => expenses.some(e => (e.attachments?.length ?? 0) > 0),
+    [expenses]
   )
+
+  // Image viewer — collect images from whatever is currently displayed
+  const viewerImages = useMemo(() => {
+    if (unifiedResults) {
+      return unifiedResults
+        .filter((item) => {
+          const type = item.source === 'document' ? item.document.type : item.attachment.type
+          const url = item.source === 'document' ? item.document.url : item.attachment.url
+          return type.startsWith('image/') && url
+        })
+        .map((item): Attachment => {
+          if (item.source === 'document') {
+            const d = item.document
+            return { id: d.id, name: d.name, type: d.type, size: d.size, url: d.url }
+          }
+          const a = item.attachment
+          return { id: a.id, name: a.name, type: a.type, size: a.size, url: a.url }
+        })
+    }
+    return recentDocs
+      .filter((d) => d.type.startsWith('image/') && d.url)
+      .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url }))
+  }, [unifiedResults, recentDocs])
 
   const getFolderName = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.name ?? 'Unknown', [folders])
   const getFolderIcon = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.icon ?? '📁', [folders])
 
-  // --- Folder card DnD handlers (accept both internal moves AND external file drops) ---
+  // --- DnD handlers ---
   const handleFolderDragOver = useCallback((e: DragEvent, folderId: string) => {
     const types = e.dataTransfer.types
     if (!types.includes('application/x-document-id') && !types.includes('Files')) return
@@ -96,8 +122,6 @@ export function DocumentsPage() {
   const handleFolderDrop = useCallback(async (e: DragEvent, targetFolderId: string) => {
     e.preventDefault()
     setDragOverFolderId(null)
-
-    // Internal document move
     const docId = e.dataTransfer.getData('application/x-document-id')
     if (docId) {
       const doc = documents.find((d) => d.id === docId)
@@ -105,47 +129,86 @@ export function DocumentsPage() {
       try { await moveDocument(docId, targetFolderId) } catch { /* rolled back */ }
       return
     }
-
-    // External file drop from OS
     if (e.dataTransfer.files.length > 0) {
-      try { await uploadDocuments(targetFolderId, Array.from(e.dataTransfer.files)) } catch { /* error shown in context */ }
+      try { await uploadDocuments(targetFolderId, Array.from(e.dataTransfer.files)) } catch {}
     }
   }, [documents, moveDocument, uploadDocuments])
 
-  const handleDocPreview = useCallback((doc: HouseDocument) => {
-    const idx = viewerImageAttachments.findIndex((a) => a.id === doc.id)
+  const handlePreview = useCallback((id: string) => {
+    const idx = viewerImages.findIndex((a) => a.id === id)
     if (idx >= 0) { setViewerIndex(idx); setViewerOpen(true) }
-  }, [viewerImageAttachments])
+  }, [viewerImages])
 
-  const renderFolderBadge = useCallback((doc: HouseDocument) => (
+  // --- Render helpers ---
+  const renderFolderBadge = (doc: HouseDocument) => (
     <Badge
       variant="secondary"
       className="text-xs font-normal shrink-0 cursor-pointer hover:bg-accent"
       onClick={(e) => {
         e.stopPropagation()
         const folder = folders.find((f) => f.id === doc.folderId)
-        if (folder) setSelectedFolder(folder)
+        if (folder) { setSearch(''); setSelectedFolder(folder) }
       }}
     >
       {getFolderIcon(doc.folderId)} {getFolderName(doc.folderId)}
     </Badge>
-  ), [folders, getFolderIcon, getFolderName])
+  )
 
-  const renderDocCard = (doc: HouseDocument, showBadge: boolean) => (
+  const renderReceiptBadge = (item: Extract<UnifiedSearchItem, { source: 'expense' }>) => (
+    <Link
+      to={`/expenses?highlight=${item.expense.id}`}
+      className="shrink-0"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Badge variant="outline" className="text-xs font-normal cursor-pointer hover:bg-accent gap-1">
+        <Paperclip className="h-3 w-3" />
+        {categoryLabel(item.expense.category)} &middot; {formatCurrency(item.expense.amount)}
+        <ArrowRight className="h-3 w-3 text-muted-foreground" />
+      </Badge>
+    </Link>
+  )
+
+  const renderUnifiedItem = (item: UnifiedSearchItem) => {
+    if (item.source === 'document') {
+      return (
+        <DocumentCard
+          key={item.document.id}
+          document={item.document}
+          isPending={pendingDocumentIds.has(item.document.id)}
+          onMove={() => setMovingDoc(item.document)}
+          onPreview={() => handlePreview(item.document.id)}
+          onNotesChange={(notes) => updateDocumentNotes(item.document.id, notes)}
+          folderBadge={renderFolderBadge(item.document)}
+        />
+      )
+    }
+    const syntheticDoc = attachmentToHouseDocument(item.attachment, item.expense)
+    return (
+      <DocumentCard
+        key={`expense-${item.attachment.id}`}
+        document={syntheticDoc}
+        isPending={false}
+        readOnly
+        onPreview={() => handlePreview(item.attachment.id)}
+        folderBadge={renderReceiptBadge(item)}
+      />
+    )
+  }
+
+  const renderStandaloneDocCard = (doc: HouseDocument) => (
     <DocumentCard
       key={doc.id}
       document={doc}
       isPending={pendingDocumentIds.has(doc.id)}
       onMove={() => setMovingDoc(doc)}
-      onPreview={() => handleDocPreview(doc)}
+      onPreview={() => handlePreview(doc.id)}
       onNotesChange={(notes) => updateDocumentNotes(doc.id, notes)}
-      folderBadge={showBadge ? renderFolderBadge(doc) : undefined}
+      folderBadge={renderFolderBadge(doc)}
     />
   )
 
   if (loading) return <LoadingInline />
 
-  // Folder view (not searching)
   if (liveFolder && !search.trim()) {
     return (
       <div className="space-y-6">
@@ -182,14 +245,14 @@ export function DocumentsPage() {
       </div>
 
       {/* Search bar */}
-      {(folders.length > 0 || documents.length > 0) && (
+      {(folders.length > 0 || documents.length > 0 || hasExpenseAttachments) && (
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search all documents..."
-            aria-label="Search documents"
+            placeholder="Search documents & receipts..."
+            aria-label="Search documents and receipts"
             className="pl-9 pr-8"
           />
           {search && (
@@ -204,18 +267,18 @@ export function DocumentsPage() {
         </div>
       )}
 
-      {/* Search results */}
+      {/* Search results (unified: documents + expense receipts) */}
       {isSearching ? (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            {searchResults?.length === 0
-              ? 'No documents found'
-              : `${searchResults?.length} result${searchResults?.length !== 1 ? 's' : ''}`
+            {unifiedResults?.length === 0
+              ? 'No results found'
+              : `${unifiedResults?.length} result${unifiedResults?.length !== 1 ? 's' : ''}`
             }
           </p>
-          {searchResults && searchResults.length > 0 && (
+          {unifiedResults && unifiedResults.length > 0 && (
             <div className="space-y-1.5">
-              {searchResults.map((doc) => renderDocCard(doc, true))}
+              {unifiedResults.map(renderUnifiedItem)}
             </div>
           )}
         </div>
@@ -235,7 +298,7 @@ export function DocumentsPage() {
             </div>
           </div>
 
-          {/* Recent documents */}
+          {/* Recent documents (standalone only) */}
           {recentDocs.length > 0 && (
             <div>
               <button
@@ -251,7 +314,7 @@ export function DocumentsPage() {
               </button>
               {!recentCollapsed && (
                 <div className="space-y-1.5">
-                  {recentDocs.map((doc) => renderDocCard(doc, true))}
+                  {recentDocs.map(renderStandaloneDocCard)}
                 </div>
               )}
             </div>
@@ -281,9 +344,7 @@ export function DocumentsPage() {
                       key={folder.id}
                       className={cn(
                         'transition-all cursor-pointer',
-                        isDropTarget
-                          ? 'bg-primary/10 ring-2 ring-primary scale-[1.02]'
-                          : 'hover:bg-accent/50',
+                        isDropTarget ? 'bg-primary/10 ring-2 ring-primary scale-[1.02]' : 'hover:bg-accent/50',
                       )}
                       onClick={() => setSelectedFolder(folder)}
                       role="button"
@@ -301,18 +362,13 @@ export function DocumentsPage() {
                             <p className="text-[11px] text-muted-foreground line-clamp-1">{folder.description}</p>
                           )}
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {isDropTarget
-                              ? 'Drop here'
-                              : docCount === 0 ? 'Empty' : `${docCount} file${docCount !== 1 ? 's' : ''}`
-                            }
+                            {isDropTarget ? 'Drop here' : docCount === 0 ? 'Empty' : `${docCount} file${docCount !== 1 ? 's' : ''}`}
                           </p>
                         </div>
                       </CardContent>
                     </Card>
                   )
                 })}
-
-                {/* Add folder card */}
                 <Card
                   className="border-dashed hover:bg-accent/50 transition-colors cursor-pointer"
                   onClick={() => setCreateOpen(true)}
@@ -336,7 +392,7 @@ export function DocumentsPage() {
       <CreateFolderDialog open={createOpen} onOpenChange={setCreateOpen} />
       <QuickUploadDialog open={quickUploadOpen} onOpenChange={setQuickUploadOpen} />
       <MoveDocumentDialog document={movingDoc} open={!!movingDoc} onOpenChange={(open) => { if (!open) setMovingDoc(null) }} />
-      <AttachmentViewer attachments={viewerImageAttachments} initialIndex={viewerIndex} open={viewerOpen} onOpenChange={setViewerOpen} />
+      <AttachmentViewer attachments={viewerImages} initialIndex={viewerIndex} open={viewerOpen} onOpenChange={setViewerOpen} />
     </div>
   )
 }

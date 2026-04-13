@@ -1251,6 +1251,200 @@ describe('stats and impact — edge cases', () => {
     expect(impact.interestSaved).toBeGreaterThan(0)
     expect(impact.newTotalInterest).toBeLessThan(impact.originalTotalInterest)
   })
+
+  it('impact with mixed modes on different dates: both reduce_term and reduce_payment effects preserved', () => {
+    const impact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_term' },
+        { id: '2', date: '2026-06-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+      ],
+    }))!
+    expect(impact).not.toBeNull()
+    // reduce_term shortens the effective term; reduce_payment lowers payment
+    // for the shortened term — both effects are preserved
+    expect(impact.monthsSaved).toBeGreaterThan(0)
+    expect(impact.interestSaved).toBeGreaterThan(0)
+    expect(impact.newTotalInterest).toBeLessThan(impact.originalTotalInterest)
+  })
+
+  it('impact with only reduce_payment recurring: monthsSaved ≈ 0 but interestSaved > 0', () => {
+    const impact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2025-06-01', amount: 10000, recurring: true, mode: 'reduce_payment' },
+      ],
+    }))!
+    expect(impact).not.toBeNull()
+    expect(impact.interestSaved).toBeGreaterThan(0)
+    // With recurring reduce_payment, months saved should be minimal or zero
+    expect(impact.monthsSaved).toBeLessThanOrEqual(1)
+  })
+
+  it('exact user scenario: one-time reduce_term then recurring reduce_payment', () => {
+    const impact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 1000000, recurring: false, mode: 'reduce_term' },
+        { id: '2', date: '2026-06-01', amount: 20000, recurring: true, mode: 'reduce_payment' },
+      ],
+    }))!
+    expect(impact).not.toBeNull()
+    // The recurring reduce_payment keeps recalculating to maintain original term,
+    // so monthsSaved may be small despite the reduce_term lump sum
+    expect(impact.monthsSaved).toBeGreaterThanOrEqual(0)
+    // Both extras reduce principal early → always saves interest
+    expect(impact.interestSaved).toBeGreaterThan(0)
+    // Sanity: reduce_term alone would save more interest than the combo
+    // because reduce_payment stretches the term back out
+    const termOnlyImpact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 1000000, recurring: false, mode: 'reduce_term' },
+      ],
+    }))!
+    expect(impact.interestSaved).toBeGreaterThan(termOnlyImpact.interestSaved)
+  })
+
+  it('reduce_payment extra on the very first month of the mortgage', () => {
+    const impact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2025-01-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+      ],
+    }))!
+    expect(impact).not.toBeNull()
+    expect(impact.interestSaved).toBeGreaterThan(0)
+    // First-month reduce_payment: recalculates using remainingMonths = termMonths - 0 - 1 = 359
+    // monthsSaved should be 0 or 1 at most (rounding)
+    expect(impact.monthsSaved).toBeLessThanOrEqual(1)
+    expect(impact.monthsSaved).toBeGreaterThanOrEqual(0)
+  })
+
+  it('reduce_term saves MORE months alone than when combined with reduce_payment', () => {
+    const termOnly = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 1000000, recurring: false, mode: 'reduce_term' },
+      ],
+    }))!
+    const mixed = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_term' },
+        { id: '2', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+      ],
+    }))!
+    // Same total extra amount but split between modes:
+    // reduce_term-only saves the most months (all money goes to shortening)
+    expect(termOnly.monthsSaved).toBeGreaterThan(mixed.monthsSaved)
+    // Mixed should still save months (reduce_term portion preserved)
+    expect(mixed.monthsSaved).toBeGreaterThan(0)
+    // Mixed should still save interest
+    expect(mixed.interestSaved).toBeGreaterThan(0)
+  })
+
+  it('reduce_payment after reduce_term: term stays shortened, payment lowered', () => {
+    // reduce_term first, reduce_payment 6 months later
+    const s = generateAmortizationSchedule(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_term' },
+        { id: '2', date: '2026-07-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+      ],
+    }))
+    // Payment should stay the same through reduce_term month (month 12)
+    expect(s[13].payment).toBe(s[11].payment)
+    // Payment should drop after reduce_payment month (month 18)
+    expect(s[19].payment).toBeLessThan(s[17].payment)
+    // Loan should end earlier than the original 360 months
+    expect(s.length).toBeLessThan(360)
+    // Loan fully amortizes
+    expect(s[s.length - 1].remainingBalance).toBe(0)
+  })
+
+  it('reduce_payment before reduce_term: both effects still apply', () => {
+    // reduce_payment first, reduce_term 6 months later
+    const s = generateAmortizationSchedule(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+        { id: '2', date: '2026-07-01', amount: 500000, recurring: false, mode: 'reduce_term' },
+      ],
+    }))
+    // Payment should drop after reduce_payment month
+    const paymentAfterReducePayment = s[13].payment
+    expect(paymentAfterReducePayment).toBeLessThan(s[11].payment)
+    // Payment should stay the same after reduce_term month (reduce_term doesn't change payment)
+    expect(s[19].payment).toBe(paymentAfterReducePayment)
+    // Loan should still end earlier than original (reduce_term shortens)
+    expect(s.length).toBeLessThan(360)
+    expect(s[s.length - 1].remainingBalance).toBe(0)
+  })
+
+  it('both recurring reduce_term + reduce_payment: loan fully amortizes', () => {
+    const s = generateAmortizationSchedule(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2025-06-01', amount: 10000, recurring: true, mode: 'reduce_term' },
+        { id: '2', date: '2025-06-01', amount: 10000, recurring: true, mode: 'reduce_payment' },
+      ],
+    }))
+    // Loan must fully amortize
+    expect(s[s.length - 1].remainingBalance).toBe(0)
+    // Should end earlier than original term (reduce_term effect)
+    expect(s.length).toBeLessThan(360)
+    // All payments should be positive
+    expect(s.every(r => r.payment > 0)).toBe(true)
+    // Interest portions should never be negative
+    expect(s.every(r => r.interestPortion >= 0)).toBe(true)
+  })
+
+  it('large reduce_term + small recurring reduce_payment: term savings preserved', () => {
+    // Simulates the user's exact complaint: big lump sum reduce_term,
+    // then small monthly reduce_payment — term should still be shortened
+    const impact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 3000000, recurring: false, mode: 'reduce_term' },
+        { id: '2', date: '2026-06-01', amount: 10000, recurring: true, mode: 'reduce_payment' },
+      ],
+    }))!
+    // €30,000 reduce_term on €150,000 mortgage = 20% of principal → significant months saved
+    expect(impact.monthsSaved).toBeGreaterThan(30)
+    expect(impact.interestSaved).toBeGreaterThan(0)
+    // Compare: reduce_term alone should save even more months
+    const termOnly = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 3000000, recurring: false, mode: 'reduce_term' },
+      ],
+    }))!
+    expect(termOnly.monthsSaved).toBeGreaterThanOrEqual(impact.monthsSaved)
+  })
+
+  it('pure reduce_payment should not shorten term (no effectiveTermEnd drift)', () => {
+    // Verifies the new effectiveTermEnd tracking doesn't accidentally
+    // shorten the term for pure reduce_payment scenarios
+    const oneTime = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+      ],
+    }))!
+    const recurring = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2025-06-01', amount: 10000, recurring: true, mode: 'reduce_payment' },
+      ],
+    }))!
+    // Neither should save more than 1 month (rounding only)
+    expect(oneTime.monthsSaved).toBeLessThanOrEqual(1)
+    expect(recurring.monthsSaved).toBeLessThanOrEqual(1)
+    // Both should save interest
+    expect(oneTime.interestSaved).toBeGreaterThan(0)
+    expect(recurring.interestSaved).toBeGreaterThan(0)
+  })
+
+  it('same-month mixed modes: impact correctly reflects both effects', () => {
+    const impact = calculateMortgageImpact(baseMortgage({
+      extraRepayments: [
+        { id: '1', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_term' },
+        { id: '2', date: '2026-01-01', amount: 500000, recurring: false, mode: 'reduce_payment' },
+      ],
+    }))!
+    expect(impact).not.toBeNull()
+    // Both months and interest should be saved
+    expect(impact.monthsSaved).toBeGreaterThan(0)
+    expect(impact.interestSaved).toBeGreaterThan(0)
+    expect(impact.newPayoffDate < impact.originalPayoffDate).toBe(true)
+  })
 })
 
 // ─────────────────────────────────────────────

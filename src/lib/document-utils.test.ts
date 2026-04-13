@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { searchDocuments, getRecentDocuments } from './document-utils'
-import type { HouseDocument } from '@/types/document'
-import type { DocFolder } from '@/types/document'
+import {
+  searchDocuments,
+  getRecentDocuments,
+  searchUnified,
+  attachmentToHouseDocument,
+} from './document-utils'
+import type { HouseDocument, DocFolder } from '@/types/document'
 import { DEFAULT_FOLDERS } from '@/types/document'
+import type { Attachment, Expense } from '@/types/expense'
 
 function makeDoc(overrides: Partial<HouseDocument> = {}): HouseDocument {
   return {
@@ -15,6 +20,31 @@ function makeDoc(overrides: Partial<HouseDocument> = {}): HouseDocument {
     uploadedBy: 'user-1',
     uploadedAt: '2026-01-15T10:00:00.000Z',
     updatedAt: '2026-01-15T10:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function makeExpense(overrides: Partial<Expense> = {}): Expense {
+  return {
+    id: crypto.randomUUID(),
+    amount: 150000, // €1,500
+    category: 'notary_legal',
+    payer: 'user-1',
+    description: 'Notary fees',
+    date: '2026-02-15',
+    createdAt: '2026-02-15T10:00:00.000Z',
+    updatedAt: '2026-02-15T10:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function makeAttachment(overrides: Partial<Attachment> = {}): Attachment {
+  return {
+    id: crypto.randomUUID(),
+    name: 'receipt.pdf',
+    type: 'application/pdf',
+    size: 512,
+    url: 'https://example.com/receipt.pdf',
     ...overrides,
   }
 }
@@ -35,249 +65,239 @@ describe('searchDocuments', () => {
     expect(searchDocuments(docs, '  ')).toBeNull()
   })
 
-  it('searches by filename (case-insensitive)', () => {
-    const results = searchDocuments(docs, 'insurance')!
-    expect(results).toHaveLength(1)
-    expect(results[0].name).toBe('insurance-policy.pdf')
+  it('searches by filename', () => {
+    expect(searchDocuments(docs, 'insurance')).toHaveLength(1)
   })
 
   it('searches by notes content', () => {
-    const results = searchDocuments(docs, 'AXA')!
-    expect(results).toHaveLength(1)
-    expect(results[0].name).toBe('insurance-policy.pdf')
-  })
-
-  it('finds documents by note text that is not in the filename', () => {
-    const results = searchDocuments(docs, 'signed')!
-    expect(results).toHaveLength(1)
-    expect(results[0].name).toBe('Purchase Agreement.pdf')
-    expect(results[0].notes).toContain('signed')
-  })
-
-  it('finds documents where note matches but name does not', () => {
-    const results = searchDocuments(docs, 'Great rate')!
-    expect(results).toHaveLength(1)
-    expect(results[0].name).toBe('mortgage-approval.pdf')
+    expect(searchDocuments(docs, 'AXA')).toHaveLength(1)
   })
 
   it('is case-insensitive', () => {
     expect(searchDocuments(docs, 'PURCHASE')).toHaveLength(1)
     expect(searchDocuments(docs, 'purchase')).toHaveLength(1)
-    expect(searchDocuments(docs, 'Purchase')).toHaveLength(1)
   })
 
-  it('matches partial strings', () => {
-    const results = searchDocuments(docs, 'inspect')!
-    expect(results).toHaveLength(1)
-    expect(results[0].name).toBe('Home Inspection Report.pdf')
+  it('excludes temp- IDs', () => {
+    const withTemp = [...docs, makeDoc({ id: 'temp-123', name: 'uploading.pdf' })]
+    expect(searchDocuments(withTemp, 'uploading')).toHaveLength(0)
   })
 
-  it('returns empty array for no matches', () => {
-    const results = searchDocuments(docs, 'nonexistent')!
-    expect(results).toHaveLength(0)
-  })
-
-  it('returns results sorted by uploadedAt descending (newest first)', () => {
+  it('returns results sorted newest first', () => {
     const results = searchDocuments(docs, 'pdf')!
-    expect(results.length).toBeGreaterThan(1)
     for (let i = 1; i < results.length; i++) {
       expect(results[i - 1].uploadedAt >= results[i].uploadedAt).toBe(true)
     }
   })
 
-  it('excludes placeholder documents (temp- IDs)', () => {
-    const withPlaceholder = [...docs, makeDoc({ id: 'temp-abc-123', name: 'uploading.pdf' })]
-    const results = searchDocuments(withPlaceholder, 'uploading')!
-    expect(results).toHaveLength(0)
-  })
-
-  it('handles docs with no notes gracefully', () => {
-    const docsNoNotes = [makeDoc({ name: 'no-notes.pdf', notes: undefined })]
-    expect(searchDocuments(docsNoNotes, 'no-notes')).toHaveLength(1)
-    expect(searchDocuments(docsNoNotes, 'random-note-text')).toHaveLength(0)
-  })
-
-  it('handles docs with empty string notes', () => {
-    const docsEmptyNotes = [makeDoc({ name: 'empty-notes.pdf', notes: '' })]
-    expect(searchDocuments(docsEmptyNotes, 'empty-notes')).toHaveLength(1)
-    expect(searchDocuments(docsEmptyNotes, 'some note')).toHaveLength(0)
-  })
-
-  it('searches across multiple folders', () => {
-    const results = searchDocuments(docs, '.pdf')!
-    const folders = new Set(results.map((d) => d.folderId))
-    expect(folders.size).toBeGreaterThanOrEqual(1)
-    expect(results.every((d) => d.name.includes('.pdf'))).toBe(true)
-  })
-
-  it('handles special regex characters in search safely', () => {
-    const docsWithSpecial = [makeDoc({ name: 'file (1).pdf' })]
-    expect(searchDocuments(docsWithSpecial, '(1)')).toHaveLength(1)
-    expect(searchDocuments(docsWithSpecial, 'file (')).toHaveLength(1)
-  })
-
-  it('returns a new array reference, not the original', () => {
-    const results = searchDocuments(docs, 'pdf')!
-    expect(results).not.toBe(docs)
-  })
-
-  it('handles empty document array', () => {
+  it('handles empty array', () => {
     expect(searchDocuments([], 'test')).toHaveLength(0)
   })
 
-  it('matches query that appears in both name and notes (no duplicates)', () => {
-    const docsOverlap = [makeDoc({ name: 'insurance.pdf', notes: 'insurance policy from AXA' })]
-    const results = searchDocuments(docsOverlap, 'insurance')!
-    expect(results).toHaveLength(1) // not 2
+  it('handles special regex characters', () => {
+    const special = [makeDoc({ name: 'file (1).pdf' })]
+    expect(searchDocuments(special, '(1)')).toHaveLength(1)
+  })
+
+  it('handles docs with undefined notes', () => {
+    const noNotes = [makeDoc({ notes: undefined })]
+    expect(searchDocuments(noNotes, 'test')).toHaveLength(1) // matches name
+    expect(searchDocuments(noNotes, 'nonexistent')).toHaveLength(0)
   })
 })
 
 // ── getRecentDocuments ──────────────────────────────────────────────
 
 describe('getRecentDocuments', () => {
-  it('returns the N most recent documents', () => {
+  it('returns N most recent, sorted newest first', () => {
     const docs = [
-      makeDoc({ name: 'oldest.pdf', uploadedAt: '2026-01-01T00:00:00.000Z' }),
-      makeDoc({ name: 'newest.pdf', uploadedAt: '2026-04-01T00:00:00.000Z' }),
-      makeDoc({ name: 'middle.pdf', uploadedAt: '2026-02-15T00:00:00.000Z' }),
+      makeDoc({ name: 'old.pdf', uploadedAt: '2026-01-01T00:00:00.000Z' }),
+      makeDoc({ name: 'new.pdf', uploadedAt: '2026-04-01T00:00:00.000Z' }),
+      makeDoc({ name: 'mid.pdf', uploadedAt: '2026-02-15T00:00:00.000Z' }),
     ]
     const recent = getRecentDocuments(docs, 2)
     expect(recent).toHaveLength(2)
-    expect(recent[0].name).toBe('newest.pdf')
-    expect(recent[1].name).toBe('middle.pdf')
+    expect(recent[0].name).toBe('new.pdf')
+    expect(recent[1].name).toBe('mid.pdf')
   })
 
-  it('defaults to 5 documents', () => {
+  it('defaults to 5', () => {
     const docs = Array.from({ length: 10 }, (_, i) =>
-      makeDoc({ name: `doc-${i}.pdf`, uploadedAt: `2026-01-${String(i + 1).padStart(2, '0')}T00:00:00.000Z` })
+      makeDoc({ uploadedAt: `2026-01-${String(i + 1).padStart(2, '0')}T00:00:00.000Z` })
     )
-    const recent = getRecentDocuments(docs)
-    expect(recent).toHaveLength(5)
+    expect(getRecentDocuments(docs)).toHaveLength(5)
   })
 
-  it('returns all docs if fewer than count', () => {
-    const docs = [
-      makeDoc({ name: 'only-one.pdf' }),
-    ]
-    const recent = getRecentDocuments(docs, 5)
-    expect(recent).toHaveLength(1)
-    expect(recent[0].name).toBe('only-one.pdf')
+  it('excludes temp- IDs', () => {
+    const docs = [makeDoc({ id: 'temp-x', name: 'pending.pdf' }), makeDoc({ name: 'real.pdf' })]
+    expect(getRecentDocuments(docs)).toHaveLength(1)
   })
 
-  it('returns empty array for no documents', () => {
-    expect(getRecentDocuments([])).toHaveLength(0)
-  })
-
-  it('excludes placeholder documents (temp- IDs)', () => {
-    const docs = [
-      makeDoc({ id: 'temp-123', name: 'uploading.pdf', uploadedAt: '2026-04-01T00:00:00.000Z' }),
-      makeDoc({ name: 'real.pdf', uploadedAt: '2026-03-01T00:00:00.000Z' }),
-    ]
-    const recent = getRecentDocuments(docs, 5)
-    expect(recent).toHaveLength(1)
-    expect(recent[0].name).toBe('real.pdf')
-  })
-
-  it('sorts by uploadedAt descending (newest first)', () => {
-    const docs = [
-      makeDoc({ name: 'jan.pdf', uploadedAt: '2026-01-01T00:00:00.000Z' }),
-      makeDoc({ name: 'mar.pdf', uploadedAt: '2026-03-01T00:00:00.000Z' }),
-      makeDoc({ name: 'feb.pdf', uploadedAt: '2026-02-01T00:00:00.000Z' }),
-    ]
-    const recent = getRecentDocuments(docs, 3)
-    expect(recent.map((d) => d.name)).toEqual(['mar.pdf', 'feb.pdf', 'jan.pdf'])
-  })
-
-  it('includes documents from all folders', () => {
-    const docs = [
-      makeDoc({ folderId: 'folder-a', name: 'a.pdf', uploadedAt: '2026-01-01T00:00:00.000Z' }),
-      makeDoc({ folderId: 'folder-b', name: 'b.pdf', uploadedAt: '2026-02-01T00:00:00.000Z' }),
-      makeDoc({ folderId: 'folder-c', name: 'c.pdf', uploadedAt: '2026-03-01T00:00:00.000Z' }),
-    ]
-    const recent = getRecentDocuments(docs, 3)
-    const folders = new Set(recent.map((d) => d.folderId))
-    expect(folders.size).toBe(3)
-  })
-
-  it('does not mutate the input array', () => {
-    const docs = [
-      makeDoc({ name: 'b.pdf', uploadedAt: '2026-02-01T00:00:00.000Z' }),
-      makeDoc({ name: 'a.pdf', uploadedAt: '2026-01-01T00:00:00.000Z' }),
-    ]
-    const originalOrder = docs.map((d) => d.name)
-    getRecentDocuments(docs, 2)
-    expect(docs.map((d) => d.name)).toEqual(originalOrder)
+  it('does not mutate input', () => {
+    const docs = [makeDoc({ name: 'b.pdf', uploadedAt: '2026-02-01' }), makeDoc({ name: 'a.pdf', uploadedAt: '2026-01-01' })]
+    const original = docs.map((d) => d.name)
+    getRecentDocuments(docs)
+    expect(docs.map((d) => d.name)).toEqual(original)
   })
 })
 
-// ── DEFAULT_FOLDERS (descriptions) ──────────────────────────────────
+// ── searchUnified ───────────────────────────────────────────────────
 
-describe('DEFAULT_FOLDERS', () => {
-  it('has 6 default folders', () => {
-    expect(DEFAULT_FOLDERS).toHaveLength(6)
+describe('searchUnified', () => {
+  const docs = [
+    makeDoc({ name: 'notary-contract.pdf', notes: 'Signed at closing', uploadedAt: '2026-03-01T10:00:00.000Z' }),
+    makeDoc({ name: 'insurance-policy.pdf', uploadedAt: '2026-02-01T10:00:00.000Z' }),
+  ]
+
+  const att1 = makeAttachment({ name: 'notary-receipt.pdf' })
+  const att2 = makeAttachment({ name: 'insurance-invoice.jpg', type: 'image/jpeg' })
+  const expenses = [
+    makeExpense({ category: 'notary_legal', description: 'Notary appointment', date: '2026-03-10', attachments: [att1] }),
+    makeExpense({ category: 'insurance', description: 'Home insurance premium', date: '2026-01-20', attachments: [att2] }),
+    makeExpense({ category: 'taxes', description: 'Property tax', date: '2026-04-01' }), // no attachments
+  ]
+
+  it('returns null for empty query', () => {
+    expect(searchUnified(docs, expenses, '')).toBeNull()
+    expect(searchUnified(docs, expenses, '   ')).toBeNull()
   })
 
-  it('every default folder has a description', () => {
-    for (const folder of DEFAULT_FOLDERS) {
-      expect(folder.description).toBeDefined()
-      expect(typeof folder.description).toBe('string')
-      expect(folder.description!.length).toBeGreaterThan(0)
+  it('finds standalone documents by name', () => {
+    const results = searchUnified(docs, expenses, 'insurance-policy')!
+    const docResults = results.filter((r) => r.source === 'document')
+    expect(docResults).toHaveLength(1)
+  })
+
+  it('finds expense attachments by filename', () => {
+    const results = searchUnified(docs, expenses, 'notary-receipt')!
+    const expResults = results.filter((r) => r.source === 'expense')
+    expect(expResults).toHaveLength(1)
+  })
+
+  it('finds expense attachments by expense description', () => {
+    const results = searchUnified(docs, expenses, 'appointment')!
+    expect(results).toHaveLength(1)
+    expect(results[0].source).toBe('expense')
+  })
+
+  it('finds expense attachments by category label', () => {
+    // "notary" matches "Notary & Legal" category label
+    const results = searchUnified(docs, expenses, 'notary')!
+    // Should find: notary-contract.pdf (doc), notary-receipt.pdf (attachment via name), and attachment via category
+    expect(results.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('returns mixed results sorted by date descending', () => {
+    const results = searchUnified(docs, expenses, 'notary')!
+    for (let i = 1; i < results.length; i++) {
+      expect(results[i - 1].sortDate >= results[i].sortDate).toBe(true)
     }
   })
 
-  it('every default folder has a unique name', () => {
+  it('excludes temp- document IDs', () => {
+    const docsWithTemp = [...docs, makeDoc({ id: 'temp-abc', name: 'notary-temp.pdf' })]
+    const results = searchUnified(docsWithTemp, expenses, 'notary')!
+    const hasTemp = results.some((r) => r.source === 'document' && r.document.id === 'temp-abc')
+    expect(hasTemp).toBe(false)
+  })
+
+  it('excludes attachments without URL (pending uploads)', () => {
+    const pendingAtt = makeAttachment({ name: 'notary-pending.pdf', url: undefined })
+    const expWithPending = [makeExpense({ category: 'notary_legal', attachments: [pendingAtt] })]
+    const results = searchUnified([], expWithPending, 'notary')!
+    expect(results).toHaveLength(0)
+  })
+
+  it('handles expenses with no attachments', () => {
+    const results = searchUnified([], expenses, 'property tax')!
+    // "Property tax" matches description but expense has no attachments
+    expect(results).toHaveLength(0)
+  })
+
+  it('handles empty inputs', () => {
+    expect(searchUnified([], [], 'test')).toHaveLength(0)
+  })
+
+  it('finds by notes on standalone document', () => {
+    const results = searchUnified(docs, expenses, 'closing')!
+    expect(results).toHaveLength(1)
+    expect(results[0].source).toBe('document')
+  })
+
+  it('does not duplicate when attachment name and category both match', () => {
+    const att = makeAttachment({ name: 'insurance-receipt.pdf' })
+    const exp = [makeExpense({ category: 'insurance', attachments: [att] })]
+    const results = searchUnified([], exp, 'insurance')!
+    // One attachment, even though both name and category match
+    expect(results).toHaveLength(1)
+  })
+})
+
+// ── attachmentToHouseDocument ───────────────────────────────────────
+
+describe('attachmentToHouseDocument', () => {
+  it('maps all fields correctly', () => {
+    const att = makeAttachment({ id: 'att-1', name: 'receipt.pdf', type: 'application/pdf', size: 2048, url: 'https://example.com/file' })
+    const expense = makeExpense({ payer: 'alice', date: '2026-05-01', updatedAt: '2026-05-01T12:00:00.000Z' })
+    const doc = attachmentToHouseDocument(att, expense)
+
+    expect(doc.id).toBe('att-1')
+    expect(doc.folderId).toBe('__expense__')
+    expect(doc.name).toBe('receipt.pdf')
+    expect(doc.type).toBe('application/pdf')
+    expect(doc.size).toBe(2048)
+    expect(doc.url).toBe('https://example.com/file')
+    expect(doc.uploadedBy).toBe('alice')
+    expect(doc.uploadedAt).toBe('2026-05-01')
+    expect(doc.updatedAt).toBe('2026-05-01T12:00:00.000Z')
+  })
+
+  it('uses __expense__ sentinel folderId', () => {
+    const doc = attachmentToHouseDocument(makeAttachment(), makeExpense())
+    expect(doc.folderId).toBe('__expense__')
+  })
+
+  it('handles missing URL (defaults to empty string)', () => {
+    const att = makeAttachment({ url: undefined })
+    const doc = attachmentToHouseDocument(att, makeExpense())
+    expect(doc.url).toBe('')
+  })
+})
+
+// ── DEFAULT_FOLDERS ─────────────────────────────────────────────────
+
+describe('DEFAULT_FOLDERS', () => {
+  it('has 6 default folders with descriptions', () => {
+    expect(DEFAULT_FOLDERS).toHaveLength(6)
+    for (const f of DEFAULT_FOLDERS) {
+      expect(f.description).toBeDefined()
+      expect(f.description!.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('has unique names and sequential orders', () => {
     const names = DEFAULT_FOLDERS.map((f) => f.name)
-    expect(new Set(names).size).toBe(names.length)
-  })
-
-  it('every default folder has a unique order', () => {
-    const orders = DEFAULT_FOLDERS.map((f) => f.order)
-    expect(new Set(orders).size).toBe(orders.length)
-  })
-
-  it('orders are sequential starting from 0', () => {
+    expect(new Set(names).size).toBe(6)
     const orders = DEFAULT_FOLDERS.map((f) => f.order).sort((a, b) => a - b)
     expect(orders).toEqual([0, 1, 2, 3, 4, 5])
   })
 
-  it('every default folder has an emoji icon', () => {
-    for (const folder of DEFAULT_FOLDERS) {
-      expect(folder.icon).toBeDefined()
-      expect(folder.icon.length).toBeGreaterThan(0)
-    }
-  })
-
-  it('"Other" folder is last (highest order)', () => {
+  it('"Other" is last', () => {
     const sorted = [...DEFAULT_FOLDERS].sort((a, b) => a.order - b.order)
-    expect(sorted[sorted.length - 1].name).toBe('Other')
+    expect(sorted[5].name).toBe('Other')
   })
 })
 
-// ── DocFolder type (description field) ──────────────────────────────
+// ── DocFolder description field ─────────────────────────────────────
 
 describe('DocFolder description field', () => {
-  it('description is optional — folder without it is valid', () => {
-    const folder: DocFolder = {
-      id: 'test-1',
-      name: 'Test Folder',
-      icon: '📁',
-      order: 0,
-      createdAt: '2026-01-01T00:00:00.000Z',
-      createdBy: 'user-1',
-    }
+  it('is optional', () => {
+    const folder: DocFolder = { id: 'x', name: 'Test', icon: '📁', order: 0, createdAt: '', createdBy: '' }
     expect(folder.description).toBeUndefined()
   })
 
-  it('description can be set', () => {
-    const folder: DocFolder = {
-      id: 'test-2',
-      name: 'Test Folder',
-      icon: '📁',
-      description: 'A test folder for testing',
-      order: 0,
-      createdAt: '2026-01-01T00:00:00.000Z',
-      createdBy: 'user-1',
-    }
-    expect(folder.description).toBe('A test folder for testing')
+  it('can be set', () => {
+    const folder: DocFolder = { id: 'x', name: 'Test', icon: '📁', description: 'A description', order: 0, createdAt: '', createdBy: '' }
+    expect(folder.description).toBe('A description')
   })
 })

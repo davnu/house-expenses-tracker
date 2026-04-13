@@ -59,14 +59,16 @@ function getRateForMonth(
 
 interface ExtraPaymentResult {
   amount: number
+  reducePaymentAmount: number
   hasReducePayment: boolean
 }
 
 function getExtraPaymentsForMonth(monthDate: string, config: MortgageConfig): ExtraPaymentResult {
   const extras = config.extraRepayments ?? []
-  if (extras.length === 0) return { amount: 0, hasReducePayment: false }
+  if (extras.length === 0) return { amount: 0, reducePaymentAmount: 0, hasReducePayment: false }
 
   let total = 0
+  let reducePaymentTotal = 0
   let hasReducePayment = false
   for (const extra of extras) {
     const extraMonth = extra.date.substring(0, 7)
@@ -83,10 +85,26 @@ function getExtraPaymentsForMonth(monthDate: string, config: MortgageConfig): Ex
       total += extra.amount
       if ((extra.mode ?? 'reduce_term') === 'reduce_payment') {
         hasReducePayment = true
+        reducePaymentTotal += extra.amount
       }
     }
   }
-  return { amount: total, hasReducePayment }
+  return { amount: total, reducePaymentAmount: reducePaymentTotal, hasReducePayment }
+}
+
+/**
+ * Compute how many months are needed to pay off a balance at a given payment and rate.
+ * Used to determine the effective remaining term after reduce_term extras have shortened it.
+ */
+function computeRemainingMonths(balanceCents: number, annualRate: number, paymentCents: number): number {
+  if (balanceCents <= 0) return 0
+  const monthlyRate = annualRate / 100 / 12
+  if (monthlyRate <= 0) {
+    return paymentCents > 0 ? Math.ceil(balanceCents / paymentCents) : 1
+  }
+  const ratio = balanceCents * monthlyRate / paymentCents
+  if (ratio >= 1) return -1 // payment doesn't cover interest — caller should fallback
+  return Math.ceil(-Math.log(1 - ratio) / Math.log(1 + monthlyRate))
 }
 
 export function generateAmortizationSchedule(config: MortgageConfig): AmortizationRow[] {
@@ -100,6 +118,13 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
   let remaining = config.principal
   let currentPayment = config.monthlyPayment
   let prevRate = config.annualRate
+
+  // Track the effective end of the loan (in absolute month index from start).
+  // reduce_term extras shorten this; reduce_payment uses it for recalculation.
+  let effectiveTermEnd = originalTermMonths
+  // basePayment tracks the payment without reduce_payment recalculations,
+  // so reduce_term can compute its effect on the term without compounding bias.
+  let basePayment = config.monthlyPayment
 
   // Sort balance corrections by date for processing in order
   const sortedCorrections = [...(config.balanceCorrections ?? [])]
@@ -121,6 +146,7 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
       if (amortCheck !== 'italian' && !correction.keepCurrentPayment && !config.monthlyPaymentOverride) {
         const remainingMonths = Math.max(1, originalTermMonths - i)
         currentPayment = calculateMonthlyPayment(remaining, prevRate, remainingMonths)
+        basePayment = currentPayment
       }
     }
 
@@ -133,6 +159,7 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
     if (amortType !== 'italian' && isChange && !config.monthlyPaymentOverride && rate !== prevRate) {
       const remainingMonths = Math.max(1, originalTermMonths - i)
       currentPayment = calculateMonthlyPayment(remaining, rate, remainingMonths)
+      basePayment = currentPayment
     }
     prevRate = rate
 
@@ -151,7 +178,7 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
     }
 
     // Extra payments this month
-    const { amount: extraThisMonth, hasReducePayment } = getExtraPaymentsForMonth(monthDate, config)
+    const { amount: extraThisMonth, reducePaymentAmount, hasReducePayment } = getExtraPaymentsForMonth(monthDate, config)
 
     // Total principal reduction
     const totalPrincipalReduction = basePrincipal + extraThisMonth
@@ -179,10 +206,23 @@ export function generateAmortizationSchedule(config: MortgageConfig): Amortizati
     // Normal month — reduce balance
     remaining -= totalPrincipalReduction
 
+    // If reduce_term extras exist, shorten the effective loan term.
+    // Use basePayment (unaffected by reduce_payment recalculations) so the
+    // term calculation is stable and doesn't compound with payment reductions.
+    const reduceTermAmount = extraThisMonth - reducePaymentAmount
+    if (amortType !== 'italian' && reduceTermAmount > 0) {
+      const balanceAfterReduceTermOnly = remaining + reducePaymentAmount
+      const months = computeRemainingMonths(balanceAfterReduceTermOnly, rate, basePayment)
+      if (months > 0) {
+        effectiveTermEnd = Math.min(effectiveTermEnd, i + 1 + months)
+      }
+    }
+
     // If extra payment is "reduce payment" mode, recalculate monthly payment
+    // to finish by the effective end date (which may have been shortened by reduce_term).
     // Only for French — Italian recalculates naturally each iteration
     if (amortType !== 'italian' && hasReducePayment && extraThisMonth > 0 && !config.monthlyPaymentOverride) {
-      const remainingMonths = Math.max(1, originalTermMonths - i - 1)
+      const remainingMonths = Math.max(1, effectiveTermEnd - i - 1)
       currentPayment = calculateMonthlyPayment(remaining, rate, remainingMonths)
     }
 

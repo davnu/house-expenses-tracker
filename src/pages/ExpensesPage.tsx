@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useSearchParams } from 'react-router'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ExpenseList } from '@/components/expenses/ExpenseList'
@@ -6,6 +7,15 @@ import { QuickAddDialog } from '@/components/expenses/QuickAddDialog'
 
 export function ExpensesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const highlightId = searchParams.get('highlight')
+
+  const clearHighlight = useCallback(() => {
+    setSearchParams(prev => {
+      prev.delete('highlight')
+      return prev
+    }, { replace: true })
+  }, [setSearchParams])
 
   return (
     <div className="space-y-6">
@@ -17,7 +27,7 @@ export function ExpensesPage() {
         </Button>
       </div>
 
-      <ExpenseList />
+      <ExpenseList highlightExpenseId={highlightId} onHighlightDone={clearHighlight} />
 
       <QuickAddDialog open={dialogOpen} onOpenChange={setDialogOpen} />
 
