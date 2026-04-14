@@ -1,5 +1,5 @@
 {
-  "name": "house-expenses-functions",
+  "name": "casatab-functions",
   "private": true,
   "scripts": {
     "build": "tsc",

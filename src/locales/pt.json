@@ -28,7 +28,7 @@
     "required": "Obrigatório",
     "mustBePositive": "Tem de ser positivo",
     "optional": "opcional",
-    "houseExpenses": "Despesas da Casa",
+    "houseExpenses": "CasaTab",
     "privacyPolicy": "Política de Privacidade",
     "signOut": "Terminar sessão",
     "formerMember": "Ex-membro",
@@ -54,7 +54,7 @@
     "settings": "Definições"
   },
   "auth": {
-    "title": "Despesas da Casa",
+    "title": "CasaTab",
     "subtitle": "Todos os custos da compra da tua casa, num só lugar",
     "continueWithGoogle": "Continuar com Google",
     "yourName": "O teu nome",
@@ -73,11 +73,14 @@
     "signUpLink": "Regista-te",
     "joinHouseSubtitle": "Inicia sessão ou regista-te para aderires a \"{{houseName}}\"",
     "verifyEmailTitle": "Verifica o teu email",
-    "verifyEmailDesc": "Enviámos um link de verificação para {{email}}. Clica no link para verificares a tua conta.",
+    "verifyEmailDesc": "Enviámos um link de verificação. Clica no link no email para verificares a tua conta.",
     "resendEmail": "Reenviar email de verificação",
     "resendEmailCooldown": "Reenviar em {{seconds}}s",
     "emailSent": "Email de verificação enviado!",
-    "checkSpam": "Não o encontras? Verifica a tua pasta de spam."
+    "checkSpamTitle": "Verifica a tua pasta de spam",
+    "checkSpamDesc": "O email de verificação pode ir para a tua pasta de Spam ou Lixo. Se o encontrares lá, marca-o como \"Não é spam\" e clica no link.",
+    "waitingForVerification": "A aguardar verificação...",
+    "wrongEmail": "Email errado? Terminar sessão"
   },
   "onboarding": {
     "welcome": "Bem-vindo!",
@@ -471,7 +474,7 @@
     "fileAttachments": "<0>Ficheiros anexados</0> — recibos, contratos e fotos que carregas",
     "mortgageData": "<0>Dados do crédito habitação</0> — detalhes do empréstimo e histórico de taxas que configuras",
     "whyWeCollect": "Porque recolhemos",
-    "whyWeCollectText": "Os teus dados são usados exclusivamente para fornecer o serviço de registo de despesas da casa. Não usamos os teus dados para publicidade, criação de perfil ou qualquer outro fim.",
+    "whyWeCollectText": "Os teus dados são usados exclusivamente para fornecer o serviço CasaTab. Não usamos os teus dados para publicidade, criação de perfil ou qualquer outro fim.",
     "whereStored": "Onde os teus dados são armazenados",
     "whereStoredIntro": "Os teus dados estão armazenados na infraestrutura Google Cloud (Firebase) com segurança de referência:",
     "encryptionAtRest": "<0>Encriptação em repouso</0> — todos os dados são encriptados com AES-256",

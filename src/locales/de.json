@@ -28,7 +28,7 @@
     "required": "Pflichtfeld",
     "mustBePositive": "Muss positiv sein",
     "optional": "optional",
-    "houseExpenses": "Hauskosten",
+    "houseExpenses": "CasaTab",
     "privacyPolicy": "Datenschutzrichtlinie",
     "signOut": "Abmelden",
     "formerMember": "Ehemaliges Mitglied",
@@ -54,7 +54,7 @@
     "settings": "Einstellungen"
   },
   "auth": {
-    "title": "Hauskosten",
+    "title": "CasaTab",
     "subtitle": "Alle Kosten rund um deinen Hauskauf an einem Ort",
     "continueWithGoogle": "Weiter mit Google",
     "yourName": "Dein Name",
@@ -73,11 +73,14 @@
     "signUpLink": "Registrieren",
     "joinHouseSubtitle": "Melde dich an oder registriere dich, um \"{{houseName}}\" beizutreten",
     "verifyEmailTitle": "Überprüfe deine E-Mail",
-    "verifyEmailDesc": "Wir haben einen Bestätigungslink an {{email}} gesendet. Klicke auf den Link, um dein Konto zu bestätigen.",
+    "verifyEmailDesc": "Wir haben einen Bestätigungslink gesendet. Klicke auf den Link in der E-Mail, um dein Konto zu bestätigen.",
     "resendEmail": "Bestätigungs-E-Mail erneut senden",
     "resendEmailCooldown": "Erneut senden in {{seconds}}s",
     "emailSent": "Bestätigungs-E-Mail gesendet!",
-    "checkSpam": "Nicht gefunden? Überprüfe deinen Spam-Ordner."
+    "checkSpamTitle": "Überprüfe deinen Spam-Ordner",
+    "checkSpamDesc": "Die Bestätigungs-E-Mail kann in deinem Spam- oder Junk-Ordner landen. Falls du sie dort findest, markiere sie als 'Kein Spam' und klicke auf den Link.",
+    "waitingForVerification": "Warte auf Bestätigung...",
+    "wrongEmail": "Falsche E-Mail? Abmelden"
   },
   "onboarding": {
     "welcome": "Willkommen!",
@@ -471,7 +474,7 @@
     "fileAttachments": "<0>Dateianhänge</0> — Quittungen, Verträge und Fotos, die du hochlädst",
     "mortgageData": "<0>Hypothekendaten</0> — Darlehensdetails und Zinsverlauf, die du konfigurierst",
     "whyWeCollect": "Warum wir diese Daten erfassen",
-    "whyWeCollectText": "Deine Daten werden ausschließlich für den Hauskostenerfassungsdienst verwendet. Wir nutzen deine Daten nicht für Werbung, Profiling oder andere Zwecke.",
+    "whyWeCollectText": "Deine Daten werden ausschließlich für den CasaTab-Dienst verwendet. Wir nutzen deine Daten nicht für Werbung, Profiling oder andere Zwecke.",
     "whereStored": "Wo deine Daten gespeichert werden",
     "whereStoredIntro": "Deine Daten werden auf der Google-Cloud-Infrastruktur (Firebase) mit branchenüblichen Sicherheitsstandards gespeichert:",
     "encryptionAtRest": "<0>Verschlüsselung im Ruhezustand</0> — alle Daten werden mit AES-256 verschlüsselt",

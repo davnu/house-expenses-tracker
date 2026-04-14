@@ -28,7 +28,7 @@
     "required": "Obligatoire",
     "mustBePositive": "Doit être positif",
     "optional": "facultatif",
-    "houseExpenses": "Frais immobiliers",
+    "houseExpenses": "CasaTab",
     "privacyPolicy": "Politique de confidentialité",
     "signOut": "Se déconnecter",
     "formerMember": "Ancien membre",
@@ -54,7 +54,7 @@
     "settings": "Paramètres"
   },
   "auth": {
-    "title": "Frais immobiliers",
+    "title": "CasaTab",
     "subtitle": "Tous les frais liés à l'achat de ton logement, au même endroit",
     "continueWithGoogle": "Continuer avec Google",
     "yourName": "Ton nom",
@@ -73,11 +73,14 @@
     "signUpLink": "S'inscrire",
     "joinHouseSubtitle": "Connecte-toi ou inscris-toi pour rejoindre « {{houseName}} »",
     "verifyEmailTitle": "Vérifie ton e-mail",
-    "verifyEmailDesc": "Nous avons envoyé un lien de vérification à {{email}}. Clique sur le lien pour vérifier ton compte.",
+    "verifyEmailDesc": "Nous avons envoyé un lien de vérification. Clique sur le lien dans l'e-mail pour vérifier ton compte.",
     "resendEmail": "Renvoyer l'e-mail de vérification",
     "resendEmailCooldown": "Renvoyer dans {{seconds}}s",
     "emailSent": "E-mail de vérification envoyé !",
-    "checkSpam": "Tu ne le vois pas ? Vérifie ton dossier spam."
+    "checkSpamTitle": "Vérifie ton dossier spam",
+    "checkSpamDesc": "L'e-mail de vérification peut arriver dans ton dossier Spam ou Indésirables. Si tu le trouves là, marque-le comme « Non spam » et clique sur le lien.",
+    "waitingForVerification": "En attente de vérification...",
+    "wrongEmail": "Mauvais e-mail ? Se déconnecter"
   },
   "onboarding": {
     "welcome": "Bienvenue !",
@@ -471,7 +474,7 @@
     "fileAttachments": "<0>Pièces jointes</0> — reçus, contrats et photos que tu envoies",
     "mortgageData": "<0>Données du prêt immobilier</0> — détails du prêt et historique des taux que tu configures",
     "whyWeCollect": "Pourquoi nous les collectons",
-    "whyWeCollectText": "Tes données sont utilisées uniquement pour fournir le service de suivi des frais immobiliers. Nous n'utilisons pas tes données à des fins publicitaires, de profilage ou pour tout autre usage.",
+    "whyWeCollectText": "Tes données sont utilisées uniquement pour fournir le service CasaTab. Nous n'utilisons pas tes données à des fins publicitaires, de profilage ou pour tout autre usage.",
     "whereStored": "Où sont stockées tes données",
     "whereStoredIntro": "Tes données sont hébergées sur l'infrastructure Google Cloud (Firebase) avec un niveau de sécurité conforme aux standards du secteur :",
     "encryptionAtRest": "<0>Chiffrement au repos</0> — toutes les données sont chiffrées avec AES-256",

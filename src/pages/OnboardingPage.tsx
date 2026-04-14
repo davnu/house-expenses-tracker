@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Home } from 'lucide-react'
+import { CasaTabLogo } from '@/components/brand/CasaTabLogo'
 import { friendlyError } from '@/lib/utils'
 import { SUPPORTED_COUNTRIES } from '@/lib/mortgage-country'
 
@@ -42,8 +42,8 @@ export function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/30">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-            <Home className="h-6 w-6 text-primary-foreground" />
+          <div className="mx-auto mb-2 h-14 w-14 rounded-2xl bg-primary flex items-center justify-center">
+            <CasaTabLogo size={28} className="text-primary-foreground" />
           </div>
           <CardTitle className="text-xl">
             {userProfile?.displayName ? t('onboarding.welcomeName', { name: userProfile.displayName }) : t('onboarding.welcome')}

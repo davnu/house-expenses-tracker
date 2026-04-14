@@ -111,8 +111,8 @@ export function PrivacyPage() {
               <h2 className="text-lg font-semibold">{t('privacy.contact')}</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {t('privacy.contactText')}{' '}
-                <a href="mailto:privacy@houseexpenses.app" className="text-primary hover:underline">
-                  privacy@houseexpenses.app
+                <a href="mailto:privacy@casatab.com" className="text-primary hover:underline">
+                  privacy@casatab.com
                 </a>
               </p>
             </section>

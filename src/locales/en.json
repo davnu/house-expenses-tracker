@@ -28,7 +28,7 @@
     "required": "Required",
     "mustBePositive": "Must be positive",
     "optional": "optional",
-    "houseExpenses": "House Expenses",
+    "houseExpenses": "CasaTab",
     "privacyPolicy": "Privacy Policy",
     "signOut": "Sign out",
     "formerMember": "Former member",
@@ -54,7 +54,7 @@
     "settings": "Settings"
   },
   "auth": {
-    "title": "House Expenses",
+    "title": "CasaTab",
     "subtitle": "Every cost of buying your home, in one place",
     "continueWithGoogle": "Continue with Google",
     "yourName": "Your name",
@@ -73,11 +73,14 @@
     "signUpLink": "Sign up",
     "joinHouseSubtitle": "Sign in or sign up to join \"{{houseName}}\"",
     "verifyEmailTitle": "Check your email",
-    "verifyEmailDesc": "We sent a verification link to {{email}}. Click the link to verify your account.",
+    "verifyEmailDesc": "We sent a verification link. Click the link in the email to verify your account.",
     "resendEmail": "Resend verification email",
     "resendEmailCooldown": "Resend in {{seconds}}s",
     "emailSent": "Verification email sent!",
-    "checkSpam": "Don't see it? Check your spam folder."
+    "checkSpamTitle": "Check your spam folder",
+    "checkSpamDesc": "The verification email may land in your Spam or Junk folder. If you find it there, mark it as \"Not spam\" and click the link.",
+    "waitingForVerification": "Waiting for verification...",
+    "wrongEmail": "Wrong email? Sign out"
   },
   "onboarding": {
     "welcome": "Welcome!",
@@ -471,7 +474,7 @@
     "fileAttachments": "<0>File attachments</0> — receipts, contracts, and photos you upload",
     "mortgageData": "<0>Mortgage data</0> — loan details and rate history you configure",
     "whyWeCollect": "Why we collect it",
-    "whyWeCollectText": "Your data is used solely to provide the house expense tracking service. We do not use your data for advertising, profiling, or any other purpose.",
+    "whyWeCollectText": "Your data is used solely to provide the CasaTab service. We do not use your data for advertising, profiling, or any other purpose.",
     "whereStored": "Where your data is stored",
     "whereStoredIntro": "Your data is stored on Google Cloud infrastructure (Firebase) with industry-standard security:",
     "encryptionAtRest": "<0>Encryption at rest</0> — all data is encrypted using AES-256",

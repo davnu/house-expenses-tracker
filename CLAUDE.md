@@ -1,7 +1,7 @@
-# House Expenses Tracker
+# CasaTab
 
 ## Purpose
-Track everything you spend buying a house: down payment, notary, taxes, renovations, furniture, etc. Plus mortgage tracking. This is NOT a monthly budget app — it's specifically for the house purchase.
+CasaTab tracks everything you spend buying a house: down payment, notary, taxes, renovations, furniture, etc. Plus mortgage tracking. This is NOT a monthly budget app — it's specifically for the house purchase.
 
 ## Stack
 React 18 + TypeScript + Vite, Tailwind CSS v4, shadcn/ui (hand-rolled in src/components/ui/), Recharts, React Router v7, React Hook Form + Zod, date-fns, lucide-react, Firebase (Auth + Firestore + Storage + Hosting).

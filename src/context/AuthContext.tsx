@@ -92,7 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     if (auth.currentUser) {
       await auth.currentUser.reload()
-      setEmailVerified(auth.currentUser.emailVerified)
+      const verified = auth.currentUser.emailVerified
+      // Force-refresh the ID token so Firestore security rules see the updated
+      // email_verified claim. reload() only updates the local User object —
+      // the JWT sent with Firestore requests still has the old claims until refreshed.
+      if (verified) {
+        await auth.currentUser.getIdToken(true)
+      }
+      setEmailVerified(verified)
     }
   }, [])
 

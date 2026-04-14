@@ -1,6 +1,6 @@
-# House Expenses Tracker
+# CasaTab
 
-A web app to track house-buying expenses, monthly costs, and who paid what — built for David and his girlfriend.
+Track every cost of buying your home — down payment, notary, taxes, renovations, furniture, mortgage, and more. All in one place, shared with your household.
 
 ## Stack
 

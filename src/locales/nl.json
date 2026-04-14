@@ -28,7 +28,7 @@
     "required": "Verplicht",
     "mustBePositive": "Moet positief zijn",
     "optional": "optioneel",
-    "houseExpenses": "Huiskosten",
+    "houseExpenses": "CasaTab",
     "privacyPolicy": "Privacybeleid",
     "signOut": "Uitloggen",
     "formerMember": "Voormalig lid",
@@ -54,7 +54,7 @@
     "settings": "Instellingen"
   },
   "auth": {
-    "title": "Huiskosten",
+    "title": "CasaTab",
     "subtitle": "Alle kosten van je woningaankoop, op één plek",
     "continueWithGoogle": "Doorgaan met Google",
     "yourName": "Je naam",
@@ -73,11 +73,14 @@
     "signUpLink": "Registreren",
     "joinHouseSubtitle": "Log in of registreer om lid te worden van \"{{houseName}}\"",
     "verifyEmailTitle": "Controleer je e-mail",
-    "verifyEmailDesc": "We hebben een verificatielink gestuurd naar {{email}}. Klik op de link om je account te verifiëren.",
+    "verifyEmailDesc": "We hebben een verificatielink gestuurd. Klik op de link in de e-mail om je account te verifiëren.",
     "resendEmail": "Verificatie-e-mail opnieuw versturen",
     "resendEmailCooldown": "Opnieuw versturen in {{seconds}}s",
     "emailSent": "Verificatie-e-mail verzonden!",
-    "checkSpam": "Niet gevonden? Controleer je spammap."
+    "checkSpamTitle": "Controleer je spammap",
+    "checkSpamDesc": "De verificatie-e-mail kan in je Spam- of Ongewenste map terechtkomen. Als je hem daar vindt, markeer hem als \"Geen spam\" en klik op de link.",
+    "waitingForVerification": "Wachten op verificatie...",
+    "wrongEmail": "Verkeerd e-mailadres? Uitloggen"
   },
   "onboarding": {
     "welcome": "Welkom!",
@@ -471,7 +474,7 @@
     "fileAttachments": "<0>Bestandsbijlagen</0> — bonnen, contracten en foto's die je uploadt",
     "mortgageData": "<0>Hypotheekgegevens</0> — leningdetails en rentehistorie die je configureert",
     "whyWeCollect": "Waarom we het verzamelen",
-    "whyWeCollectText": "Je gegevens worden uitsluitend gebruikt om de huiskostentracker te laten werken. We gebruiken je gegevens niet voor reclame, profilering of enig ander doel.",
+    "whyWeCollectText": "Je gegevens worden uitsluitend gebruikt om de CasaTab-service te laten werken. We gebruiken je gegevens niet voor reclame, profilering of enig ander doel.",
     "whereStored": "Waar je gegevens worden opgeslagen",
     "whereStoredIntro": "Je gegevens worden opgeslagen op Google Cloud-infrastructuur (Firebase) met standaard beveiligingsmaatregelen:",
     "encryptionAtRest": "<0>Versleuteling in rust</0> — alle gegevens zijn versleuteld met AES-256",
