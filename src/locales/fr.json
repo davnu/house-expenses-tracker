@@ -549,7 +549,7 @@
       "openApp": "Ouvrir l'app"
     },
     "hero": {
-      "title": "Sachez exactement combien votre maison coûte vraiment",
+      "title": "Sachez exactement combien coûte vraiment l'achat de votre maison",
       "subtitle": "Suivez chaque dépense, conservez chaque document et gardez un œil sur votre prêt — de l'apport personnel au dernier meuble, tout au même endroit.",
       "cta": "Commencer le suivi",
       "ctaSecondary": "Voir comment ça marche",
@@ -564,7 +564,7 @@
     "problem": {
       "title": "Acheter une maison coûte cher. Perdre le fil des dépenses, c'est pire.",
       "card1Title": "Les frais cachés s'accumulent",
-      "card1Text": "L'apport n'est que le début. Notaire, taxes, assurances, diagnostics — le coût réel est toujours plus élevé que prévu.",
+      "card1Text": "L'apport n'est que le début. Notaire, taxes, assurances, diagnostics — la facture totale est toujours plus élevée que prévu.",
       "card2Title": "Les tableurs ne marchent pas à deux",
       "card2Text": "Savoir qui a payé quoi sur des dizaines de dépenses ne devrait pas nécessiter un diplôme en comptabilité.",
       "card3Title": "Contrats, factures, rapports — éparpillés partout",
@@ -575,7 +575,7 @@
       "title": "Tout ce qu'il vous faut, rien de superflu",
       "dashboard": {
         "title": "Tableau de bord du coût total",
-        "text": "Visualisez chaque euro dépensé en un coup d'œil. Graphiques, ventilations et tendances — votre panorama financier complet."
+        "text": "Visualisez toutes vos dépenses en un coup d'œil. Graphiques, ventilations et tendances — votre panorama financier complet."
       },
       "categories": {
         "title": "Catégories intelligentes",
@@ -646,8 +646,8 @@
       "a6": "34+ pays en Europe, Amérique du Nord, Asie-Pacifique et plus. Chaque pays dispose de la bonne devise et, pour les prêts, des taux de référence pertinents (Euribor, SOFR, etc.)."
     },
     "cta": {
-      "title": "Commencez à suivre les coûts de votre logement aujourd'hui",
-      "subtitle": "Rejoignez les foyers qui utilisent déjà CasaTab pour comprendre le vrai coût de leur logement.",
+      "title": "Commencez à suivre les frais d'achat de votre logement aujourd'hui",
+      "subtitle": "Rejoignez les foyers qui utilisent déjà CasaTab pour savoir exactement combien coûte l'achat de leur logement.",
       "button": "Commencer"
     },
     "footer": {

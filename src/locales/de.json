@@ -549,7 +549,7 @@
       "openApp": "App öffnen"
     },
     "hero": {
-      "title": "Wissen Sie genau, was Ihr Haus wirklich kostet",
+      "title": "Wissen Sie genau, was Ihr Hauskauf wirklich kostet",
       "subtitle": "Erfassen Sie jede Ausgabe, speichern Sie jedes Dokument und behalten Sie Ihre Hypothek im Blick — von der Anzahlung bis zum letzten Möbelstück, alles an einem Ort.",
       "cta": "Jetzt starten",
       "ctaSecondary": "So funktioniert's",
@@ -564,7 +564,7 @@
     "problem": {
       "title": "Ein Haus kaufen ist teuer. Den Überblick über die Kosten zu verlieren ist schlimmer.",
       "card1Title": "Versteckte Kosten summieren sich",
-      "card1Text": "Die Anzahlung ist erst der Anfang. Notar, Steuern, Versicherungen, Gutachten — die tatsächlichen Kosten sind immer höher als gedacht.",
+      "card1Text": "Die Anzahlung ist erst der Anfang. Notar, Steuern, Versicherungen, Gutachten — die Gesamtkosten sind immer höher als erwartet.",
       "card2Title": "Tabellen scheitern bei zwei Käufern",
       "card2Text": "Nachzuverfolgen, wer was bei Dutzenden von Ausgaben bezahlt hat, sollte kein Buchhaltungsstudium erfordern.",
       "card3Title": "Verträge, Belege, Gutachten — überall verstreut",
@@ -575,7 +575,7 @@
       "title": "Alles was Sie brauchen, nichts was Sie nicht brauchen",
       "dashboard": {
         "title": "Gesamtkosten-Dashboard",
-        "text": "Sehen Sie jeden ausgegebenen Euro auf einen Blick. Diagramme, Aufschlüsselungen und Trends — Ihr vollständiges Finanzbild."
+        "text": "Sehen Sie alle Ausgaben auf einen Blick. Diagramme, Aufschlüsselungen und Trends — Ihr vollständiges Finanzbild."
       },
       "categories": {
         "title": "Intelligente Kategorien",
@@ -646,8 +646,8 @@
       "a6": "34+ Länder in Europa, Nordamerika, Asien-Pazifik und mehr. Jedes Land kommt mit der richtigen Währung und, für Hypotheken, den relevanten Referenzzinssätzen (Euribor, SOFR, etc.)."
     },
     "cta": {
-      "title": "Beginnen Sie noch heute mit der Erfassung Ihrer Hauskosten",
-      "subtitle": "Schließen Sie sich Haushalten an, die CasaTab bereits nutzen, um die wahren Kosten ihres Hauses zu verstehen.",
+      "title": "Beginnen Sie noch heute mit der Erfassung Ihrer Hauskaufkosten",
+      "subtitle": "Schließen Sie sich Haushalten an, die CasaTab bereits nutzen, um genau zu wissen, was ihr Hauskauf wirklich kostet.",
       "button": "Loslegen"
     },
     "footer": {

@@ -549,7 +549,7 @@
       "openApp": "Abrir app"
     },
     "hero": {
-      "title": "Descubre cuánto te cuesta realmente tu casa",
+      "title": "Descubre cuánto cuesta realmente comprar tu casa",
       "subtitle": "Registra cada gasto, guarda cada documento y controla tu hipoteca — desde la entrada hasta el último mueble, todo en un solo lugar.",
       "cta": "Empezar a registrar",
       "ctaSecondary": "Ver cómo funciona",
@@ -564,7 +564,7 @@
     "problem": {
       "title": "Comprar una casa es caro. Perder el control de los gastos es peor.",
       "card1Title": "Los costes ocultos se acumulan",
-      "card1Text": "La entrada es solo el principio. Notario, impuestos, seguros, inspecciones — el coste real siempre es mayor de lo que piensas.",
+      "card1Text": "La entrada es solo el principio. Notario, impuestos, seguros, inspecciones — el gasto total siempre es mayor de lo que esperas.",
       "card2Title": "Las hojas de cálculo no sirven para dos compradores",
       "card2Text": "Controlar quién pagó qué en docenas de gastos no debería necesitar un título en contabilidad.",
       "card3Title": "Contratos, recibos, informes — por todas partes",
@@ -575,7 +575,7 @@
       "title": "Todo lo que necesitas, nada que no",
       "dashboard": {
         "title": "Panel de coste total",
-        "text": "Consulta cada euro gastado de un vistazo. Gráficos, desgloses y tendencias — tu panorama financiero completo."
+        "text": "Consulta todo lo que has gastado de un vistazo. Gráficos, desgloses y tendencias — tu panorama financiero completo."
       },
       "categories": {
         "title": "Categorías inteligentes",
@@ -646,8 +646,8 @@
       "a6": "Más de 34 países en Europa, Norteamérica, Asia-Pacífico y más. Cada país incluye la moneda correcta y, para hipotecas, los tipos de referencia relevantes (Euríbor, SOFR, etc.)."
     },
     "cta": {
-      "title": "Empieza a controlar los costes de tu hogar hoy",
-      "subtitle": "Únete a los hogares que ya usan CasaTab para conocer el coste real de su vivienda.",
+      "title": "Empieza a controlar los gastos de compra de tu casa hoy",
+      "subtitle": "Únete a los hogares que ya usan CasaTab para saber exactamente cuánto cuesta comprar su vivienda.",
       "button": "Empezar"
     },
     "footer": {

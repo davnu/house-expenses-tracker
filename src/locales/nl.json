@@ -549,7 +549,7 @@
       "openApp": "Open app"
     },
     "hero": {
-      "title": "Weet precies wat je huis echt kost",
+      "title": "Weet precies wat het kopen van je huis echt kost",
       "subtitle": "Registreer elke uitgave, bewaar elk document en houd je hypotheek bij — van de aanbetaling tot het laatste meubel, alles op één plek.",
       "cta": "Begin met registreren",
       "ctaSecondary": "Bekijk hoe het werkt",
@@ -564,7 +564,7 @@
     "problem": {
       "title": "Een huis kopen is duur. De kosten kwijtraken is erger.",
       "card1Title": "Verborgen kosten stapelen zich op",
-      "card1Text": "De aanbetaling is nog maar het begin. Notaris, belastingen, verzekeringen, keuringen — de werkelijke kosten zijn altijd hoger dan je denkt.",
+      "card1Text": "De aanbetaling is nog maar het begin. Notaris, belastingen, verzekeringen, keuringen — de totale rekening is altijd hoger dan je verwacht.",
       "card2Title": "Spreadsheets werken niet met twee kopers",
       "card2Text": "Bijhouden wie wat betaalde bij tientallen uitgaven zou geen boekhoudkundig diploma moeten vereisen.",
       "card3Title": "Contracten, bonnen, rapporten — overal",
@@ -646,8 +646,8 @@
       "a6": "34+ landen in Europa, Noord-Amerika, Azië-Pacific en meer. Elk land heeft de juiste valuta en, voor hypotheken, de relevante referentierentes (Euribor, SOFR, etc.)."
     },
     "cta": {
-      "title": "Begin vandaag met het bijhouden van je woningkosten",
-      "subtitle": "Sluit je aan bij huishoudens die CasaTab al gebruiken om de werkelijke kosten van hun woning te begrijpen.",
+      "title": "Begin vandaag met het bijhouden van je aankoopkosten",
+      "subtitle": "Sluit je aan bij huishoudens die CasaTab al gebruiken om precies te weten wat het kopen van hun woning echt kost.",
       "button": "Aan de slag"
     },
     "footer": {

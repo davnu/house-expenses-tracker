@@ -549,7 +549,7 @@
       "openApp": "Open App"
     },
     "hero": {
-      "title": "Know exactly what your house really costs",
+      "title": "Know exactly what buying your home really costs",
       "subtitle": "Track every cost, store every document, and keep tabs on your mortgage — from the down payment to the last piece of furniture, all in one place.",
       "cta": "Start Tracking",
       "ctaSecondary": "See How It Works",
@@ -564,7 +564,7 @@
     "problem": {
       "title": "Buying a house is expensive. Losing track of costs is worse.",
       "card1Title": "Hidden costs add up",
-      "card1Text": "Down payment is just the start. Notary, taxes, insurance, inspections — the true cost is always higher than you think.",
+      "card1Text": "Down payment is just the start. Notary, taxes, insurance, inspections — the total bill is always higher than you expect.",
       "card2Title": "Spreadsheets break with two buyers",
       "card2Text": "Tracking who paid what across dozens of expenses shouldn't require an accounting degree.",
       "card3Title": "Contracts, receipts, reports — everywhere",
@@ -575,7 +575,7 @@
       "title": "Everything you need, nothing you don't",
       "dashboard": {
         "title": "Total Cost Dashboard",
-        "text": "See every euro you've spent at a glance. Charts, breakdowns, and trends — your complete financial picture."
+        "text": "See everything you've spent at a glance. Charts, breakdowns, and trends — your complete financial picture."
       },
       "categories": {
         "title": "Smart Categories",
@@ -646,8 +646,8 @@
       "a6": "34+ countries across Europe, North America, Asia-Pacific, and more. Each country comes with the right currency and, for mortgages, the relevant reference rates (Euribor, SOFR, etc.)."
     },
     "cta": {
-      "title": "Start tracking your home costs today",
-      "subtitle": "Join households already using CasaTab to understand the true cost of their home.",
+      "title": "Start tracking your home purchase costs today",
+      "subtitle": "Join households already using CasaTab to see exactly what buying their home really costs.",
       "button": "Get Started"
     },
     "footer": {
