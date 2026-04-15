@@ -1,13 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.backfillReferenceRates = exports.updateReferenceRates = void 0;
+exports.onHouseSoftDeleted = exports.backfillReferenceRates = exports.updateReferenceRates = exports.onFileDeleted = exports.onFileUploaded = void 0;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const https_1 = require("firebase-functions/v2/https");
+const firestore_1 = require("firebase-functions/v2/firestore");
 const app_1 = require("firebase-admin/app");
-const firestore_1 = require("firebase-admin/firestore");
+const firestore_2 = require("firebase-admin/firestore");
+var storage_quota_1 = require("./storage-quota");
+Object.defineProperty(exports, "onFileUploaded", { enumerable: true, get: function () { return storage_quota_1.onFileUploaded; } });
+Object.defineProperty(exports, "onFileDeleted", { enumerable: true, get: function () { return storage_quota_1.onFileDeleted; } });
+const storage_1 = require("firebase-admin/storage");
 const fetch_rates_1 = require("./fetch-rates");
 (0, app_1.initializeApp)();
-const db = (0, firestore_1.getFirestore)();
+const db = (0, firestore_2.getFirestore)();
 /**
  * Store rates in a single doc per rate ID.
  * Structure: reference_rates/{rateId} → { values: { "2024-01": 3.609, "2024-02": 3.671, ... }, ... }
@@ -122,5 +127,93 @@ exports.backfillReferenceRates = (0, https_1.onCall)({ region: "europe-west1" },
     const results = await fetchAndStoreAll(startDate, endDate);
     console.log("Results:", JSON.stringify(results));
     return { success: true, results };
+});
+/**
+ * Safety-net cascade delete: triggered when a house document gets a `deletedAt` field.
+ *
+ * The client sets `deletedAt` first (soft-delete) then runs its own cascade for
+ * progress UI. This function is the server-side backstop — if the client finishes
+ * first, every operation here is a no-op (idempotent). If the client crashes
+ * mid-cascade, this function guarantees full cleanup.
+ *
+ * Steps:
+ *  1. Read expenses → collect attachment paths for Storage cleanup
+ *  2. Read members → update their user profiles (clear houseId)
+ *  3. Delete Storage attachments (best-effort)
+ *  4. recursiveDelete the house doc + all subcollections
+ */
+exports.onHouseSoftDeleted = (0, firestore_1.onDocumentUpdated)({
+    document: "houses/{houseId}",
+    region: "europe-west1",
+}, async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after)
+        return;
+    // Only fire when deletedAt transitions from falsy → truthy
+    if (before.deletedAt || !after.deletedAt)
+        return;
+    const houseId = event.params.houseId;
+    console.log(`House ${houseId} soft-deleted, starting cascade cleanup`);
+    const storage = (0, storage_1.getStorage)();
+    const bucket = storage.bucket();
+    // 1. Collect attachment paths from expenses
+    try {
+        const expensesSnap = await db
+            .collection(`houses/${houseId}/expenses`)
+            .get();
+        const deletePromises = [];
+        for (const expDoc of expensesSnap.docs) {
+            const attachments = expDoc.data().attachments;
+            if (attachments?.length) {
+                for (const att of attachments) {
+                    const filePath = `houses/${houseId}/attachments/${att.id}/${att.name}`;
+                    deletePromises.push(bucket
+                        .file(filePath)
+                        .delete()
+                        .then(() => { })
+                        .catch(() => { }) // best-effort — file may already be gone
+                    );
+                }
+            }
+        }
+        await Promise.all(deletePromises);
+        console.log(`Deleted ${deletePromises.length} attachment(s) for house ${houseId}`);
+    }
+    catch (err) {
+        console.warn(`Attachment cleanup failed for house ${houseId}:`, err);
+    }
+    // 2. Clear houseId on affected members' user profiles
+    try {
+        const membersSnap = await db
+            .collection(`houses/${houseId}/members`)
+            .get();
+        for (const memberDoc of membersSnap.docs) {
+            try {
+                const profileRef = db.doc(`users/${memberDoc.id}`);
+                const profileSnap = await profileRef.get();
+                if (profileSnap.exists &&
+                    profileSnap.data()?.houseId === houseId) {
+                    await profileRef.update({ houseId: null });
+                }
+            }
+            catch {
+                // best-effort per member
+            }
+        }
+        console.log(`Cleaned ${membersSnap.size} member profile(s) for house ${houseId}`);
+    }
+    catch (err) {
+        console.warn(`Member cleanup failed for house ${houseId}:`, err);
+    }
+    // 3. Recursively delete house doc + all subcollections
+    try {
+        const houseRef = db.doc(`houses/${houseId}`);
+        await db.recursiveDelete(houseRef);
+        console.log(`Recursive delete completed for house ${houseId}`);
+    }
+    catch (err) {
+        console.error(`Recursive delete failed for house ${houseId}:`, err);
+    }
 });
 //# sourceMappingURL=index.js.map

@@ -1,8 +1,11 @@
+import i18next from 'i18next'
+
 export interface DocFolder {
   id: string
   name: string
   icon: string // emoji
   description?: string
+  translationKey?: string | null // key into defaultFolders.* for dynamic i18n
   order: number
   createdAt: string
   createdBy: string
@@ -22,12 +25,26 @@ export interface HouseDocument {
   updatedAt: string
 }
 
-/** Pre-created folders when a household first uses the Documents feature */
-export const DEFAULT_FOLDERS: Omit<DocFolder, 'id' | 'createdAt' | 'createdBy'>[] = [
-  { name: 'Purchase & Legal', icon: '📋', order: 0, description: 'Contracts, title deeds, settlement statements' },
-  { name: 'Mortgage', icon: '🏦', order: 1, description: 'Pre-approval, loan documents, rate lock letters' },
-  { name: 'Insurance', icon: '🛡️', order: 2, description: 'Homeowner, title, and life insurance policies' },
-  { name: 'Inspections', icon: '🔍', order: 3, description: 'Home inspection, appraisal, pest reports' },
-  { name: 'Renovations', icon: '🔨', order: 4, description: 'Permits, contractor quotes, floor plans' },
-  { name: 'Other', icon: '📁', order: 5, description: 'Warranties, utility setup, miscellaneous' },
-]
+const FOLDER_DEFS = [
+  { key: 'purchase', icon: '📋', order: 0 },
+  { key: 'mortgage', icon: '🏦', order: 1 },
+  { key: 'property', icon: '🏠', order: 2 },
+  { key: 'tax',      icon: '📊', order: 3 },
+  { key: 'insurance', icon: '🛡️', order: 4 },
+  { key: 'inspections', icon: '🔍', order: 5 },
+  { key: 'other',    icon: '📁', order: 6 },
+] as const
+
+/** Returns translated default folders — call at runtime when i18next is ready */
+export function getDefaultFolders(): Omit<DocFolder, 'id' | 'createdAt' | 'createdBy'>[] {
+  return FOLDER_DEFS.map(({ key, icon, order }) => ({
+    name: i18next.t(`defaultFolders.${key}.name`),
+    icon,
+    order,
+    description: i18next.t(`defaultFolders.${key}.description`),
+    translationKey: key,
+  }))
+}
+
+/** @deprecated Use getDefaultFolders() for translated names */
+export const DEFAULT_FOLDERS = getDefaultFolders()

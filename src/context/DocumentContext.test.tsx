@@ -403,4 +403,305 @@ describe('DocumentContext', () => {
       expect(result.current.documentStorageUsed).toBe(0)
     })
   })
+
+  // ── translationKey — dynamic folder name i18n ──
+
+  describe('translationKey', () => {
+    it('resolves translated name when translationKey is present', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'Compra y contratos', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      // In test env, i18next is English — should resolve to the English translation
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.name).toBe('Purchase & Contracts')
+      expect(resolved?.description).toBe('Purchase agreement, offer letter, deposit receipt, closing documents')
+    })
+
+    it('passes through literal name when translationKey is absent', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'My Custom Folder' })
+      const { result } = await setupHook([folder])
+
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.name).toBe('My Custom Folder')
+    })
+
+    it('passes through literal name when translationKey is null', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'Renamed Folder', translationKey: null })
+      const { result } = await setupHook([folder])
+
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.name).toBe('Renamed Folder')
+    })
+
+    it('clears translationKey when folder name is actually changed', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored-name', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        // "My Purchase Docs" differs from the translated name "Purchase & Contracts"
+        await result.current.updateFolder('folder-1', { name: 'My Purchase Docs', icon: '📋' })
+      })
+
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', {
+        name: 'My Purchase Docs',
+        icon: '📋',
+        translationKey: null,
+      })
+    })
+
+    it('clears translationKey when description is actually changed', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored-name', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        // Submit the translated name (unchanged) but a custom description
+        await result.current.updateFolder('folder-1', {
+          name: 'Purchase & Contracts',
+          icon: '📋',
+          description: 'My custom description',
+        })
+      })
+
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', {
+        name: 'Purchase & Contracts',
+        icon: '📋',
+        description: 'My custom description',
+        translationKey: null,
+      })
+    })
+
+    it('preserves translationKey when only icon is changed (dialog sends name/desc unchanged)', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored-name', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        // Dialog always sends name and description — but they match the translations
+        await result.current.updateFolder('folder-1', {
+          name: 'Purchase & Contracts', // matches t('defaultFolders.purchase.name')
+          icon: '📄',
+          description: 'Purchase agreement, offer letter, deposit receipt, closing documents', // matches translation
+        })
+      })
+
+      // Name and description should be stripped since they match translations.
+      // Only icon should be sent to Firestore.
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', { icon: '📄' })
+    })
+
+    it('does not clear translationKey when only icon is updated without name', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored-name', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        await result.current.updateFolder('folder-1', { icon: '📄' })
+      })
+
+      // No name in updates → translationKey untouched, just icon sent
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', { icon: '📄' })
+    })
+
+    it('resolves all 7 default folder translationKeys correctly', async () => {
+      const defaults: DocFolder[] = [
+        makeFolder({ id: 'f1', name: 'ES name', translationKey: 'purchase', icon: '📋', order: 0 }),
+        makeFolder({ id: 'f2', name: 'ES name', translationKey: 'mortgage', icon: '🏦', order: 1 }),
+        makeFolder({ id: 'f3', name: 'ES name', translationKey: 'property', icon: '🏠', order: 2 }),
+        makeFolder({ id: 'f4', name: 'ES name', translationKey: 'tax', icon: '📊', order: 3 }),
+        makeFolder({ id: 'f5', name: 'ES name', translationKey: 'insurance', icon: '🛡️', order: 4 }),
+        makeFolder({ id: 'f6', name: 'ES name', translationKey: 'inspections', icon: '🔍', order: 5 }),
+        makeFolder({ id: 'f7', name: 'ES name', translationKey: 'other', icon: '📁', order: 6 }),
+      ]
+      const { result } = await setupHook(defaults)
+
+      // All should resolve to English names (test env is English)
+      const names = result.current.folders.map(f => f.name)
+      expect(names).toContain('Purchase & Contracts')
+      expect(names).toContain('Mortgage & Bank')
+      expect(names).toContain('Property')
+      expect(names).toContain('Tax & Government')
+      expect(names).toContain('Insurance')
+      expect(names).toContain('Inspections & Reports')
+      expect(names).toContain('Other')
+
+      // None should show the raw stored name
+      expect(names).not.toContain('ES name')
+    })
+
+    it('clears translationKey when description is intentionally cleared (set to undefined)', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored-name', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        // User clears description → dialog sends undefined
+        await result.current.updateFolder('folder-1', {
+          name: 'Purchase & Contracts',
+          icon: '📋',
+          description: undefined,
+        })
+      })
+
+      // undefined !== translated description → description was changed → clear translationKey
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', {
+        name: 'Purchase & Contracts',
+        icon: '📋',
+        translationKey: null,
+      })
+    })
+
+    it('handles mix of default and custom folders', async () => {
+      const folders = [
+        makeFolder({ id: 'f1', name: 'ES purchase', translationKey: 'purchase', order: 0 }),
+        makeFolder({ id: 'f2', name: 'My Custom Folder', order: 1 }),
+      ]
+      const { result } = await setupHook(folders)
+
+      const f1 = result.current.folders.find(f => f.id === 'f1')
+      const f2 = result.current.folders.find(f => f.id === 'f2')
+      expect(f1?.name).toBe('Purchase & Contracts') // translated
+      expect(f2?.name).toBe('My Custom Folder')     // literal
+    })
+
+    // ── Edge cases: translationKey clearing logic ──
+
+    it('clears translationKey when both name and description are changed', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        await result.current.updateFolder('folder-1', {
+          name: 'Custom Name',
+          icon: '📋',
+          description: 'Custom Description',
+        })
+      })
+
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', {
+        name: 'Custom Name',
+        icon: '📋',
+        description: 'Custom Description',
+        translationKey: null,
+      })
+    })
+
+    it('does not affect custom folders (no translationKey) when updating name', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'Custom Folder' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        await result.current.updateFolder('folder-1', { name: 'Renamed Custom', icon: '📁' })
+      })
+
+      // No translationKey logic involved — updates pass through as-is
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', {
+        name: 'Renamed Custom',
+        icon: '📁',
+      })
+    })
+
+    it('does not affect folders with translationKey already cleared (null)', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'Previously Renamed', translationKey: null })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        await result.current.updateFolder('folder-1', { name: 'Renamed Again', icon: '📋' })
+      })
+
+      // translationKey is null (falsy) → no translationKey logic → pass through
+      expect(mockRepo.updateFolder).toHaveBeenCalledWith('folder-1', {
+        name: 'Renamed Again',
+        icon: '📋',
+      })
+    })
+
+    it('rolls back translated folder on update failure', async () => {
+      mockRepo.updateFolder.mockRejectedValueOnce(new Error('Network error'))
+      const folder = makeFolder({ id: 'folder-1', name: 'stored-raw', translationKey: 'purchase' })
+      const { result } = await setupHook([folder])
+
+      // Before: translated name
+      expect(result.current.folders.find(f => f.id === 'folder-1')?.name).toBe('Purchase & Contracts')
+
+      await expect(
+        act(async () => {
+          await result.current.updateFolder('folder-1', { name: 'Custom Name', icon: '📋' })
+        })
+      ).rejects.toThrow('Network error')
+
+      // After rollback: raw data restored → translation resolves again
+      const rolledBack = result.current.folders.find(f => f.id === 'folder-1')
+      expect(rolledBack?.name).toBe('Purchase & Contracts')
+      expect(rolledBack?.translationKey).toBe('purchase')
+    })
+
+    it('preserves translationKey in optimistic state when only icon changes', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'stored', translationKey: 'mortgage' })
+      const { result } = await setupHook([folder])
+
+      await act(async () => {
+        await result.current.updateFolder('folder-1', {
+          name: 'Mortgage & Bank',
+          icon: '💰',
+          description: 'Pre-approval, loan agreement, mortgage deed, bank statements',
+        })
+      })
+
+      // translationKey should still be present → folder still translates
+      const updated = result.current.folders.find(f => f.id === 'folder-1')
+      expect(updated?.name).toBe('Mortgage & Bank')
+      expect(updated?.translationKey).toBe('mortgage')
+    })
+
+    it('passes through empty string translationKey as falsy (no translation)', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'Literal Name', translationKey: '' as string })
+      const { result } = await setupHook([folder])
+
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.name).toBe('Literal Name')
+    })
+
+    it('handles folder with translationKey pointing to missing locale key gracefully', async () => {
+      const folder = makeFolder({ id: 'folder-1', name: 'Fallback Name', translationKey: 'nonexistent_key' })
+      const { result } = await setupHook([folder])
+
+      // i18next returns the key itself when translation is missing
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.name).toBe('defaultFolders.nonexistent_key.name')
+    })
+
+    it('translated description also resolves alongside name', async () => {
+      const folder = makeFolder({
+        id: 'folder-1',
+        name: 'raw',
+        description: 'raw desc',
+        translationKey: 'tax',
+      })
+      const { result } = await setupHook([folder])
+
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.name).toBe('Tax & Government')
+      expect(resolved?.description).toBe('Transfer tax, property tax, stamp duty, land registry')
+    })
+
+    it('preserves all other DocFolder fields during translation resolution', async () => {
+      const folder = makeFolder({
+        id: 'folder-1',
+        name: 'raw',
+        icon: '🛡️',
+        order: 4,
+        translationKey: 'insurance',
+        createdAt: '2026-01-01T00:00:00Z',
+        createdBy: 'user-123',
+      })
+      const { result } = await setupHook([folder])
+
+      const resolved = result.current.folders.find(f => f.id === 'folder-1')
+      expect(resolved?.id).toBe('folder-1')
+      expect(resolved?.icon).toBe('🛡️')
+      expect(resolved?.order).toBe(4)
+      expect(resolved?.translationKey).toBe('insurance')
+      expect(resolved?.createdAt).toBe('2026-01-01T00:00:00Z')
+      expect(resolved?.createdBy).toBe('user-123')
+      // Only name and description are overridden
+      expect(resolved?.name).toBe('Insurance')
+    })
+  })
 })

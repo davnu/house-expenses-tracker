@@ -374,6 +374,36 @@
     "sortBy": "Documenten sorteren op",
     "size": "Grootte"
   },
+  "defaultFolders": {
+    "purchase": {
+      "name": "Aankoop en contracten",
+      "description": "Koopovereenkomst, waarborgsom, leveringsakte, notariële akte"
+    },
+    "mortgage": {
+      "name": "Hypotheek en bank",
+      "description": "Hypotheekofferte, hypotheekakte, bindend aanbod, bankafschriften"
+    },
+    "property": {
+      "name": "Woning",
+      "description": "Eigendomsakte, plattegronden, energielabel, VvE-stukken"
+    },
+    "tax": {
+      "name": "Belasting en overheid",
+      "description": "Overdrachtsbelasting, WOZ-beschikking, Kadaster, OZB-aanslag"
+    },
+    "insurance": {
+      "name": "Verzekeringen",
+      "description": "Opstalverzekering, overlijdensrisicoverzekering, inboedelverzekering"
+    },
+    "inspections": {
+      "name": "Keuringen en rapporten",
+      "description": "Bouwkundige keuring, taxatierapport, bodemonderzoek, funderingsonderzoek"
+    },
+    "other": {
+      "name": "Overig",
+      "description": "Bonnen, garantiebewijzen, verhuisdocumenten, diversen"
+    }
+  },
   "settings": {
     "title": "Instellingen",
     "yourProfile": "Jouw profiel",

@@ -164,6 +164,7 @@ const FOLDER_ICON_BG: Record<string, string> = {
   '📄': 'bg-gray-100 dark:bg-gray-800/50',
   '🔑': 'bg-rose-100 dark:bg-rose-900/40',
   '⚡': 'bg-yellow-100 dark:bg-yellow-900/40',
+  '📊': 'bg-teal-100 dark:bg-teal-900/40',
 }
 
 const FOLDER_ICON_BG_FALLBACK = 'bg-slate-100 dark:bg-slate-800/50'

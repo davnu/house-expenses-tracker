@@ -69,10 +69,12 @@ service cloud.firestore {
         allow write: if request.auth != null && isVerifiedEmail() && isMember();
       }
 
-      // Settings
+      // Settings (mortgage config, house settings, etc.)
+      // The 'storage' doc is written exclusively by Cloud Functions (admin SDK)
       match /meta/{docId} {
         allow read: if request.auth != null && isMember();
-        allow write: if request.auth != null && isVerifiedEmail() && isMember();
+        allow write: if request.auth != null && isVerifiedEmail() && isMember()
+                    && docId != 'storage';
       }
 
       // Document folders

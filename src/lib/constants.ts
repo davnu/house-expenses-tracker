@@ -52,7 +52,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
 // Attachment limits
 export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB per file
 export const MAX_FILES_PER_EXPENSE = 10
-export const MAX_HOUSEHOLD_STORAGE = 500 * 1024 * 1024 // 500 MB total per household
+export const MAX_HOUSEHOLD_STORAGE = 50 * 1024 * 1024 // 50 MB total per household
 
 // Document limits (shared with attachment quota)
 export const MAX_DOCUMENTS_PER_FOLDER = 50

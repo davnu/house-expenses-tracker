@@ -374,6 +374,36 @@
     "sortBy": "Ordenar documentos por",
     "size": "Tamaño"
   },
+  "defaultFolders": {
+    "purchase": {
+      "name": "Compra y contratos",
+      "description": "Contrato de arras, compraventa, reserva, escritura pública"
+    },
+    "mortgage": {
+      "name": "Hipoteca y banco",
+      "description": "Oferta vinculante, escritura de hipoteca, tasación oficial, extractos"
+    },
+    "property": {
+      "name": "Inmueble",
+      "description": "Nota simple, planos, certificado energético, referencia catastral"
+    },
+    "tax": {
+      "name": "Impuestos y administración",
+      "description": "ITP, AJD, plusvalía, registro de la propiedad"
+    },
+    "insurance": {
+      "name": "Seguros",
+      "description": "Seguro del hogar, seguro de vida, seguro de comunidad"
+    },
+    "inspections": {
+      "name": "Inspecciones e informes",
+      "description": "ITE, tasación, peritaje, informe de estado"
+    },
+    "other": {
+      "name": "Otros",
+      "description": "Recibos, garantías, documentos de mudanza, varios"
+    }
+  },
   "settings": {
     "title": "Ajustes",
     "yourProfile": "Tu perfil",

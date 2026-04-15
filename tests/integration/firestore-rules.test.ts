@@ -601,6 +601,31 @@ describe('Meta docs (/houses/{houseId}/meta/{docId})', () => {
     const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
     await assertFails(outsider.firestore().doc('houses/house1/meta/mortgage').get())
   })
+
+  it('member cannot write to meta/storage (server-managed)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(
+      alice.firestore().doc('houses/house1/meta/storage').set({ usedBytes: 0 })
+    )
+  })
+
+  it('member can still read meta/storage', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/meta/storage').set({ usedBytes: 1000 })
+    })
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(alice.firestore().doc('houses/house1/meta/storage').get())
+  })
+
+  it('member can still write to other meta docs (e.g. settings)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/meta/settings').set({ currency: 'EUR' })
+    )
+  })
 })
 
 // ── Reference Rates ──────────────────────────────────────────────────

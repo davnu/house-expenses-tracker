@@ -3,6 +3,8 @@ import { onCall } from "firebase-functions/v2/https";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+
+export { onFileUploaded, onFileDeleted } from "./storage-quota";
 import { getStorage } from "firebase-admin/storage";
 import {
   fetchEuribor,

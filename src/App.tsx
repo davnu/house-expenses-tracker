@@ -108,6 +108,15 @@ function InviteGate() {
   )
 }
 
+/* ── SEO language landing: /es, /fr, /de, /nl, /pt serve pre-rendered HTML.
+   React Router needs matching routes so the catch-all doesn't redirect to /. ── */
+
+const SEO_LANGUAGES = ['es', 'fr', 'de', 'nl', 'pt'] as const
+
+function LanguageLanding() {
+  return <LandingPage />
+}
+
 /* ── Root ── */
 
 function App() {
@@ -123,6 +132,11 @@ function App() {
 
           {/* Protected app */}
           <Route path="/app/*" element={<ProtectedApp />} />
+
+          {/* SEO language landing pages (/es, /fr, /de, /nl, /pt) */}
+          {SEO_LANGUAGES.map(lang => (
+            <Route key={lang} path={`/${lang}`} element={<LanguageLanding />} />
+          ))}
 
           {/* Legacy redirects (old bookmarks) */}
           <Route path="/mortgage" element={<Navigate to="/app/mortgage" replace />} />

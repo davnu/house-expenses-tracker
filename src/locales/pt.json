@@ -374,6 +374,36 @@
     "sortBy": "Ordenar documentos por",
     "size": "Tamanho"
   },
+  "defaultFolders": {
+    "purchase": {
+      "name": "Compra e contratos",
+      "description": "CPCV, sinal, escritura de compra e venda, licença de utilização"
+    },
+    "mortgage": {
+      "name": "Crédito e banco",
+      "description": "Proposta de crédito, escritura de hipoteca, FINE, extratos bancários"
+    },
+    "property": {
+      "name": "Imóvel",
+      "description": "Caderneta predial, certidão predial, plantas, certificado energético"
+    },
+    "tax": {
+      "name": "Impostos e governo",
+      "description": "IMT, imposto de selo, IMI, registo predial"
+    },
+    "insurance": {
+      "name": "Seguros",
+      "description": "Seguro multirriscos, seguro de vida, seguro de condomínio"
+    },
+    "inspections": {
+      "name": "Vistorias e relatórios",
+      "description": "Vistoria ao imóvel, avaliação bancária, peritagem, relatório técnico"
+    },
+    "other": {
+      "name": "Outros",
+      "description": "Recibos, garantias, documentos de mudança, diversos"
+    }
+  },
   "settings": {
     "title": "Definições",
     "yourProfile": "O Teu Perfil",

@@ -189,14 +189,14 @@ describe('getFolderIconBg', () => {
   })
 
   it('all known emojis include dark mode variant', () => {
-    const emojis = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁', '📦', '🏠', '💰', '📄', '🔑', '⚡']
+    const emojis = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁', '📦', '🏠', '💰', '📄', '🔑', '⚡', '📊']
     for (const emoji of emojis) {
       expect(getFolderIconBg(emoji)).toContain('dark:')
     }
   })
 
   it('all known emojis return a valid Tailwind bg- class', () => {
-    const emojis = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁', '📦', '🏠', '💰', '📄', '🔑', '⚡']
+    const emojis = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁', '📦', '🏠', '💰', '📄', '🔑', '⚡', '📊']
     for (const emoji of emojis) {
       expect(getFolderIconBg(emoji)).toMatch(/^bg-/)
     }
@@ -204,7 +204,7 @@ describe('getFolderIconBg', () => {
 
   it('covers every DEFAULT_FOLDERS icon with a non-fallback color', () => {
     // DEFAULT_FOLDERS icons must NOT fall back to generic slate
-    const defaultIcons = ['📋', '🏦', '🛡️', '🔍', '🔨', '📁']
+    const defaultIcons = ['📋', '🏦', '🏠', '📊', '🛡️', '🔍', '📁']
     const fallback = getFolderIconBg('🎉') // unknown → fallback
     for (const icon of defaultIcons) {
       const result = getFolderIconBg(icon)

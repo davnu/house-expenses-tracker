@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useDocuments } from '@/context/DocumentContext'
 import { friendlyError } from '@/lib/utils'
 
-const FOLDER_ICONS = ['📁', '📋', '🏦', '🛡️', '🔍', '🔨', '📦', '🏠', '💰', '📄', '🔑', '⚡']
+const FOLDER_ICONS = ['📁', '📋', '🏦', '🛡️', '🔍', '🔨', '📦', '🏠', '💰', '📄', '🔑', '⚡', '📊']
 
 interface CreateFolderDialogProps {
   open: boolean

@@ -279,8 +279,8 @@ describe('attachmentToHouseDocument', () => {
 // ── DEFAULT_FOLDERS ─────────────────────────────────────────────────
 
 describe('DEFAULT_FOLDERS', () => {
-  it('has 6 default folders with descriptions', () => {
-    expect(DEFAULT_FOLDERS).toHaveLength(6)
+  it('has 7 default folders with descriptions', () => {
+    expect(DEFAULT_FOLDERS).toHaveLength(7)
     for (const f of DEFAULT_FOLDERS) {
       expect(f.description).toBeDefined()
       expect(f.description!.length).toBeGreaterThan(0)
@@ -289,14 +289,32 @@ describe('DEFAULT_FOLDERS', () => {
 
   it('has unique names and sequential orders', () => {
     const names = DEFAULT_FOLDERS.map((f) => f.name)
-    expect(new Set(names).size).toBe(6)
+    expect(new Set(names).size).toBe(7)
     const orders = DEFAULT_FOLDERS.map((f) => f.order).sort((a, b) => a - b)
-    expect(orders).toEqual([0, 1, 2, 3, 4, 5])
+    expect(orders).toEqual([0, 1, 2, 3, 4, 5, 6])
   })
 
   it('"Other" is last', () => {
     const sorted = [...DEFAULT_FOLDERS].sort((a, b) => a.order - b.order)
-    expect(sorted[5].name).toBe('Other')
+    expect(sorted[6].icon).toBe('📁')
+  })
+
+  it('every default folder has a translationKey', () => {
+    for (const f of DEFAULT_FOLDERS) {
+      expect(f.translationKey).toBeDefined()
+      expect(typeof f.translationKey).toBe('string')
+      expect(f.translationKey!.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('translationKeys are unique across all folders', () => {
+    const keys = DEFAULT_FOLDERS.map((f) => f.translationKey)
+    expect(new Set(keys).size).toBe(7)
+  })
+
+  it('translationKeys match expected set', () => {
+    const keys = DEFAULT_FOLDERS.map((f) => f.translationKey).sort()
+    expect(keys).toEqual(['inspections', 'insurance', 'mortgage', 'other', 'property', 'purchase', 'tax'])
   })
 })
 

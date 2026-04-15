@@ -8,7 +8,7 @@ import { useDocuments } from '@/context/DocumentContext'
 import { friendlyError } from '@/lib/utils'
 import type { DocFolder } from '@/types/document'
 
-const FOLDER_ICONS = ['📁', '📋', '🏦', '🛡️', '🔍', '🔨', '📦', '🏠', '💰', '📄', '🔑', '⚡']
+const FOLDER_ICONS = ['📁', '📋', '🏦', '🛡️', '🔍', '🔨', '📦', '🏠', '💰', '📄', '🔑', '⚡', '📊']
 
 interface RenameFolderDialogProps {
   folder: DocFolder | null

@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { collection, onSnapshot, query } from 'firebase/firestore'
+import { useTranslation } from 'react-i18next'
 import type { DocFolder, HouseDocument } from '@/types/document'
-import { DEFAULT_FOLDERS } from '@/types/document'
+import { getDefaultFolders } from '@/types/document'
 import type { ExpenseRepository } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
 import { uploadDocument, uploadDocumentThumbnail, deleteDocumentFile } from '@/data/firebase-document-store'
@@ -32,19 +33,34 @@ interface DocumentContextValue {
 const DocumentContext = createContext<DocumentContextValue | null>(null)
 
 export function DocumentProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { house } = useHousehold()
   const { storageUsed: expenseStorageUsed } = useExpenses()
   const [repo, setRepo] = useState<ExpenseRepository | null>(null)
-  const [folders, setFolders] = useState<DocFolder[]>([])
+  const [rawFolders, setRawFolders] = useState<DocFolder[]>([])
   const [documents, setDocuments] = useState<HouseDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [pendingDocumentIds, setPendingDocumentIds] = useState<Set<string>>(new Set())
 
   const houseId = house?.id
 
-  const foldersRef = useRef(folders)
-  foldersRef.current = folders
+  // Resolve translated names for default folders; custom folders pass through as-is.
+  // Depends on `t` which changes reference on language switch → auto-recomputes.
+  // Note: translationKey can be null (cleared on rename) or undefined (custom folders) —
+  // both are falsy, so the folder passes through with its literal stored name.
+  const folders = useMemo(() => rawFolders.map((f) => {
+    if (!f.translationKey) return f
+    return {
+      ...f,
+      name: t(`defaultFolders.${f.translationKey}.name`),
+      description: t(`defaultFolders.${f.translationKey}.description`),
+    }
+  }), [rawFolders, t])
+
+  // Refs track raw data for optimistic updates and rollbacks
+  const foldersRef = useRef(rawFolders)
+  foldersRef.current = rawFolders
   const documentsRef = useRef(documents)
   documentsRef.current = documents
 
@@ -64,7 +80,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setRepo(new FirestoreRepository(db, houseId))
     } else {
       setRepo(null)
-      setFolders([])
+      setRawFolders([])
       setDocuments([])
       setLoading(false)
     }
@@ -96,7 +112,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           seedingRef.current = true
           try {
             await Promise.all(
-              DEFAULT_FOLDERS.map((def) => repo.addFolder({ ...def, createdBy: user?.uid ?? '' }))
+              getDefaultFolders().map((def) => repo.addFolder({ ...def, createdBy: user?.uid ?? '' }))
             )
             // onSnapshot will fire again with the seeded folders
           } catch {
@@ -107,7 +123,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        setFolders(serverFolders)
+        setRawFolders(serverFolders)
         foldersLoaded = true
         markReady()
       }
@@ -145,14 +161,14 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString()
     const temp: DocFolder = { id: tempId, name, icon, description, order: maxOrder + 1, createdAt: now, createdBy: user?.uid ?? '' }
 
-    setFolders((prev) => [...prev, temp])
+    setRawFolders((prev) => [...prev, temp])
 
     try {
       const real = await repo.addFolder({ name, icon, description, order: maxOrder + 1, createdBy: user?.uid ?? '' })
-      setFolders((prev) => prev.filter((f) => f.id !== tempId))
+      setRawFolders((prev) => prev.filter((f) => f.id !== tempId))
       return real
     } catch (err) {
-      setFolders((prev) => prev.filter((f) => f.id !== tempId))
+      setRawFolders((prev) => prev.filter((f) => f.id !== tempId))
       throw err
     }
   }, [repo, user?.uid])
@@ -162,16 +178,38 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     const previous = foldersRef.current.find((f) => f.id === id)
     if (!previous) return
 
+    // For default folders (with translationKey), compare submitted name/description
+    // against their current translated values. Only clear translationKey if the user
+    // actually changed them — changing just the icon should preserve translation.
+    // Uses null (not undefined) because stripInvalid strips undefined but preserves null,
+    // and Firestore accepts null — this overwrites the stored key in the database.
+    if (previous.translationKey) {
+      const translatedName = t(`defaultFolders.${previous.translationKey}.name`)
+      const translatedDesc = t(`defaultFolders.${previous.translationKey}.description`)
+      const nameChanged = 'name' in updates && updates.name !== translatedName
+      const descChanged = 'description' in updates && updates.description !== translatedDesc
+      if (nameChanged || descChanged) {
+        updates = { ...updates, translationKey: null }
+      } else {
+        // Name/description unchanged — strip them to avoid overwriting raw Firestore data
+        // with the current language's translated string
+        const cleaned = { ...updates }
+        if ('name' in cleaned && cleaned.name === translatedName) delete cleaned.name
+        if ('description' in cleaned && cleaned.description === translatedDesc) delete cleaned.description
+        updates = cleaned
+      }
+    }
+
     // Optimistic: apply immediately, onSnapshot will confirm
-    setFolders((prev) => prev.map((f) => f.id === id ? { ...f, ...updates } : f))
+    setRawFolders((prev) => prev.map((f) => f.id === id ? { ...f, ...updates } : f))
 
     try {
       await repo.updateFolder(id, updates)
     } catch (err) {
-      setFolders((prev) => prev.map((f) => f.id === id ? previous : f))
+      setRawFolders((prev) => prev.map((f) => f.id === id ? previous : f))
       throw err
     }
-  }, [repo])
+  }, [repo, t])
 
   const deleteFolder = useCallback(async (id: string) => {
     if (!repo || !houseId) return
@@ -180,7 +218,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     const previousDocs = documentsRef.current
 
     // Optimistic: remove folder and its documents
-    setFolders((prev) => prev.filter((f) => f.id !== id))
+    setRawFolders((prev) => prev.filter((f) => f.id !== id))
     setDocuments((prev) => prev.filter((d) => d.folderId !== id))
 
     try {
@@ -190,7 +228,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       }
       await repo.deleteFolder(id)
     } catch (err) {
-      setFolders(previousFolders)
+      setRawFolders(previousFolders)
       setDocuments(previousDocs)
       throw err
     }

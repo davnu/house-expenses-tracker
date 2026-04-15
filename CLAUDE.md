@@ -33,9 +33,18 @@ down_payment, notary, taxes, financial_advisor, renovations, furniture, moving, 
 - Rules: `firestore.rules` (membership-based), `storage.rules`
 - Deploy: `npm run build && firebase deploy`
 
+## i18n & SEO
+- **6 languages**: en, es, fr, de, nl, pt — locale files in `src/locales/*.json`
+- **Landing page**: pre-rendered in all 6 languages for SEO (`/`, `/es/`, `/fr/`, `/de/`, `/nl/`, `/pt/`)
+- **Build pipeline**: `tsc → vite build → scripts/generate-seo-pages.mjs` — the SEO script generates pre-rendered HTML per language with translated meta tags, hreflang, JSON-LD, and full page content
+- **React Router**: has explicit routes for `/es`, `/fr`, `/de`, `/nl`, `/pt` in App.tsx so the catch-all doesn't redirect language pages
+- **Language detection**: i18next checks `localStorage` first, then `navigator`. Language pages set `localStorage('i18nextLng')` via inline script before React loads
+- **SEO meta descriptions & keywords**: hand-crafted per language in `scripts/generate-seo-pages.mjs` (separate from UI copy for search optimization)
+- **When changing locale copy**: rebuild to regenerate SEO pages. Landing page content in `landing.*` keys is duplicated as pre-rendered HTML by the build script — if the landing page structure changes significantly, update the `prerenderedContent()` function in the script
+
 ## Dev
-- `npm run dev` — localhost:5173, connects to real Firebase
-- `npm run build` — type-checks then builds to `dist/`
+- `npm run dev` — localhost:5173, connects to real Firebase (no SEO pages in dev — those are build-time only)
+- `npm run build` — type-checks, bundles, then generates SEO pages to `dist/`
 
 ## Tests
 - `npm test` — runs all tests (unit + integration). Integration tests auto-start/stop Firebase emulators.

@@ -374,6 +374,36 @@
     "sortBy": "Dokumente sortieren nach",
     "size": "Größe"
   },
+  "defaultFolders": {
+    "purchase": {
+      "name": "Kauf und Verträge",
+      "description": "Kaufvertrag, Reservierung, Zahlungsnachweis, Notarurkunde"
+    },
+    "mortgage": {
+      "name": "Finanzierung und Bank",
+      "description": "Darlehensangebot, Darlehensvertrag, Grundschuldbestellung, Kontoauszüge"
+    },
+    "property": {
+      "name": "Immobilie",
+      "description": "Grundbuchauszug, Grundrisse, Energieausweis, Exposé"
+    },
+    "tax": {
+      "name": "Steuern und Behörden",
+      "description": "Grunderwerbsteuer, Grundsteuer, Steuerbescheid, Grundbuchamt"
+    },
+    "insurance": {
+      "name": "Versicherungen",
+      "description": "Wohngebäudeversicherung, Risikolebensversicherung, Hausratversicherung"
+    },
+    "inspections": {
+      "name": "Gutachten und Berichte",
+      "description": "Wertgutachten, Baugutachten, Zustandsbericht, Sachverständigengutachten"
+    },
+    "other": {
+      "name": "Sonstiges",
+      "description": "Belege, Garantien, Umzugsdokumente, Diverses"
+    }
+  },
   "settings": {
     "title": "Einstellungen",
     "yourProfile": "Dein Profil",

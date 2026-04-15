@@ -374,6 +374,36 @@
     "sortBy": "Trier les documents par",
     "size": "Taille"
   },
+  "defaultFolders": {
+    "purchase": {
+      "name": "Achat et contrats",
+      "description": "Compromis de vente, promesse, séquestre, acte authentique"
+    },
+    "mortgage": {
+      "name": "Prêt et banque",
+      "description": "Offre de prêt, contrat de prêt, tableau d'amortissement, relevés"
+    },
+    "property": {
+      "name": "Bien immobilier",
+      "description": "Titre de propriété, plans, DPE, annonce immobilière"
+    },
+    "tax": {
+      "name": "Taxes et administration",
+      "description": "Droits de mutation, taxe foncière, frais de notaire, publicité foncière"
+    },
+    "insurance": {
+      "name": "Assurances",
+      "description": "Assurance habitation, assurance emprunteur, attestations d'assurance"
+    },
+    "inspections": {
+      "name": "Diagnostics et rapports",
+      "description": "Diagnostics immobiliers, état des risques, estimation, expertise"
+    },
+    "other": {
+      "name": "Autres",
+      "description": "Factures, garanties, documents de déménagement, divers"
+    }
+  },
   "settings": {
     "title": "Paramètres",
     "yourProfile": "Ton profil",

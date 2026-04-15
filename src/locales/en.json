@@ -374,6 +374,36 @@
     "sortBy": "Sort documents by",
     "size": "Size"
   },
+  "defaultFolders": {
+    "purchase": {
+      "name": "Purchase & Contracts",
+      "description": "Purchase agreement, offer letter, deposit receipt, closing documents"
+    },
+    "mortgage": {
+      "name": "Mortgage & Bank",
+      "description": "Pre-approval, loan agreement, mortgage deed, bank statements"
+    },
+    "property": {
+      "name": "Property",
+      "description": "Title deed, floor plans, energy certificate, property listing"
+    },
+    "tax": {
+      "name": "Tax & Government",
+      "description": "Transfer tax, property tax, stamp duty, land registry"
+    },
+    "insurance": {
+      "name": "Insurance",
+      "description": "Home insurance, life insurance, title insurance policies"
+    },
+    "inspections": {
+      "name": "Inspections & Reports",
+      "description": "Home inspection, valuation, survey, appraisal"
+    },
+    "other": {
+      "name": "Other",
+      "description": "Receipts, warranties, moving docs, miscellaneous"
+    }
+  },
   "settings": {
     "title": "Settings",
     "yourProfile": "Your Profile",
