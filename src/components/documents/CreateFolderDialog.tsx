@@ -66,7 +66,6 @@ export function CreateFolderDialog({ open, onOpenChange }: CreateFolderDialogPro
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('documents.folderNamePlaceholder')}
-              autoFocus
               maxLength={50}
             />
           </div>

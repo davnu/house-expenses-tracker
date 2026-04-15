@@ -127,7 +127,7 @@ describe('DocumentsPage', () => {
 
     it('shows "New Folder" action card in the grid', () => {
       const container = renderPage()
-      // "New Folder" text appears in both the header button and the grid card
+      // "New Folder" text appears in the grid card
       const newFolderTexts = container.querySelectorAll('[role="button"]')
       const lastCard = newFolderTexts[newFolderTexts.length - 1]
       expect(lastCard.textContent).toContain('New Folder')
@@ -233,6 +233,53 @@ describe('DocumentsPage', () => {
       const cls = folderCard.getAttribute('class') ?? ''
       expect(cls).toContain('transition-[transform,box-shadow]')
       expect(cls).not.toContain('transition-all')
+    })
+  })
+
+  describe('security trust indicator', () => {
+    it('renders shield icon and info tooltip in the header', () => {
+      mockFolders.current = testFolders
+      const container = renderPage()
+      // ShieldCheck icon is an SVG inside a span next to the title
+      const header = container.querySelector('h1')
+      expect(header).not.toBeNull()
+      // The trust span contains the shield icon and info tooltip button
+      const trustSpan = header?.querySelector('span.inline-flex')
+      expect(trustSpan).not.toBeNull()
+      // InfoTooltip renders a button
+      const infoButton = trustSpan?.querySelector('button')
+      expect(infoButton).not.toBeNull()
+    })
+
+    it('shows trust indicator even in empty state', () => {
+      const container = renderPage()
+      const header = container.querySelector('h1')
+      const trustSpan = header?.querySelector('span.inline-flex')
+      expect(trustSpan).not.toBeNull()
+    })
+  })
+
+  describe('header actions', () => {
+    it('shows Upload button when folders exist', () => {
+      mockFolders.current = testFolders
+      renderPage()
+      expect(screen.getByText('Upload')).toBeDefined()
+    })
+
+    it('hides Upload button when no folders exist', () => {
+      renderPage()
+      expect(screen.queryByText('Upload')).toBeNull()
+    })
+
+    it('does not show New Folder button in header', () => {
+      mockFolders.current = testFolders
+      const container = renderPage()
+      // Header buttons are direct children of the flex container, not role="button" cards
+      const headerDiv = container.querySelector('.flex.items-center.justify-between')
+      const headerButtons = headerDiv?.querySelectorAll('button')
+      // Only the Upload button + the InfoTooltip button should be in the header area
+      const buttonTexts = Array.from(headerButtons ?? []).map(b => b.textContent)
+      expect(buttonTexts.some(t => t?.includes('New Folder'))).toBe(false)
     })
   })
 

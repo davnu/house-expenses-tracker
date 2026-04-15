@@ -237,18 +237,12 @@ export function DocumentsPage() {
             <InfoTooltip text={t('files.securityTooltip')} position="bottom" />
           </span>
         </h1>
-        <div className="flex items-center gap-2">
-          {folders.length > 0 && (
-            <Button size="sm" variant="outline" onClick={() => setQuickUploadOpen(true)}>
-              <Upload className="h-4 w-4 mr-1.5" />
-              {t('documents.upload')}
-            </Button>
-          )}
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            {t('documents.newFolder')}
+        {folders.length > 0 && (
+          <Button size="sm" variant="outline" onClick={() => setQuickUploadOpen(true)}>
+            <Upload className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">{t('documents.upload')}</span>
           </Button>
-        </div>
+        )}
       </div>
 
       {/* Search bar */}
