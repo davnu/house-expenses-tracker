@@ -7,7 +7,7 @@ import { BudgetProvider } from '@/context/BudgetContext'
 import { DocumentProvider } from '@/context/DocumentContext'
 import { TodoProvider } from '@/context/TodoContext'
 import { AppShell } from '@/components/layout/AppShell'
-import { LoadingScreen, LoadingInline } from '@/components/ui/loading'
+import { LoadingScreen } from '@/components/ui/loading'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -38,15 +38,7 @@ function AppRoutes() {
   }
 
   // House doc hasn't loaded yet
-  if (!house) {
-    return (
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route path="*" element={<LoadingInline />} />
-        </Route>
-      </Routes>
-    )
-  }
+  if (!house) return <LoadingScreen />
 
   return (
     <ExpenseProvider>

@@ -91,7 +91,6 @@ export function EditTodoDialog({ todo, onOpenChange }: EditTodoDialogProps) {
                   handleSave()
                 }
               }}
-              autoFocus
             />
           </div>
 

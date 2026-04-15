@@ -106,7 +106,14 @@ describe('Full house creation and invite flow', () => {
       })
     )
 
-    // ── Step 10: Bob adds himself as member ──
+    // ── Step 10: Bob adds himself to memberIds (join flow updates both) ──
+    await assertSucceeds(
+      bobDb.doc(`houses/${HOUSE_ID}`).update({
+        memberIds: ['alice', 'bob'],
+      })
+    )
+
+    // ── Step 10b: Bob adds himself as member doc ──
     await assertSucceeds(
       bobDb.doc(`houses/${HOUSE_ID}/members/bob`).set({
         displayName: 'Bob',

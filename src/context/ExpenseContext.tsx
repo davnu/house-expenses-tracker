@@ -64,7 +64,10 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (repo) {
       setLoading(true)
-      refresh()
+      refresh().catch((err) => {
+        console.error('Failed to load expenses:', err)
+        setLoading(false)
+      })
     }
   }, [repo, refresh])
 

@@ -64,9 +64,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     setCurrencyContext(house?.country, house?.currency)
   }, [house?.country, house?.currency])
 
-  // Ref to avoid stale closures in callbacks
+  // Refs to avoid stale closures in callbacks
   const housesRef = useRef(houses)
   housesRef.current = houses
+  const housesLoadedRef = useRef(housesLoaded)
+  housesLoadedRef.current = housesLoaded
 
   // Guard to prevent duplicate auto-select writes
   const autoSelectingRef = useRef(false)
@@ -110,6 +112,9 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         .filter((d) => !d.data().deletedAt)
         .map((d) => ({ id: d.id, ...d.data() }) as House))
       setHousesLoaded(true)
+    }, (error) => {
+      console.error('Houses listener error:', error)
+      setHousesLoaded(true) // Unblock loading
     })
 
     return unsubscribe
@@ -140,9 +145,12 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       if (snap.exists()) {
         setHouse({ id: snap.id, ...snap.data() } as House)
       } else {
-        // House was deleted — clear active house
+        // House was deleted — clear active house and dangling houseId
         setHouse(null)
+        if (user) updateDoc(doc(db, 'users', user.uid), { houseId: null }).catch(() => {})
       }
+    }, (error) => {
+      console.error('House listener error:', error)
     })
 
     const unsubMembers = onSnapshot(
@@ -153,6 +161,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       (error) => {
         // PERMISSION_DENIED means user was removed from this house
         if (error.code === 'permission-denied') {
+          // If the houses query still lists this house (or hasn't loaded yet),
+          // the user is likely a known member — this is a transient propagation
+          // delay (e.g. right after house creation). Don't nuke state.
+          const isKnownMember = !housesLoadedRef.current || housesRef.current.some(h => h.id === houseId)
+          if (isKnownMember) return
           updateDoc(doc(db, 'users', user.uid), { houseId: null }).catch(() => {})
           setHouse(null)
           setMembers([])
