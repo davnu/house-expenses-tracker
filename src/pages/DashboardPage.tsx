@@ -15,6 +15,7 @@ import { DashboardPrintView } from '@/components/dashboard/DashboardPrintView'
 import { QuickAddDialog } from '@/components/expenses/QuickAddDialog'
 import { BudgetSetupDialog } from '@/components/budget/BudgetSetupDialog'
 import { BudgetHealthCard } from '@/components/budget/BudgetHealthCard'
+import { TodoCard } from '@/components/todos/TodoCard'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
@@ -127,11 +128,15 @@ export function DashboardPage() {
               </Link>
             </div>
 
+            <TodoCard />
+
             <QuickAddDialog open={addExpenseOpen} onOpenChange={setAddExpenseOpen} />
           </div>
         ) : (
           <>
             <TotalCostCard expenses={filteredExpenses} mortgagePaid={mortgagePaid} budget={budget} />
+
+            <TodoCard />
 
             {filteredExpenses.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

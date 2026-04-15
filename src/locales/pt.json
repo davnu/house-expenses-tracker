@@ -728,5 +728,29 @@
       "date2": "10 abr",
       "date3": "8 abr"
     }
+  },
+  "todos": {
+    "title": "Tarefas",
+    "addPlaceholder": "Adicionar tarefa...",
+    "emptyPrompt": "Qual é o próximo passo?",
+    "emptyHint": "Adicione tarefas para acompanhar o progresso da sua compra",
+    "showCompleted": "Mostrar concluídas ({{count}})",
+    "hideCompleted": "Ocultar concluídas",
+    "editTask": "Editar tarefa",
+    "taskName": "Tarefa",
+    "dueDate": "Data limite",
+    "assignee": "Atribuído a",
+    "unassigned": "Não atribuído",
+    "deleteTask": "Eliminar tarefa",
+    "deleteConfirm": "Eliminar esta tarefa?",
+    "overdue": "Atrasada",
+    "dueToday": "Hoje",
+    "progress": "{{completed}}/{{total}}",
+    "expand": "Expandir lista de tarefas",
+    "collapse": "Recolher lista de tarefas",
+    "completedBy": "{{name}}",
+    "failedToAdd": "Não foi possível adicionar a tarefa. Tente novamente.",
+    "failedToSave": "Não foi possível guardar. Tente novamente.",
+    "failedToDelete": "Não foi possível eliminar. Tente novamente."
   }
 }

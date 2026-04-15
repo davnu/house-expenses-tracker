@@ -88,6 +88,12 @@ service cloud.firestore {
         allow read: if request.auth != null && isMember();
         allow write: if request.auth != null && isVerifiedEmail() && isMember();
       }
+
+      // Todos
+      match /todos/{todoId} {
+        allow read: if request.auth != null && isMember();
+        allow write: if request.auth != null && isVerifiedEmail() && isMember();
+      }
     }
 
     // Reference rates — public data, written by Cloud Functions only

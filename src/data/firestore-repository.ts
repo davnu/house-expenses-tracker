@@ -14,6 +14,7 @@ import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
 import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
+import type { Todo } from '@/types/todo'
 import type { ExpenseRepository } from './repository'
 import { stripInvalid } from '@/lib/utils'
 
@@ -166,5 +167,31 @@ export class FirestoreRepository implements ExpenseRepository {
 
   async deleteDocument(id: string): Promise<void> {
     await deleteDoc(this.docRef('documents', id))
+  }
+
+  // ── Todos ────────────────────────────────────────────────────────
+
+  async getTodos(): Promise<Todo[]> {
+    const snap = await getDocs(query(this.col('todos')))
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Todo)
+  }
+
+  async addTodo(input: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo> {
+    const now = new Date().toISOString()
+    const data = stripInvalid({ ...input, createdAt: now, updatedAt: now })
+    const ref = await addDoc(this.col('todos'), data)
+    return { id: ref.id, ...data } as Todo
+  }
+
+  async updateTodo(id: string, updates: Partial<Todo>): Promise<Todo> {
+    const ref = this.docRef('todos', id)
+    const toUpdate = stripInvalid({ ...updates, updatedAt: new Date().toISOString() })
+    await updateDoc(ref, toUpdate)
+    const snap = await getDoc(ref)
+    return { id: snap.id, ...snap.data() } as Todo
+  }
+
+  async deleteTodo(id: string): Promise<void> {
+    await deleteDoc(this.docRef('todos', id))
   }
 }

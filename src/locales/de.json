@@ -728,5 +728,29 @@
       "date2": "10. Apr",
       "date3": "8. Apr"
     }
+  },
+  "todos": {
+    "title": "Aufgaben",
+    "addPlaceholder": "Aufgabe hinzufügen...",
+    "emptyPrompt": "Was ist dein nächster Schritt?",
+    "emptyHint": "Füge Aufgaben hinzu, um deinen Hauskauf zu verfolgen",
+    "showCompleted": "Erledigte anzeigen ({{count}})",
+    "hideCompleted": "Erledigte ausblenden",
+    "editTask": "Aufgabe bearbeiten",
+    "taskName": "Aufgabe",
+    "dueDate": "Fälligkeitsdatum",
+    "assignee": "Zugewiesen an",
+    "unassigned": "Nicht zugewiesen",
+    "deleteTask": "Aufgabe löschen",
+    "deleteConfirm": "Diese Aufgabe löschen?",
+    "overdue": "Überfällig",
+    "dueToday": "Heute",
+    "progress": "{{completed}}/{{total}}",
+    "expand": "Aufgabenliste erweitern",
+    "collapse": "Aufgabenliste einklappen",
+    "completedBy": "{{name}}",
+    "failedToAdd": "Aufgabe konnte nicht hinzugefügt werden. Bitte erneut versuchen.",
+    "failedToSave": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+    "failedToDelete": "Löschen fehlgeschlagen. Bitte erneut versuchen."
   }
 }

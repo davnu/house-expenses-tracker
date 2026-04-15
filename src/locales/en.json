@@ -728,5 +728,29 @@
       "date2": "Apr 10",
       "date3": "Apr 8"
     }
+  },
+  "todos": {
+    "title": "To Do",
+    "addPlaceholder": "Add a task...",
+    "emptyPrompt": "What's your next step?",
+    "emptyHint": "Add tasks to track your house-buying progress",
+    "showCompleted": "Show completed ({{count}})",
+    "hideCompleted": "Hide completed",
+    "editTask": "Edit Task",
+    "taskName": "Task",
+    "dueDate": "Due date",
+    "assignee": "Assigned to",
+    "unassigned": "Unassigned",
+    "deleteTask": "Delete task",
+    "deleteConfirm": "Delete this task?",
+    "overdue": "Overdue",
+    "dueToday": "Today",
+    "progress": "{{completed}}/{{total}}",
+    "expand": "Expand to-do list",
+    "collapse": "Collapse to-do list",
+    "completedBy": "{{name}}",
+    "failedToAdd": "Failed to add task. Please try again.",
+    "failedToSave": "Failed to save. Please try again.",
+    "failedToDelete": "Failed to delete. Please try again."
   }
 }

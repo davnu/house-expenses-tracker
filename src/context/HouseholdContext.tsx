@@ -351,7 +351,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
     // 2. Delete all subcollection docs in batches
     onProgress?.('data', 'active')
-    const subcollections = ['expenses', 'recurring', 'meta', 'folders', 'documents']
+    const subcollections = ['expenses', 'recurring', 'meta', 'folders', 'documents', 'todos']
     for (const sub of subcollections) {
       try {
         const snap = await getDocs(collection(db, 'houses', houseId, sub))

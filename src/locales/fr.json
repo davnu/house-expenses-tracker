@@ -728,5 +728,29 @@
       "date2": "10 avr",
       "date3": "8 avr"
     }
+  },
+  "todos": {
+    "title": "À faire",
+    "addPlaceholder": "Ajouter une tâche...",
+    "emptyPrompt": "Quelle est votre prochaine étape ?",
+    "emptyHint": "Ajoutez des tâches pour suivre l'avancement de votre achat",
+    "showCompleted": "Afficher terminées ({{count}})",
+    "hideCompleted": "Masquer terminées",
+    "editTask": "Modifier la tâche",
+    "taskName": "Tâche",
+    "dueDate": "Date limite",
+    "assignee": "Assigné à",
+    "unassigned": "Non assigné",
+    "deleteTask": "Supprimer la tâche",
+    "deleteConfirm": "Supprimer cette tâche ?",
+    "overdue": "En retard",
+    "dueToday": "Aujourd'hui",
+    "progress": "{{completed}}/{{total}}",
+    "expand": "Développer la liste",
+    "collapse": "Réduire la liste",
+    "completedBy": "{{name}}",
+    "failedToAdd": "Impossible d'ajouter la tâche. Veuillez réessayer.",
+    "failedToSave": "Impossible de sauvegarder. Veuillez réessayer.",
+    "failedToDelete": "Impossible de supprimer. Veuillez réessayer."
   }
 }

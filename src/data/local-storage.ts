@@ -2,6 +2,7 @@ import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
 import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
+import type { Todo } from '@/types/todo'
 import type { ExpenseRepository } from './repository'
 import { deleteAttachmentBlobs } from './attachment-store'
 
@@ -117,4 +118,15 @@ export class LocalStorageRepository implements ExpenseRepository {
     return { id, ...updates } as HouseDocument
   }
   async deleteDocument(): Promise<void> {}
+
+  // Todo stubs — LocalStorage is not used in production (Firestore only)
+  async getTodos(): Promise<Todo[]> { return [] }
+  async addTodo(input: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo> {
+    const now = new Date().toISOString()
+    return { id: crypto.randomUUID(), ...input, createdAt: now, updatedAt: now } as Todo
+  }
+  async updateTodo(id: string, updates: Partial<Todo>): Promise<Todo> {
+    return { id, ...updates } as Todo
+  }
+  async deleteTodo(): Promise<void> {}
 }

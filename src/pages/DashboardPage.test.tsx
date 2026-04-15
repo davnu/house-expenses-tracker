@@ -71,6 +71,19 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'alice' } }),
 }))
 
+vi.mock('@/context/TodoContext', () => ({
+  useTodos: () => ({
+    todos: [],
+    loading: false,
+    pendingTodoIds: new Set(),
+    addTodo: vi.fn(),
+    toggleTodo: vi.fn(),
+    updateTodo: vi.fn(),
+    deleteTodo: vi.fn(),
+    reorderTodos: vi.fn(),
+  }),
+}))
+
 vi.mock('@/lib/mortgage-utils', () => ({
   getMortgageStats: () => ({
     principalPaidSoFar: 500000,

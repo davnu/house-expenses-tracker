@@ -1006,3 +1006,124 @@ describe('Email verification enforcement', () => {
   })
 
 })
+
+// ── Todos ───────────────────────────────────────────────────────────
+
+describe('Todos (/houses/{houseId}/todos/{todoId})', () => {
+  it('member can create a todo', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(
+      alice.firestore().collection('houses/house1/todos').add({
+        title: 'Get pre-approval',
+        completed: false,
+        sortOrder: 0,
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('member can read todos', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(
+      alice.firestore().collection('houses/house1/todos').get()
+    )
+  })
+
+  it('member can update a todo', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    // Seed a todo
+    let todoId: string
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const ref = await ctx.firestore().collection('houses/house1/todos').add({
+        title: 'Schedule inspection',
+        completed: false,
+        sortOrder: 0,
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      todoId = ref.id
+    })
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(
+      alice.firestore().doc(`houses/house1/todos/${todoId!}`).update({
+        completed: true,
+        completedAt: new Date().toISOString(),
+        completedBy: 'alice',
+      })
+    )
+  })
+
+  it('member can delete a todo', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    let todoId: string
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const ref = await ctx.firestore().collection('houses/house1/todos').add({
+        title: 'To delete',
+        completed: false,
+        sortOrder: 0,
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      todoId = ref.id
+    })
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(
+      alice.firestore().doc(`houses/house1/todos/${todoId!}`).delete()
+    )
+  })
+
+  it('non-member cannot read todos', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
+    await assertFails(
+      bob.firestore().collection('houses/house1/todos').get()
+    )
+  })
+
+  it('non-member cannot write todos', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
+    await assertFails(
+      bob.firestore().collection('houses/house1/todos').add({
+        title: 'Intruder task',
+        completed: false,
+        sortOrder: 0,
+        createdBy: 'bob',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+
+  it('unauthenticated user cannot access todos', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unauth = testEnv.unauthenticatedContext()
+    await assertFails(
+      unauth.firestore().collection('houses/house1/todos').get()
+    )
+  })
+
+  it('unverified email user can read but not write todos', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertSucceeds(
+      unverified.firestore().collection('houses/house1/todos').get()
+    )
+    await assertFails(
+      unverified.firestore().collection('houses/house1/todos').add({
+        title: 'Should fail',
+        completed: false,
+        sortOrder: 0,
+        createdBy: 'alice',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+    )
+  })
+})

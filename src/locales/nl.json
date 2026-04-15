@@ -728,5 +728,29 @@
       "date2": "10 apr",
       "date3": "8 apr"
     }
+  },
+  "todos": {
+    "title": "Taken",
+    "addPlaceholder": "Taak toevoegen...",
+    "emptyPrompt": "Wat is je volgende stap?",
+    "emptyHint": "Voeg taken toe om de voortgang van je aankoop bij te houden",
+    "showCompleted": "Voltooide tonen ({{count}})",
+    "hideCompleted": "Voltooide verbergen",
+    "editTask": "Taak bewerken",
+    "taskName": "Taak",
+    "dueDate": "Vervaldatum",
+    "assignee": "Toegewezen aan",
+    "unassigned": "Niet toegewezen",
+    "deleteTask": "Taak verwijderen",
+    "deleteConfirm": "Deze taak verwijderen?",
+    "overdue": "Te laat",
+    "dueToday": "Vandaag",
+    "progress": "{{completed}}/{{total}}",
+    "expand": "Takenlijst uitvouwen",
+    "collapse": "Takenlijst invouwen",
+    "completedBy": "{{name}}",
+    "failedToAdd": "Taak toevoegen mislukt. Probeer het opnieuw.",
+    "failedToSave": "Opslaan mislukt. Probeer het opnieuw.",
+    "failedToDelete": "Verwijderen mislukt. Probeer het opnieuw."
   }
 }

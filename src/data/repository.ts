@@ -2,6 +2,7 @@ import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
 import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
+import type { Todo } from '@/types/todo'
 
 export interface ExpenseRepository {
   getExpenses(): Promise<Expense[]>
@@ -29,4 +30,9 @@ export interface ExpenseRepository {
   addDocument(id: string, doc: Omit<HouseDocument, 'id' | 'uploadedAt' | 'updatedAt'>): Promise<HouseDocument>
   updateDocument(id: string, updates: Partial<HouseDocument>): Promise<HouseDocument>
   deleteDocument(id: string): Promise<void>
+
+  getTodos(): Promise<Todo[]>
+  addTodo(todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo>
+  updateTodo(id: string, updates: Partial<Todo>): Promise<Todo>
+  deleteTodo(id: string): Promise<void>
 }
