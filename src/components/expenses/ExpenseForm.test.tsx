@@ -43,6 +43,25 @@ const noopSubmit = vi.fn().mockResolvedValue(undefined)
 
 // ── Tests ──
 
+describe('ExpenseForm attachments section', () => {
+  beforeEach(() => {
+    mockMembers.current = [...twoMembers]
+  })
+
+  it('shows the attachments label with security info tooltip', () => {
+    const { container } = render(<ExpenseForm onSubmit={noopSubmit} />)
+    expect(screen.getByText('Attachments')).toBeTruthy()
+    // InfoTooltip renders an info icon button
+    const infoButton = container.querySelector('.text-muted-foreground.hover\\:text-foreground')
+    expect(infoButton).not.toBeNull()
+  })
+
+  it('hides attachments section when hideAttachments is true', () => {
+    render(<ExpenseForm onSubmit={noopSubmit} hideAttachments />)
+    expect(screen.queryByText('Attachments')).toBeNull()
+  })
+})
+
 describe('ExpenseForm payer behavior', () => {
   describe('multi-member household', () => {
     beforeEach(() => {

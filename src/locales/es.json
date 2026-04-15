@@ -168,7 +168,9 @@
     "unsupportedType": "\"{{name}}\" no es un tipo de archivo compatible",
     "exceedsLimit": "\"{{name}}\" supera el límite de 10 MB",
     "maxFilesPerExpense": "Máximo {{max}} archivos por gasto",
-    "householdStorageLimit": "Límite de almacenamiento del hogar alcanzado ({{size}})"
+    "householdStorageLimit": "Límite de almacenamiento del hogar alcanzado ({{size}})",
+    "securityNote": "Cifrado y visible solo para los miembros de tu hogar",
+    "securityTooltip": "Tus archivos se envían por conexión segura y se almacenan con cifrado de nivel empresarial. Solo los miembros de tu hogar pueden acceder a ellos. Puedes eliminarlos en cualquier momento."
   },
   "mortgage": {
     "title": "Hipoteca",

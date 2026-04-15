@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { PayerSelect } from './PayerSelect'
 import { FileDropZone } from './FileDropZone'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { EXPENSE_CATEGORIES, SHARED_PAYER } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useExpenses } from '@/context/ExpenseContext'
@@ -143,7 +144,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
 
       {!hideAttachments && (
         <div className="space-y-2">
-          <Label>{t('expenses.attachments')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span></Label>
+          <Label>{t('expenses.attachments')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span><InfoTooltip text={t('files.securityTooltip')} /></Label>
           <p className="text-xs text-muted-foreground -mt-1">{t('expenses.attachmentsHint')}</p>
           <FileDropZone files={files} onChange={setFiles} householdStorageUsed={storageUsed} />
         </div>

@@ -267,4 +267,21 @@ describe('FileDropZone', () => {
       expect(screen.getByText(/4\/10 files/)).toBeDefined()
     })
   })
+
+  describe('security trust messaging', () => {
+    it('renders the security note inside the drop zone', () => {
+      renderDropZone()
+      expect(screen.getByText('Encrypted and visible only to your household')).toBeDefined()
+    })
+
+    it('renders the security note even when files are present', () => {
+      renderDropZone({ files: [makeFile('a.png', 'image/png')] })
+      expect(screen.getByText('Encrypted and visible only to your household')).toBeDefined()
+    })
+
+    it('renders the security note when drop zone is disabled', () => {
+      renderDropZone({ householdStorageUsed: MAX_HOUSEHOLD_STORAGE })
+      expect(screen.getByText('Encrypted and visible only to your household')).toBeDefined()
+    })
+  })
 })

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { getFileTypeInfo } from '@/lib/file-type-info'
@@ -127,6 +127,10 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
         </p>
         <p className="text-xs text-muted-foreground">
           {t('files.storageUsed', { used: formatSize(storageAfterNew), total: formatSize(MAX_HOUSEHOLD_STORAGE) })}
+        </p>
+        <p className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground/70 mt-1.5">
+          <ShieldCheck className="h-3 w-3" />
+          {t('files.securityNote')}
         </p>
         <input
           ref={inputRef}

@@ -168,7 +168,9 @@
     "unsupportedType": "\"{{name}}\" is not a supported file type",
     "exceedsLimit": "\"{{name}}\" exceeds 10 MB limit",
     "maxFilesPerExpense": "Maximum {{max}} files per expense",
-    "householdStorageLimit": "Household storage limit reached ({{size}})"
+    "householdStorageLimit": "Household storage limit reached ({{size}})",
+    "securityNote": "Encrypted and visible only to your household",
+    "securityTooltip": "Your files are sent over a secure connection and stored with enterprise-grade encryption. Only household members can access them. You can delete them at any time."
   },
   "mortgage": {
     "title": "Mortgage",

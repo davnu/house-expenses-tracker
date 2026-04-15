@@ -168,7 +168,9 @@
     "unsupportedType": "\"{{name}}\" não é um tipo de ficheiro suportado",
     "exceedsLimit": "\"{{name}}\" excede o limite de 10 MB",
     "maxFilesPerExpense": "Máximo de {{max}} ficheiros por despesa",
-    "householdStorageLimit": "Limite de armazenamento do agregado atingido ({{size}})"
+    "householdStorageLimit": "Limite de armazenamento do agregado atingido ({{size}})",
+    "securityNote": "Encriptado e visível apenas para o teu agregado",
+    "securityTooltip": "Os teus ficheiros são enviados por ligação segura e guardados com encriptação de nível empresarial. Apenas os membros do teu agregado podem aceder. Podes eliminá-los a qualquer momento."
   },
   "mortgage": {
     "title": "Crédito Habitação",

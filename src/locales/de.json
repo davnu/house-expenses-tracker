@@ -168,7 +168,9 @@
     "unsupportedType": "\"{{name}}\" ist kein unterstützter Dateityp",
     "exceedsLimit": "\"{{name}}\" überschreitet das 10-MB-Limit",
     "maxFilesPerExpense": "Maximal {{max}} Dateien pro Ausgabe",
-    "householdStorageLimit": "Speicherlimit des Haushalts erreicht ({{size}})"
+    "householdStorageLimit": "Speicherlimit des Haushalts erreicht ({{size}})",
+    "securityNote": "Verschlüsselt und nur für deinen Haushalt sichtbar",
+    "securityTooltip": "Deine Dateien werden über eine sichere Verbindung übertragen und mit Verschlüsselung auf Unternehmensniveau gespeichert. Nur Mitglieder deines Haushalts können darauf zugreifen. Du kannst sie jederzeit löschen."
   },
   "mortgage": {
     "title": "Hypothek",

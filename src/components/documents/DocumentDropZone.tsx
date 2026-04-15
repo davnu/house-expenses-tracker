@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Upload } from 'lucide-react'
+import { Upload, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 
@@ -99,6 +99,10 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
             ? t('files.storageLimitReached')
             : t('files.dropOrBrowsePlain')
           }
+        </p>
+        <p className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground/70 mt-1.5">
+          <ShieldCheck className="h-3 w-3" />
+          {t('files.securityNote')}
         </p>
         <input
           ref={inputRef}

@@ -168,7 +168,9 @@
     "unsupportedType": "« {{name}} » n'est pas un type de fichier pris en charge",
     "exceedsLimit": "« {{name}} » dépasse la limite de 10 Mo",
     "maxFilesPerExpense": "Maximum {{max}} fichiers par dépense",
-    "householdStorageLimit": "Limite de stockage du foyer atteinte ({{size}})"
+    "householdStorageLimit": "Limite de stockage du foyer atteinte ({{size}})",
+    "securityNote": "Chiffré et visible uniquement par les membres de ton foyer",
+    "securityTooltip": "Tes fichiers sont envoyés via une connexion sécurisée et stockés avec un chiffrement professionnel. Seuls les membres de ton foyer peuvent y accéder. Tu peux les supprimer à tout moment."
   },
   "mortgage": {
     "title": "Prêt immobilier",

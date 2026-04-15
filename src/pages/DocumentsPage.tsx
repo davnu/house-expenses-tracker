@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, type DragEvent } from 'react'
-import { Plus, Search, X, Upload, ChevronDown, Paperclip, ArrowRight } from 'lucide-react'
+import { Plus, Search, X, Upload, ChevronDown, Paperclip, ArrowRight, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { LoadingInline } from '@/components/ui/loading'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { FolderView } from '@/components/documents/FolderView'
 import { CreateFolderDialog } from '@/components/documents/CreateFolderDialog'
 import { QuickUploadDialog } from '@/components/documents/QuickUploadDialog'
@@ -229,7 +230,13 @@ export function DocumentsPage() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">{t('documents.title')}</h1>
+        <h1 className="text-2xl font-bold flex items-center">
+          {t('documents.title')}
+          <span className="ml-2 inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <InfoTooltip text={t('files.securityTooltip')} position="bottom" />
+          </span>
+        </h1>
         <div className="flex items-center gap-2">
           {folders.length > 0 && (
             <Button size="sm" variant="outline" onClick={() => setQuickUploadOpen(true)}>

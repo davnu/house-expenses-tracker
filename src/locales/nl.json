@@ -168,7 +168,9 @@
     "unsupportedType": "\"{{name}}\" is geen ondersteund bestandstype",
     "exceedsLimit": "\"{{name}}\" is groter dan 10 MB",
     "maxFilesPerExpense": "Maximaal {{max}} bestanden per uitgave",
-    "householdStorageLimit": "Opslaglimiet van het huishouden bereikt ({{size}})"
+    "householdStorageLimit": "Opslaglimiet van het huishouden bereikt ({{size}})",
+    "securityNote": "Versleuteld en alleen zichtbaar voor je huishouden",
+    "securityTooltip": "Je bestanden worden via een beveiligde verbinding verzonden en opgeslagen met bedrijfsmatige versleuteling. Alleen leden van je huishouden hebben toegang. Je kunt ze op elk moment verwijderen."
   },
   "mortgage": {
     "title": "Hypotheek",
