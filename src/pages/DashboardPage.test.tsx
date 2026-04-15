@@ -25,9 +25,10 @@ beforeAll(() => {
 
 // ── Mocks ─────────────────────────────────────────────
 
-const { mockExpenses, mockMortgage } = vi.hoisted(() => ({
+const { mockExpenses, mockMortgage, mockBudget } = vi.hoisted(() => ({
   mockExpenses: { current: [] as Array<{ id: string; amount: number; category: string; payer: string; description: string; date: string; createdAt: string; updatedAt: string }> },
   mockMortgage: { current: null as object | null },
+  mockBudget: { current: null as object | null },
 }))
 
 vi.mock('@/context/ExpenseContext', () => ({
@@ -45,6 +46,15 @@ vi.mock('@/context/MortgageContext', () => ({
   useMortgage: () => ({
     mortgage: mockMortgage.current,
     loading: false,
+  }),
+}))
+
+vi.mock('@/context/BudgetContext', () => ({
+  useBudget: () => ({
+    budget: mockBudget.current,
+    loading: false,
+    saveBudget: vi.fn(),
+    deleteBudget: vi.fn(),
   }),
 }))
 
@@ -109,6 +119,7 @@ describe('DashboardPage', () => {
   beforeEach(() => {
     mockExpenses.current = []
     mockMortgage.current = null
+    mockBudget.current = null
   })
 
   describe('empty state', () => {
@@ -183,6 +194,56 @@ describe('DashboardPage', () => {
       const container = renderPage()
 
       expect(container.textContent).not.toContain('Track every cost of your purchase')
+    })
+
+    it('shows "Set Your Limits" button when no budget is set', () => {
+      mockExpenses.current = [{
+        id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
+        description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
+      }]
+
+      const container = renderPage()
+      expect(container.textContent).toContain('Set Your Limits')
+    })
+
+    it('shows "Edit Limits" button when budget exists', () => {
+      mockExpenses.current = [{
+        id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
+        description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
+      }]
+      mockBudget.current = {
+        totalBudget: 10000000,
+        categories: { notary_legal: 500000 },
+        updatedAt: '',
+      }
+
+      const container = renderPage()
+      expect(container.textContent).toContain('Edit Limits')
+    })
+
+    it('shows BudgetHealthCard when budget has categories', () => {
+      mockExpenses.current = [{
+        id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
+        description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
+      }]
+      mockBudget.current = {
+        totalBudget: 10000000,
+        categories: { notary_legal: 500000 },
+        updatedAt: '',
+      }
+
+      const container = renderPage()
+      expect(container.textContent).toContain('Spending Limits')
+    })
+
+    it('hides BudgetHealthCard when no budget is set', () => {
+      mockExpenses.current = [{
+        id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
+        description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
+      }]
+
+      const container = renderPage()
+      expect(container.textContent).not.toContain('Spending Limits')
     })
   })
 })

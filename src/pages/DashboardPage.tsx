@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router'
-import { Plus, Landmark, Printer } from 'lucide-react'
+import { Plus, Landmark, Printer, Target } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,8 +13,11 @@ import { PersonSplitCard } from '@/components/dashboard/PersonSplitCard'
 import { RecentExpenses } from '@/components/dashboard/RecentExpenses'
 import { DashboardPrintView } from '@/components/dashboard/DashboardPrintView'
 import { QuickAddDialog } from '@/components/expenses/QuickAddDialog'
+import { BudgetSetupDialog } from '@/components/budget/BudgetSetupDialog'
+import { BudgetHealthCard } from '@/components/budget/BudgetHealthCard'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useMortgage } from '@/context/MortgageContext'
+import { useBudget } from '@/context/BudgetContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { getMortgageStats } from '@/lib/mortgage-utils'
 import { applyFilters, type DashboardFilters as Filters } from '@/lib/expense-utils'
@@ -24,9 +27,11 @@ export function DashboardPage() {
   const { t } = useTranslation()
   const { expenses } = useExpenses()
   const { mortgage } = useMortgage()
+  const { budget } = useBudget()
   const { house } = useHousehold()
   const [filters, setFilters] = useState<Filters>({})
   const [addExpenseOpen, setAddExpenseOpen] = useState(false)
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false)
 
   const filteredExpenses = useMemo(() => applyFilters(expenses, filters), [expenses, filters])
 
@@ -50,14 +55,24 @@ export function DashboardPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">{t('nav.dashboard')}</h1>
           {hasData && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-            >
-              <Printer className="h-4 w-4 mr-1.5" />
-              {t('common.print')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBudgetDialogOpen(true)}
+              >
+                <Target className="h-4 w-4 mr-1.5" />
+                {budget ? t('budget.editBudget') : t('budget.setBudget')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <Printer className="h-4 w-4 mr-1.5" />
+                {t('common.print')}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -116,7 +131,7 @@ export function DashboardPage() {
           </div>
         ) : (
           <>
-            <TotalCostCard expenses={filteredExpenses} mortgagePaid={mortgagePaid} />
+            <TotalCostCard expenses={filteredExpenses} mortgagePaid={mortgagePaid} budget={budget} />
 
             {filteredExpenses.length > 0 && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -129,6 +144,10 @@ export function DashboardPage() {
               <MortgageSummaryCard />
               <PersonSplitCard expenses={filteredExpenses} />
             </div>
+
+            {budget && Object.keys(budget.categories).length > 0 && (
+              <BudgetHealthCard expenses={filteredExpenses} budget={budget} />
+            )}
 
             <RecentExpenses expenses={expenses} />
           </>
@@ -143,6 +162,8 @@ export function DashboardPage() {
           houseName={house?.name ?? t('common.houseExpenses')}
         />
       )}
+
+      <BudgetSetupDialog open={budgetDialogOpen} onOpenChange={setBudgetDialogOpen} />
     </>
   )
 }

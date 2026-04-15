@@ -1,5 +1,6 @@
 import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
+import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { ExpenseRepository } from './repository'
 import { deleteAttachmentBlobs } from './attachment-store'
@@ -82,6 +83,20 @@ export class LocalStorageRepository implements ExpenseRepository {
 
   async deleteMortgage(): Promise<void> {
     localStorage.removeItem('house-expenses:mortgage')
+  }
+
+  async getBudget(): Promise<BudgetConfig | null> {
+    return read<BudgetConfig | null>('house-expenses:budget', null)
+  }
+
+  async saveBudget(config: BudgetConfig): Promise<BudgetConfig> {
+    const data = { ...config, updatedAt: new Date().toISOString() }
+    write('house-expenses:budget', data)
+    return data
+  }
+
+  async deleteBudget(): Promise<void> {
+    localStorage.removeItem('house-expenses:budget')
   }
 
   // Document stubs — LocalStorage is not used in production (Firestore only)

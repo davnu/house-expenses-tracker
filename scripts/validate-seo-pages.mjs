@@ -107,6 +107,12 @@ for (const lang of LANGUAGES) {
   const dtCount = (html.match(/<dt[\s>]/g) || []).length
   assert(dtCount >= 6, `Has 6+ FAQ <dt> items (got ${dtCount})`)
 
+  // English page: should have language detection redirect script with pathname guard
+  if (lang === 'en') {
+    assert(html.includes("if(window.location.pathname!=='/')return"), `English page has pathname guard in redirect script`)
+    assert(html.includes('window.location.replace'), `English page has language detection redirect script`)
+  }
+
   // Non-English pages: should set localStorage
   if (lang !== 'en') {
     assert(html.includes(`localStorage.setItem('i18nextLng','${lang}')`), `Sets localStorage to '${lang}'`)

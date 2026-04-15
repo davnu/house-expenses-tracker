@@ -432,10 +432,21 @@ function generatePage(lang) {
     `<div id="root">${prerenderedContent(t, lang)}\n    </div>`
   )
 
-  // 11. For non-default languages: set localStorage before React loads
-  //     so i18next picks the right language on init.
-  //     React Router has matching routes for /es, /fr, etc. so no URL normalization needed.
-  if (lang !== DEFAULT_LANG) {
+  // 11. Language scripts injected before the module script in <head>
+  if (lang === DEFAULT_LANG) {
+    // For the root English page: detect non-English browsers and redirect
+    // to their language page before <body> is parsed (prevents flash of wrong language).
+    // Googlebot uses navigator.language="en-US" so the redirect never fires for crawlers.
+    const supportedList = LANGUAGES.join(',')
+    const detectScript = `<script>(function(){if(window.location.pathname!=='/')return;var s='${supportedList}'.split(',');var l;try{l=localStorage.getItem('i18nextLng')}catch(e){}if(!l){var n=navigator.language||'';l=n.split('-')[0].toLowerCase()}if(l&&l!=='en'&&s.indexOf(l)!==-1){window.location.replace('/'+l+'/')}})()</script>`
+    html = html.replace(
+      /<script type="module"/,
+      `${detectScript}\n    <script type="module"`
+    )
+  } else {
+    // For non-default languages: set localStorage before React loads
+    // so i18next picks the right language on init.
+    // React Router has matching routes for /es, /fr, etc. so no URL normalization needed.
     html = html.replace(
       /<script type="module"/,
       `<script>try{localStorage.setItem('i18nextLng','${lang}')}catch(e){}</script>\n    <script type="module"`

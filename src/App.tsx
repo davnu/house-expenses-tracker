@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
 import { MortgageProvider } from '@/context/MortgageContext'
+import { BudgetProvider } from '@/context/BudgetContext'
 import { DocumentProvider } from '@/context/DocumentContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoadingScreen, LoadingInline } from '@/components/ui/loading'
@@ -49,17 +50,19 @@ function AppRoutes() {
   return (
     <ExpenseProvider>
       <MortgageProvider>
-        <DocumentProvider>
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="mortgage" element={<MortgagePage />} />
-              <Route path="expenses" element={<ExpensesPage />} />
-              <Route path="documents" element={<DocumentsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-          </Routes>
-        </DocumentProvider>
+        <BudgetProvider>
+          <DocumentProvider>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="mortgage" element={<MortgagePage />} />
+                <Route path="expenses" element={<ExpensesPage />} />
+                <Route path="documents" element={<DocumentsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+            </Routes>
+          </DocumentProvider>
+        </BudgetProvider>
       </MortgageProvider>
     </ExpenseProvider>
   )

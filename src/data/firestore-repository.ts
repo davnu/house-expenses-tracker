@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore'
 import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
+import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { ExpenseRepository } from './repository'
 import { stripInvalid } from '@/lib/utils'
@@ -92,6 +93,26 @@ export class FirestoreRepository implements ExpenseRepository {
 
   async deleteMortgage(): Promise<void> {
     await deleteDoc(this.docRef('meta', 'mortgage'))
+  }
+
+  // ── Budget ─────────────────────────────────────────────────────────
+
+  async getBudget(): Promise<BudgetConfig | null> {
+    const ref = this.docRef('meta', 'budget')
+    const snap = await getDoc(ref)
+    if (!snap.exists()) return null
+    return snap.data() as BudgetConfig
+  }
+
+  async saveBudget(config: BudgetConfig): Promise<BudgetConfig> {
+    const ref = this.docRef('meta', 'budget')
+    const data = stripInvalid({ ...config, updatedAt: new Date().toISOString() })
+    await setDoc(ref, data)
+    return data as BudgetConfig
+  }
+
+  async deleteBudget(): Promise<void> {
+    await deleteDoc(this.docRef('meta', 'budget'))
   }
 
   // ── Folders ────────────────────────────────────────────────────────

@@ -14,6 +14,7 @@ import { useExpenses } from '@/context/ExpenseContext'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useMortgage } from '@/context/MortgageContext'
+import { useBudget } from '@/context/BudgetContext'
 import { CreateHouseDialog } from '@/components/layout/CreateHouseDialog'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
 
@@ -23,6 +24,7 @@ export function SettingsPage() {
   const { logout, deleteAccount } = useAuth()
   const { userProfile, house, houses, members, generateInvite, updateDisplayName, updateHouseName, removeMember, leaveHouse, deleteHouse } = useHousehold()
   const { mortgage } = useMortgage()
+  const { budget } = useBudget()
 
   const HOUSE_DELETE_STEPS: CascadeStep[] = [
     { id: 'attachments', label: t('settings.removingFiles'), icon: Paperclip },
@@ -164,6 +166,7 @@ export function SettingsPage() {
         })),
       })),
       mortgage: mortgage ?? null,
+      budget: budget ?? null,
       _note: 'File attachments are not included in this export due to size. Download them individually from the app.',
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })

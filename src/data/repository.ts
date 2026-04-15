@@ -1,5 +1,6 @@
 import type { Expense, AppSettings } from '@/types/expense'
 import type { MortgageConfig } from '@/types/mortgage'
+import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
 
 export interface ExpenseRepository {
@@ -14,6 +15,10 @@ export interface ExpenseRepository {
   getMortgage(): Promise<MortgageConfig | null>
   saveMortgage(config: MortgageConfig): Promise<MortgageConfig>
   deleteMortgage(): Promise<void>
+
+  getBudget(): Promise<BudgetConfig | null>
+  saveBudget(config: BudgetConfig): Promise<BudgetConfig>
+  deleteBudget(): Promise<void>
 
   getFolders(): Promise<DocFolder[]>
   addFolder(folder: Omit<DocFolder, 'id' | 'createdAt'>): Promise<DocFolder>
