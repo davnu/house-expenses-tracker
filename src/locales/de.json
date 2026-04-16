@@ -368,13 +368,13 @@
     }
   },
   "budget": {
-    "setBudget": "Limits festlegen",
-    "editBudget": "Limits bearbeiten",
+    "setBudget": "Limits",
     "budgetSetup": "Ausgabenlimits",
-    "totalBudget": "Gesamtbudget",
-    "totalBudgetHint": "Das Maximum, das du für diesen Hauskauf ausgeben möchtest",
+    "budgetSetupDescription": "Optional — lege fest, wie viel du ausgeben möchtest, und wir zeigen dir deinen Fortschritt. Jederzeit änderbar.",
+    "totalBudget": "Gesamtlimit",
+    "totalBudgetHint": "Was du insgesamt ausgeben möchtest",
     "perCategory": "Pro Kategorie",
-    "perCategoryHint": "Lege das Maximum fest, das du pro Kategorie ausgeben möchtest",
+    "perCategoryHint": "Setze ein Limit für Kategorien, die du im Blick behalten willst",
     "categoryTotal": "Kategorien gesamt: {{amount}}",
     "unallocated": "{{amount}} nicht zugewiesen",
     "save": "Speichern",

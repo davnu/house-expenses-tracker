@@ -368,13 +368,13 @@
     }
   },
   "budget": {
-    "setBudget": "Definir limites",
-    "editBudget": "Editar limites",
+    "setBudget": "Limites",
     "budgetSetup": "Limites de gasto",
-    "totalBudget": "Orçamento total",
-    "totalBudgetHint": "O máximo que espera gastar nesta compra",
+    "budgetSetupDescription": "Opcional — indica quanto planeias gastar e mostramos o teu progresso. Podes alterar quando quiseres.",
+    "totalBudget": "Limite total",
+    "totalBudgetHint": "Quanto pretendes gastar no total",
     "perCategory": "Por categoria",
-    "perCategoryHint": "Defina o máximo que espera gastar em cada categoria",
+    "perCategoryHint": "Define um teto para as categorias que queres controlar",
     "categoryTotal": "Total categorias: {{amount}}",
     "unallocated": "{{amount}} não alocado",
     "save": "Guardar",

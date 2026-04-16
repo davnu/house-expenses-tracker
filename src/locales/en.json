@@ -368,13 +368,13 @@
     }
   },
   "budget": {
-    "setBudget": "Set Your Limits",
-    "editBudget": "Edit Limits",
+    "setBudget": "Limits",
     "budgetSetup": "Spending Limits",
-    "totalBudget": "Total budget",
-    "totalBudgetHint": "The maximum you expect to spend on this house purchase",
+    "budgetSetupDescription": "Optional — set how much you plan to spend and we'll show your progress. Change anything anytime.",
+    "totalBudget": "Total limit",
+    "totalBudgetHint": "What you're aiming to spend overall",
     "perCategory": "Per category",
-    "perCategoryHint": "Set the maximum you expect to spend per category",
+    "perCategoryHint": "Add a ceiling for any category worth watching",
     "categoryTotal": "Category total: {{amount}}",
     "unallocated": "{{amount}} unallocated",
     "save": "Save",

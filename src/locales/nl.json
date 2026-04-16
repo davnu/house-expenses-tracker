@@ -368,13 +368,13 @@
     }
   },
   "budget": {
-    "setBudget": "Stel je limieten in",
-    "editBudget": "Limieten bewerken",
+    "setBudget": "Limieten",
     "budgetSetup": "Uitgavelimieten",
-    "totalBudget": "Totaal budget",
-    "totalBudgetHint": "Het maximum dat je verwacht uit te geven aan deze aankoop",
+    "budgetSetupDescription": "Optioneel — geef aan hoeveel je wilt uitgeven en we tonen je voortgang. Alles later aanpasbaar.",
+    "totalBudget": "Totaallimiet",
+    "totalBudgetHint": "Wat je in totaal wilt uitgeven",
     "perCategory": "Per categorie",
-    "perCategoryHint": "Stel het maximum in dat je per categorie wilt uitgeven",
+    "perCategoryHint": "Stel een plafond in voor categorieën die je wilt bewaken",
     "categoryTotal": "Categorieën totaal: {{amount}}",
     "unallocated": "{{amount}} niet toegewezen",
     "save": "Opslaan",

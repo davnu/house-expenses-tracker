@@ -4,6 +4,7 @@ import { Plus, Landmark, Printer, Target } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ToolbarButton } from '@/components/ui/toolbar-button'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
 import { TotalCostCard } from '@/components/dashboard/TotalCostCard'
 import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown'
@@ -62,22 +63,16 @@ export function DashboardPage() {
           <h1 className="text-2xl font-bold">{t('nav.dashboard')}</h1>
           {hasData && (
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+              <ToolbarButton
+                icon={Target}
+                label={t('budget.setBudget')}
                 onClick={() => setBudgetDialogOpen(true)}
-              >
-                <Target className="h-4 w-4 mr-1.5" />
-                {budget ? t('budget.editBudget') : t('budget.setBudget')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              />
+              <ToolbarButton
+                icon={Printer}
+                label={t('common.print')}
                 onClick={() => window.print()}
-              >
-                <Printer className="h-4 w-4 mr-1.5" />
-                {t('common.print')}
-              </Button>
+              />
             </div>
           )}
         </div>

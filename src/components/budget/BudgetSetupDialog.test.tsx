@@ -134,7 +134,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog()
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget') as HTMLInputElement
+    const totalInput = within(dialog).getByLabelText('Total limit') as HTMLInputElement
     expect(totalInput.value).toBe('120000')
 
     // 2 budgeted category inputs visible as primary + 1 total = 3 inputs
@@ -152,7 +152,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog(onOpenChange)
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget')
+    const totalInput = within(dialog).getByLabelText('Total limit')
     await user.type(totalInput, '50000')
 
     await user.click(within(dialog).getByText('Save'))
@@ -205,7 +205,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog()
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget')
+    const totalInput = within(dialog).getByLabelText('Total limit')
     await user.type(totalInput, '1000')
 
     await user.click(within(dialog).getByText('Save'))
@@ -259,7 +259,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog()
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget')
+    const totalInput = within(dialog).getByLabelText('Total limit')
     await user.type(totalInput, '0.01')
 
     await user.click(within(dialog).getByText('Save'))
@@ -275,7 +275,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog()
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget')
+    const totalInput = within(dialog).getByLabelText('Total limit')
     await user.type(totalInput, '99.99')
 
     await user.click(within(dialog).getByText('Save'))
@@ -312,7 +312,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog(onOpenChange)
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget')
+    const totalInput = within(dialog).getByLabelText('Total limit')
     await user.type(totalInput, '1000')
 
     await user.click(within(dialog).getByText('Save'))
@@ -334,7 +334,7 @@ describe('BudgetSetupDialog', () => {
     renderDialog()
     const dialog = getDialog()
 
-    const totalInput = within(dialog).getByLabelText('Total budget')
+    const totalInput = within(dialog).getByLabelText('Total limit')
     await user.type(totalInput, '1000')
 
     const saveButton = within(dialog).getByText('Save') as HTMLButtonElement

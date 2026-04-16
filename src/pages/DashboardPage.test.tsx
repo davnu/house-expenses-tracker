@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 
@@ -118,12 +118,11 @@ import React from 'react'
 import { DashboardPage } from './DashboardPage'
 
 function renderPage() {
-  const { container } = render(
+  return render(
     <MemoryRouter>
       <DashboardPage />
     </MemoryRouter>
   )
-  return container
 }
 
 // ── Tests ─────────────────────────────────────────────
@@ -137,7 +136,7 @@ describe('DashboardPage', () => {
 
   describe('empty state', () => {
     it('explains what the dashboard will show once populated', () => {
-      const container = renderPage()
+      const { container } = renderPage()
 
       expect(container.textContent).toContain('Track every cost of your purchase')
       expect(container.textContent).toContain('total spend')
@@ -145,7 +144,7 @@ describe('DashboardPage', () => {
     })
 
     it('shows two equal action cards: log cost and set up mortgage', () => {
-      const container = renderPage()
+      const { container } = renderPage()
 
       expect(container.textContent).toContain('Log a cost')
       expect(container.textContent).toContain('Down payment, notary, taxes, renovations...')
@@ -154,7 +153,7 @@ describe('DashboardPage', () => {
     })
 
     it('mortgage card links to /app/mortgage', () => {
-      const container = renderPage()
+      const { container } = renderPage()
 
       const link = container.querySelector('a[href="/app/mortgage"]')
       expect(link).not.toBeNull()
@@ -163,7 +162,7 @@ describe('DashboardPage', () => {
 
     it('clicking the expense card opens QuickAddDialog', async () => {
       const user = userEvent.setup()
-      const container = renderPage()
+      const { container } = renderPage()
 
       const card = container.querySelector('[role="button"]')!
       await user.click(card)
@@ -173,7 +172,7 @@ describe('DashboardPage', () => {
 
     it('expense card is keyboard accessible', async () => {
       const user = userEvent.setup()
-      const container = renderPage()
+      const { container } = renderPage()
 
       const card = container.querySelector('[role="button"]') as HTMLElement
       card.focus()
@@ -190,7 +189,7 @@ describe('DashboardPage', () => {
         description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
       }]
 
-      const container = renderPage()
+      const { container } = renderPage()
 
       expect(container.textContent).not.toContain('Track every cost of your purchase')
       expect(container.textContent).not.toContain('Log your first cost')
@@ -204,22 +203,22 @@ describe('DashboardPage', () => {
         createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z',
       }
 
-      const container = renderPage()
+      const { container } = renderPage()
 
       expect(container.textContent).not.toContain('Track every cost of your purchase')
     })
 
-    it('shows "Set Your Limits" button when no budget is set', () => {
+    it('shows Limits button when no budget is set', () => {
       mockExpenses.current = [{
         id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
         description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
       }]
 
-      const container = renderPage()
-      expect(container.textContent).toContain('Set Your Limits')
+      const { container } = renderPage()
+      expect(within(container).getByRole('button', { name: 'Limits' })).toBeDefined()
     })
 
-    it('shows "Edit Limits" button when budget exists', () => {
+    it('shows Limits button when budget exists', () => {
       mockExpenses.current = [{
         id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
         description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
@@ -230,8 +229,8 @@ describe('DashboardPage', () => {
         updatedAt: '',
       }
 
-      const container = renderPage()
-      expect(container.textContent).toContain('Edit Limits')
+      const { container } = renderPage()
+      expect(within(container).getByRole('button', { name: 'Limits' })).toBeDefined()
     })
 
     it('shows BudgetHealthCard when budget has categories', () => {
@@ -245,7 +244,7 @@ describe('DashboardPage', () => {
         updatedAt: '',
       }
 
-      const container = renderPage()
+      const { container } = renderPage()
       expect(container.textContent).toContain('Spending Limits')
     })
 
@@ -255,7 +254,7 @@ describe('DashboardPage', () => {
         description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
       }]
 
-      const container = renderPage()
+      const { container } = renderPage()
       expect(container.textContent).not.toContain('Spending Limits')
     })
   })

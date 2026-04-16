@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -160,6 +160,7 @@ export function BudgetSetupDialog({ open, onOpenChange }: BudgetSetupDialogProps
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('budget.budgetSetup')}</DialogTitle>
+          <DialogDescription>{t('budget.budgetSetupDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">

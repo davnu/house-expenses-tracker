@@ -110,4 +110,10 @@ function DialogTitle({ className, ...props }: React.ComponentPropsWithoutRef<typ
   return <Component className={cn('text-lg font-semibold leading-none tracking-tight', className)} {...props} />
 }
 
-export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogClose }
+function DialogDescription({ className, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>) {
+  const { isMobile } = React.useContext(DialogContext)
+  const Component = isMobile ? DrawerPrimitive.Description : DialogPrimitive.Description
+  return <Component className={cn('text-sm text-muted-foreground', className)} {...props} />
+}
+
+export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose }
