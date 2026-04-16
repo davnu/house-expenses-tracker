@@ -1,19 +1,19 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
-import type { TooltipProps } from 'recharts'
+import type { Payload } from 'recharts/types/component/DefaultTooltipContent'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { getDateLocale, getCurrencySymbol } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { AmortizationRow } from '@/types/mortgage'
 
-export function PaymentTooltip({ active, payload, label }: TooltipProps<number, string>) {
+export function PaymentTooltip({ active, payload, label }: { active?: boolean; payload?: Payload<number, string>[]; label?: string }) {
   const { t } = useTranslation()
   if (!active || !payload?.length) return null
 
-  const principal = payload.find((p) => p.dataKey === 'principal')?.value ?? 0
-  const interest = payload.find((p) => p.dataKey === 'interest')?.value ?? 0
+  const principal = payload.find((p: Payload<number, string>) => p.dataKey === 'principal')?.value ?? 0
+  const interest = payload.find((p: Payload<number, string>) => p.dataKey === 'interest')?.value ?? 0
   const total = principal + interest
   const sym = getCurrencySymbol()
   const dateStr = label ? format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() }) : ''

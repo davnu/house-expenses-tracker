@@ -34,7 +34,6 @@ function diffBg(value: number, lowerIsBetter: boolean) {
 }
 
 export function ComparisonResults({ comparison, currentMonthIndex }: ComparisonResultsProps) {
-  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const { current, scenario, diff } = comparison
 
@@ -307,7 +306,6 @@ function OverlayChart({
   const sym = useMemo(() => getCurrencySymbol(), [])
 
   const data = useMemo(() => {
-    const maxLength = Math.max(currentSchedule.length, scenarioSchedule.length)
     const currentMap = new Map(currentSchedule.map((r) => [r.date, r.remainingBalance]))
     const scenarioMap = new Map(scenarioSchedule.map((r) => [r.date, r.remainingBalance]))
 
@@ -352,7 +350,7 @@ function OverlayChart({
           <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
           <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${sym}${(v / 1000).toFixed(0)}k`} />
           <Tooltip
-            formatter={(value: number, name: string) => [
+            formatter={(value, name) => [
               `${sym}${Number(value).toLocaleString()}`,
               name === 'current' ? t('mortgage.compare.yourMortgage') : t('mortgage.compare.scenario'),
             ]}
