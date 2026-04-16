@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine,
 } from 'recharts'
-import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
+import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatCurrency, getDateLocale, getCurrencySymbol } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -41,7 +41,10 @@ export function ComparisonResults({ comparison, currentMonthIndex }: ComparisonR
   return (
     <div className="space-y-5">
       {/* Headline difference cards */}
-      <HeadlineCards diff={diff} />
+      <HeadlineCards current={current} scenario={scenario} diff={diff} />
+
+      {/* Total savings/cost banner */}
+      <TotalSavingsSummary diff={diff} />
 
       {/* Detail table */}
       <DetailTable current={current} scenario={scenario} diff={diff} />
@@ -76,35 +79,48 @@ export function ComparisonResults({ comparison, currentMonthIndex }: ComparisonR
 // Headline Cards
 // ─────────────────────────────────────────────
 
-function HeadlineCards({ diff }: { diff: ComparisonOutput['diff'] }) {
+function formatMonths(totalMonths: number): string {
+  const years = Math.floor(totalMonths / 12)
+  const months = totalMonths % 12
+  if (years > 0 && months > 0) return `${years}y ${months}m`
+  if (years > 0) return `${years}y`
+  return `${totalMonths}m`
+}
+
+function HeadlineCards({
+  current, scenario, diff,
+}: {
+  current: ComparisonOutput['current']
+  scenario: ComparisonOutput['scenario']
+  diff: ComparisonOutput['diff']
+}) {
   const { t } = useTranslation()
 
   const cards = [
     {
       label: t('mortgage.compare.monthlyDiff'),
+      scenarioAbsolute: formatCurrency(scenario.monthlyPayment),
+      currentAbsolute: formatCurrency(current.monthlyPayment),
       value: diff.monthlyPayment,
-      format: (v: number) => formatCurrency(Math.abs(v)),
+      formatDiff: (v: number) => formatCurrency(Math.abs(v)),
       suffix: (v: number) => v > 0 ? t('mortgage.compare.morePerMonth') : v < 0 ? t('mortgage.compare.lessPerMonth') : '',
       lowerIsBetter: true,
     },
     {
       label: t('mortgage.compare.interestDiff'),
+      scenarioAbsolute: formatCurrency(scenario.totalInterest),
+      currentAbsolute: formatCurrency(current.totalInterest),
       value: diff.totalInterest,
-      format: (v: number) => formatCurrency(Math.abs(v)),
+      formatDiff: (v: number) => formatCurrency(Math.abs(v)),
       suffix: (v: number) => v > 0 ? t('mortgage.compare.moreInterest') : v < 0 ? t('mortgage.compare.lessInterest') : '',
       lowerIsBetter: true,
     },
     {
       label: t('mortgage.compare.timeDiff'),
+      scenarioAbsolute: formatMonths(scenario.totalMonths),
+      currentAbsolute: formatMonths(current.totalMonths),
       value: diff.months,
-      format: (v: number) => {
-        const abs = Math.abs(v)
-        const years = Math.floor(abs / 12)
-        const months = abs % 12
-        if (years > 0 && months > 0) return `${years}y ${months}m`
-        if (years > 0) return `${years}y`
-        return `${abs}m`
-      },
+      formatDiff: (v: number) => formatMonths(Math.abs(v)),
       suffix: (v: number) => v > 0 ? t('mortgage.compare.longerTerm') : v < 0 ? t('mortgage.compare.shorterTerm') : '',
       lowerIsBetter: true,
     },
@@ -117,18 +133,61 @@ function HeadlineCards({ diff }: { diff: ComparisonOutput['diff'] }) {
           key={card.label}
           className={`rounded-lg border p-3 ${diffBg(card.value, card.lowerIsBetter)}`}
         >
-          <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
-          <div className={`flex items-center gap-1.5 ${diffColor(card.value, card.lowerIsBetter)}`}>
-            <DiffIcon value={card.value} />
-            <span className="text-lg font-bold">{card.format(card.value)}</span>
+          <p className="text-xs text-muted-foreground mb-1.5">{card.label}</p>
+          <div className="flex items-baseline gap-2">
+            <div>
+              <span className="text-lg font-bold tabular-nums">{card.scenarioAbsolute}</span>
+              <p className="text-[10px] text-muted-foreground leading-tight">{t('mortgage.compare.scenario')}</p>
+            </div>
+            <span className="text-xs text-muted-foreground">{t('mortgage.compare.vs')}</span>
+            <div>
+              <span className="text-sm text-muted-foreground tabular-nums">{card.currentAbsolute}</span>
+              <p className="text-[10px] text-muted-foreground leading-tight">{t('mortgage.compare.yourMortgage')}</p>
+            </div>
           </div>
           {card.value !== 0 && (
-            <p className={`text-xs mt-0.5 ${diffColor(card.value, card.lowerIsBetter)}`}>
-              {card.suffix(card.value)}
-            </p>
+            <div className={`flex items-center gap-1 mt-1 text-xs ${diffColor(card.value, card.lowerIsBetter)}`}>
+              <DiffIcon value={card.value} />
+              <span>{card.formatDiff(card.value)} {card.suffix(card.value)}</span>
+            </div>
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// Total Savings Summary
+// ─────────────────────────────────────────────
+
+function TotalSavingsSummary({ diff }: { diff: ComparisonOutput['diff'] }) {
+  const { t } = useTranslation()
+
+  // Suppress for negligible differences (< €1) caused by rounding
+  if (Math.abs(diff.totalPayments) < 100) return null
+
+  const saves = diff.totalPayments < 0
+  const amount = formatCurrency(Math.abs(diff.totalPayments))
+
+  return (
+    <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+      saves ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'
+    }`}>
+      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+        saves ? 'bg-green-100' : 'bg-amber-100'
+      }`}>
+        {saves
+          ? <TrendingDown className="h-4 w-4 text-green-700" />
+          : <TrendingUp className="h-4 w-4 text-amber-700" />
+        }
+      </div>
+      <p className={`text-sm font-medium ${saves ? 'text-green-800' : 'text-amber-800'}`}>
+        {saves
+          ? t('mortgage.compare.savesOverall', { amount })
+          : t('mortgage.compare.costsOverall', { amount })
+        }
+      </p>
     </div>
   )
 }
@@ -146,12 +205,17 @@ function DetailTable({
 }) {
   const { t } = useTranslation()
 
+  const currentInterestShare = current.totalPayments > 0 ? Math.round((current.totalInterest / current.totalPayments) * 1000) / 10 : 0
+  const scenarioInterestShare = scenario.totalPayments > 0 ? Math.round((scenario.totalInterest / scenario.totalPayments) * 1000) / 10 : 0
+  const interestShareDiff = Math.round((scenarioInterestShare - currentInterestShare) * 10) / 10
+
   const rows = [
     {
       label: t('mortgage.monthlyPayment'),
       current: formatCurrency(current.monthlyPayment),
       scenario: formatCurrency(scenario.monthlyPayment),
       diff: diff.monthlyPayment,
+      diffDisplay: formatCurrency(Math.abs(diff.monthlyPayment)),
       lowerIsBetter: true,
     },
     {
@@ -159,6 +223,15 @@ function DetailTable({
       current: formatCurrency(current.totalInterest),
       scenario: formatCurrency(scenario.totalInterest),
       diff: diff.totalInterest,
+      diffDisplay: formatCurrency(Math.abs(diff.totalInterest)),
+      lowerIsBetter: true,
+    },
+    {
+      label: t('mortgage.compare.interestShare'),
+      current: `${currentInterestShare}%`,
+      scenario: `${scenarioInterestShare}%`,
+      diff: interestShareDiff,
+      diffDisplay: `${Math.abs(interestShareDiff)}%`,
       lowerIsBetter: true,
     },
     {
@@ -166,6 +239,7 @@ function DetailTable({
       current: formatCurrency(current.totalPayments),
       scenario: formatCurrency(scenario.totalPayments),
       diff: diff.totalPayments,
+      diffDisplay: formatCurrency(Math.abs(diff.totalPayments)),
       lowerIsBetter: true,
     },
     {
@@ -173,6 +247,7 @@ function DetailTable({
       current: format(new Date(current.payoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() }),
       scenario: format(new Date(scenario.payoffDate + '-01'), 'MMM yyyy', { locale: getDateLocale() }),
       diff: diff.months,
+      diffDisplay: `${Math.abs(diff.months)}m`,
       lowerIsBetter: true,
     },
   ]
@@ -201,10 +276,7 @@ function DetailTable({
                 <td className={`py-2.5 pl-3 text-right tabular-nums ${diffColor(row.diff, row.lowerIsBetter)}`}>
                   <span className="flex items-center justify-end gap-1">
                     <DiffIcon value={row.diff} />
-                    {row.label === t('mortgage.payoff')
-                      ? `${Math.abs(row.diff)}m`
-                      : formatCurrency(Math.abs(row.diff))
-                    }
+                    {row.diffDisplay}
                   </span>
                 </td>
               </tr>
@@ -232,6 +304,7 @@ function OverlayChart({
   isMobile: boolean
 }) {
   const { t } = useTranslation()
+  const sym = useMemo(() => getCurrencySymbol(), [])
 
   const data = useMemo(() => {
     const maxLength = Math.max(currentSchedule.length, scenarioSchedule.length)
@@ -277,10 +350,10 @@ function OverlayChart({
         <AreaChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-          <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${getCurrencySymbol()}${(v / 1000).toFixed(0)}k`} />
+          <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${sym}${(v / 1000).toFixed(0)}k`} />
           <Tooltip
             formatter={(value: number, name: string) => [
-              `${getCurrencySymbol()}${Number(value).toLocaleString()}`,
+              `${sym}${Number(value).toLocaleString()}`,
               name === 'current' ? t('mortgage.compare.yourMortgage') : t('mortgage.compare.scenario'),
             ]}
             labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() })}
@@ -340,6 +413,7 @@ function PaymentBreakdownComparison({
   isMobile: boolean
 }) {
   const { t } = useTranslation()
+  const sym = useMemo(() => getCurrencySymbol(), [])
 
   const { currentData, scenarioData, yMax } = useMemo(() => {
     const sampleSchedule = (schedule: ComparisonOutput['current']['schedule']) =>
@@ -385,7 +459,7 @@ function PaymentBreakdownComparison({
         <AreaChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="date" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
-          <YAxis domain={[0, yMax]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${getCurrencySymbol()}${v}`} />
+          <YAxis domain={[0, yMax]} tick={{ fontSize: 10 }} tickFormatter={(v) => `${sym}${v}`} />
           <Tooltip content={<PaymentTooltip />} />
           <Area type="monotone" dataKey="interest" stackId="1" stroke="#e76e50" fill="#e76e50" fillOpacity={0.4} />
           <Area type="monotone" dataKey="principal" stackId="1" stroke="#2a9d90" fill="#2a9d90" fillOpacity={0.6} />
@@ -421,8 +495,8 @@ function PaymentBreakdownComparison({
 interface MilestoneRow {
   year: number
   date: string
-  current: { payment: number; balance: number } | null
-  scenario: { payment: number; balance: number } | null
+  current: { payment: number; balance: number; interestPaid: number } | null
+  scenario: { payment: number; balance: number; interestPaid: number } | null
   balanceDiff: number | null
 }
 
@@ -442,13 +516,31 @@ function MilestoneTable({
     const milestoneYears = [1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
       .filter((y) => y * 12 <= maxLength)
 
+    // Pre-compute cumulative interest arrays for O(1) lookup per milestone
+    const cumulativeInterestCurrent = currentSchedule.reduce<number[]>((acc, r, i) => {
+      acc.push((acc[i - 1] ?? 0) + r.interestPortion)
+      return acc
+    }, [])
+    const cumulativeInterestScenario = scenarioSchedule.reduce<number[]>((acc, r, i) => {
+      acc.push((acc[i - 1] ?? 0) + r.interestPortion)
+      return acc
+    }, [])
+
     return milestoneYears.map((year): MilestoneRow => {
       const monthIndex = year * 12 - 1 // 0-based
       const cRow = monthIndex < currentSchedule.length ? currentSchedule[monthIndex] : null
       const sRow = monthIndex < scenarioSchedule.length ? scenarioSchedule[monthIndex] : null
 
-      const current = cRow ? { payment: cRow.payment, balance: cRow.remainingBalance } : null
-      const scenario = sRow ? { payment: sRow.payment, balance: sRow.remainingBalance } : null
+      const current = cRow ? {
+        payment: cRow.payment,
+        balance: cRow.remainingBalance,
+        interestPaid: cumulativeInterestCurrent[monthIndex] ?? 0,
+      } : null
+      const scenario = sRow ? {
+        payment: sRow.payment,
+        balance: sRow.remainingBalance,
+        interestPaid: cumulativeInterestScenario[monthIndex] ?? 0,
+      } : null
       const balanceDiff = current && scenario ? scenario.balance - current.balance : null
 
       // Use whichever schedule has the row for the date label
@@ -478,21 +570,35 @@ function MilestoneTable({
                 <span className="text-sm font-medium">{t('mortgage.compare.year')} {row.year}</span>
                 <span className="text-xs text-muted-foreground">{row.date}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('mortgage.compare.yourMortgage')}</span>
-                {row.current ? (
-                  <span className="tabular-nums">
-                    {formatCurrency(row.current.payment)}{t('mortgage.compare.perMonth')} · {formatCurrency(row.current.balance)}
-                  </span>
-                ) : paidOffBadge}
+              <div className="space-y-0.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('mortgage.compare.yourMortgage')}</span>
+                  {row.current ? (
+                    <span className="tabular-nums">
+                      {formatCurrency(row.current.payment)}{t('mortgage.compare.perMonth')} · {formatCurrency(row.current.balance)}
+                    </span>
+                  ) : paidOffBadge}
+                </div>
+                {row.current && (
+                  <div className="flex justify-end text-xs text-muted-foreground tabular-nums">
+                    {t('mortgage.compare.interestPaid')}: {formatCurrency(row.current.interestPaid)}
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('mortgage.compare.scenario')}</span>
-                {row.scenario ? (
-                  <span className="tabular-nums">
-                    {formatCurrency(row.scenario.payment)}{t('mortgage.compare.perMonth')} · {formatCurrency(row.scenario.balance)}
-                  </span>
-                ) : paidOffBadge}
+              <div className="space-y-0.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('mortgage.compare.scenario')}</span>
+                  {row.scenario ? (
+                    <span className="tabular-nums">
+                      {formatCurrency(row.scenario.payment)}{t('mortgage.compare.perMonth')} · {formatCurrency(row.scenario.balance)}
+                    </span>
+                  ) : paidOffBadge}
+                </div>
+                {row.scenario && (
+                  <div className="flex justify-end text-xs text-muted-foreground tabular-nums">
+                    {t('mortgage.compare.interestPaid')}: {formatCurrency(row.scenario.interestPaid)}
+                  </div>
+                )}
               </div>
               {row.balanceDiff !== null && row.balanceDiff !== 0 && (
                 <div className={`flex items-center justify-end gap-1 text-xs ${diffColor(row.balanceDiff, true)}`}>
@@ -515,16 +621,18 @@ function MilestoneTable({
           <thead className="bg-muted/30">
             <tr className="border-b">
               <th className="text-left py-2 px-3 text-muted-foreground font-medium">{t('mortgage.compare.year')}</th>
-              <th colSpan={2} className="text-center py-2 px-3 text-muted-foreground font-medium border-l">{t('mortgage.compare.yourMortgage')}</th>
-              <th colSpan={2} className="text-center py-2 px-3 text-muted-foreground font-medium border-l">{t('mortgage.compare.scenario')}</th>
+              <th colSpan={3} className="text-center py-2 px-3 text-muted-foreground font-medium border-l">{t('mortgage.compare.yourMortgage')}</th>
+              <th colSpan={3} className="text-center py-2 px-3 text-muted-foreground font-medium border-l">{t('mortgage.compare.scenario')}</th>
               <th className="text-right py-2 px-3 text-muted-foreground font-medium border-l">{t('mortgage.compare.balanceDiff')}</th>
             </tr>
             <tr className="border-b text-xs text-muted-foreground">
               <th></th>
               <th className="text-right py-1 px-3 font-normal border-l">{t('mortgage.payment')}</th>
               <th className="text-right py-1 px-3 font-normal">{t('mortgage.balance')}</th>
+              <th className="text-right py-1 px-3 font-normal">{t('mortgage.compare.interestPaid')}</th>
               <th className="text-right py-1 px-3 font-normal border-l">{t('mortgage.payment')}</th>
               <th className="text-right py-1 px-3 font-normal">{t('mortgage.balance')}</th>
+              <th className="text-right py-1 px-3 font-normal">{t('mortgage.compare.interestPaid')}</th>
               <th></th>
             </tr>
           </thead>
@@ -539,17 +647,19 @@ function MilestoneTable({
                   <>
                     <td className="py-2 px-3 text-right tabular-nums border-l">{formatCurrency(row.current.payment)}</td>
                     <td className="py-2 px-3 text-right tabular-nums">{formatCurrency(row.current.balance)}</td>
+                    <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">{formatCurrency(row.current.interestPaid)}</td>
                   </>
                 ) : (
-                  <td colSpan={2} className="py-2 px-3 text-center border-l">{paidOffBadge}</td>
+                  <td colSpan={3} className="py-2 px-3 text-center border-l">{paidOffBadge}</td>
                 )}
                 {row.scenario ? (
                   <>
                     <td className="py-2 px-3 text-right tabular-nums border-l">{formatCurrency(row.scenario.payment)}</td>
                     <td className="py-2 px-3 text-right tabular-nums">{formatCurrency(row.scenario.balance)}</td>
+                    <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">{formatCurrency(row.scenario.interestPaid)}</td>
                   </>
                 ) : (
-                  <td colSpan={2} className="py-2 px-3 text-center border-l">{paidOffBadge}</td>
+                  <td colSpan={3} className="py-2 px-3 text-center border-l">{paidOffBadge}</td>
                 )}
                 <td className={`py-2 px-3 text-right tabular-nums border-l ${row.balanceDiff !== null && row.balanceDiff !== 0 ? diffColor(row.balanceDiff, true) : 'text-muted-foreground'}`}>
                   {row.balanceDiff !== null ? (

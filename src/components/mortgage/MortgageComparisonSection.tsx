@@ -28,12 +28,14 @@ export function MortgageComparisonSection({ config, stats }: MortgageComparisonS
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [scenario, setScenario] = useState<ComparisonScenario>(() => scenarioFromConfig(config))
+  const [resetKey, setResetKey] = useState(0)
 
   // Defer the scenario value so the form stays responsive while charts recompute
   const deferredScenario = useDeferredValue(scenario)
 
   const handleReset = useCallback(() => {
     setScenario(scenarioFromConfig(config))
+    setResetKey((k) => k + 1)
   }, [config])
 
   // Current mortgage result — only recomputes when config changes, NOT on scenario keystrokes
@@ -88,6 +90,7 @@ export function MortgageComparisonSection({ config, stats }: MortgageComparisonS
       </CardHeader>
       <CardContent className="space-y-5">
         <ComparisonForm
+          key={resetKey}
           scenario={scenario}
           onChange={setScenario}
           onReset={handleReset}

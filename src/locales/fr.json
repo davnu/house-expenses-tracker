@@ -359,7 +359,12 @@
       "balanceDiff": "Écart",
       "paidOff": "Soldé",
       "perMonth": "/mois",
-      "extraEffect": "Stratégie"
+      "extraEffect": "Stratégie",
+      "vs": "vs",
+      "savesOverall": "Ce scénario t'économise {{amount}} sur la durée du prêt",
+      "costsOverall": "Ce scénario coûte {{amount}} de plus sur la durée du prêt",
+      "interestShare": "Part d'intérêts",
+      "interestPaid": "Intérêts payés"
     }
   },
   "budget": {

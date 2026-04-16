@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw, Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -22,17 +22,11 @@ interface ComparisonFormProps {
 export function ComparisonForm({ scenario, onChange, onReset, startDate, currentConfig }: ComparisonFormProps) {
   const { t } = useTranslation()
 
-  // String-based inputs so users can clear and retype without freezing
+  // String-based inputs so users can clear and retype without freezing.
+  // Reset is handled by key-based remounting from the parent — no useEffect sync needed.
   const [principalStr, setPrincipalStr] = useState(() => (scenario.principal / 100).toFixed(0))
   const [rateStr, setRateStr] = useState(() => String(scenario.annualRate))
   const [termStr, setTermStr] = useState(() => String(scenario.termYears))
-
-  // Sync string state when scenario changes externally (e.g. reset)
-  useEffect(() => {
-    setPrincipalStr((scenario.principal / 100).toFixed(0))
-    setRateStr(String(scenario.annualRate))
-    setTermStr(String(scenario.termYears))
-  }, [scenario.principal, scenario.annualRate, scenario.termYears])
 
   const scenarioPayment = calculateMonthlyPayment(
     scenario.principal,

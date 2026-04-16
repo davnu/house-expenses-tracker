@@ -359,7 +359,12 @@
       "balanceDiff": "Diferencia",
       "paidOff": "Amortizado",
       "perMonth": "/mes",
-      "extraEffect": "Estrategia"
+      "extraEffect": "Estrategia",
+      "vs": "vs",
+      "savesOverall": "Este escenario te ahorra {{amount}} en la vida del préstamo",
+      "costsOverall": "Este escenario cuesta {{amount}} más en la vida del préstamo",
+      "interestShare": "Porción de intereses",
+      "interestPaid": "Intereses pagados"
     }
   },
   "budget": {

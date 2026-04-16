@@ -359,7 +359,12 @@
       "balanceDiff": "Differenz",
       "paidOff": "Getilgt",
       "perMonth": "/Mt.",
-      "extraEffect": "Strategie"
+      "extraEffect": "Strategie",
+      "vs": "vs",
+      "savesOverall": "Dieses Szenario spart dir {{amount}} über die gesamte Laufzeit",
+      "costsOverall": "Dieses Szenario kostet dich {{amount}} mehr über die gesamte Laufzeit",
+      "interestShare": "Zinsanteil",
+      "interestPaid": "Gezahlte Zinsen"
     }
   },
   "budget": {

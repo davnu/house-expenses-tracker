@@ -359,7 +359,12 @@
       "balanceDiff": "Verschil",
       "paidOff": "Afgelost",
       "perMonth": "/mnd",
-      "extraEffect": "Strategie"
+      "extraEffect": "Strategie",
+      "vs": "vs",
+      "savesOverall": "Dit scenario bespaart je {{amount}} over de gehele looptijd",
+      "costsOverall": "Dit scenario kost je {{amount}} meer over de gehele looptijd",
+      "interestShare": "Renteaandeel",
+      "interestPaid": "Betaalde rente"
     }
   },
   "budget": {

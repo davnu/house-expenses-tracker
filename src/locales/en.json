@@ -359,7 +359,12 @@
       "balanceDiff": "Difference",
       "paidOff": "Paid off",
       "perMonth": "/mo",
-      "extraEffect": "Strategy"
+      "extraEffect": "Strategy",
+      "vs": "vs",
+      "savesOverall": "This scenario saves you {{amount}} over the life of the loan",
+      "costsOverall": "This scenario costs {{amount}} more over the life of the loan",
+      "interestShare": "Interest share",
+      "interestPaid": "Interest Paid"
     }
   },
   "budget": {

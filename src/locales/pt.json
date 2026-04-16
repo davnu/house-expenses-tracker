@@ -359,7 +359,12 @@
       "balanceDiff": "Diferença",
       "paidOff": "Liquidado",
       "perMonth": "/mês",
-      "extraEffect": "Estratégia"
+      "extraEffect": "Estratégia",
+      "vs": "vs",
+      "savesOverall": "Este cenário poupa-te {{amount}} ao longo de todo o prazo",
+      "costsOverall": "Este cenário custa-te mais {{amount}} ao longo de todo o prazo",
+      "interestShare": "Peso dos juros",
+      "interestPaid": "Juros pagos"
     }
   },
   "budget": {
