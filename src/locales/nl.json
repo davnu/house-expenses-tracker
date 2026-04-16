@@ -91,7 +91,9 @@
     "country": "Land",
     "selectCountry": "Selecteer land...",
     "currency": "Valuta: {{code}}",
-    "createHouse": "Woning aanmaken"
+    "createHouse": "Woning aanmaken",
+    "selectCountryHint": "Selecteer een land om door te gaan",
+    "enterNameHint": "Voer een naam in om door te gaan"
   },
   "dashboard": {
     "title": "Overzicht",
@@ -199,7 +201,7 @@
     "annualRate": "Jaarlijkse rente (%)",
     "fixedPeriod": "Rentevaste periode (jaren)",
     "fixedPeriodTooltip": "Hoe lang je rente vaststaat voordat deze variabel wordt.",
-    "noCountryWarning": "Stel je land in bij het aanmaken van de woning voor referentierente-informatie.",
+    "noCountryWarning": "Geen land ingesteld — referentierente-informatie is niet beschikbaar.",
     "variableBreakdown": "Opbouw variabele rente",
     "afterFixedPeriod": "Na de rentevaste periode",
     "referenceRate": "Referentierente",

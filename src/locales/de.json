@@ -91,7 +91,9 @@
     "country": "Land",
     "selectCountry": "Land auswählen...",
     "currency": "Währung: {{code}}",
-    "createHouse": "Haus erstellen"
+    "createHouse": "Haus erstellen",
+    "selectCountryHint": "Wähle ein Land, um fortzufahren",
+    "enterNameHint": "Gib einen Hausnamen ein, um fortzufahren"
   },
   "dashboard": {
     "title": "Übersicht",
@@ -199,7 +201,7 @@
     "annualRate": "Jahreszins (%)",
     "fixedPeriod": "Zinsbindung (Jahre)",
     "fixedPeriodTooltip": "Wie lange dein Zinssatz fest bleibt, bevor er auf variabel umgestellt wird.",
-    "noCountryWarning": "Setze beim Erstellen des Hauses dein Land für Referenzzins-Details.",
+    "noCountryWarning": "Kein Land festgelegt — Referenzzins-Details sind nicht verfügbar.",
     "variableBreakdown": "Aufschlüsselung variabler Zinssatz",
     "afterFixedPeriod": "Nach der Zinsbindung",
     "referenceRate": "Referenzzins",

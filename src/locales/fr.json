@@ -91,7 +91,9 @@
     "country": "Pays",
     "selectCountry": "Sélectionner un pays...",
     "currency": "Devise : {{code}}",
-    "createHouse": "Créer le logement"
+    "createHouse": "Créer le logement",
+    "selectCountryHint": "Sélectionne un pays pour continuer",
+    "enterNameHint": "Saisis un nom pour continuer"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -199,7 +201,7 @@
     "annualRate": "Taux annuel (%)",
     "fixedPeriod": "Période fixe (années)",
     "fixedPeriodTooltip": "Durée pendant laquelle ton taux reste fixe avant de passer en variable.",
-    "noCountryWarning": "Indique ton pays lors de la création du logement pour obtenir les détails du taux de référence.",
+    "noCountryWarning": "Aucun pays défini pour ce logement — les détails du taux de référence ne sont pas disponibles.",
     "variableBreakdown": "Détail du taux variable",
     "afterFixedPeriod": "Après la période fixe",
     "referenceRate": "Taux de référence",

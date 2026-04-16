@@ -91,7 +91,9 @@
     "country": "País",
     "selectCountry": "Selecciona un país...",
     "currency": "Moneda: {{code}}",
-    "createHouse": "Crear casa"
+    "createHouse": "Crear casa",
+    "selectCountryHint": "Selecciona un país para continuar",
+    "enterNameHint": "Introduce un nombre para continuar"
   },
   "dashboard": {
     "title": "Panel",
@@ -199,7 +201,7 @@
     "annualRate": "Tipo de interés anual (%)",
     "fixedPeriod": "Periodo fijo (años)",
     "fixedPeriodTooltip": "Tiempo que tu tipo se mantiene fijo antes de pasar a variable.",
-    "noCountryWarning": "Indica tu país al crear la casa para ver detalles del tipo de referencia.",
+    "noCountryWarning": "Sin país configurado — el desglose del tipo de referencia no está disponible.",
     "variableBreakdown": "Desglose del tipo variable",
     "afterFixedPeriod": "Tras el periodo fijo",
     "referenceRate": "Tipo de referencia",

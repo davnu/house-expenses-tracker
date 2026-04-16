@@ -22,14 +22,14 @@ export function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!houseName.trim()) return
+    if (!houseName.trim() || !selectedCountry) return
     setError('')
     setLoading(true)
     try {
       await createHouse(
         houseName.trim(),
-        country || undefined,
-        selectedCountry?.currency
+        selectedCountry.code,
+        selectedCountry.currency
       )
     } catch (err) {
       setError(friendlyError(err))
@@ -73,6 +73,7 @@ export function OnboardingPage() {
                 id="country"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
+                required
               >
                 <option value="">{t('onboarding.selectCountry')}</option>
                 {SUPPORTED_COUNTRIES.map((c) => (
@@ -88,9 +89,15 @@ export function OnboardingPage() {
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <Button type="submit" className="w-full" disabled={loading || !houseName.trim()}>
+            <Button type="submit" className="w-full" disabled={loading || !houseName.trim() || !selectedCountry}>
               {loading ? t('common.creating') : t('onboarding.createHouse')}
             </Button>
+            {!loading && houseName.trim() && !selectedCountry && (
+              <p className="text-xs text-muted-foreground text-center">{t('onboarding.selectCountryHint')}</p>
+            )}
+            {!loading && !houseName.trim() && selectedCountry && (
+              <p className="text-xs text-muted-foreground text-center">{t('onboarding.enterNameHint')}</p>
+            )}
           </form>
         </CardContent>
       </Card>

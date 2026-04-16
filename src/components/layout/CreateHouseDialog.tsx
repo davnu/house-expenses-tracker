@@ -37,11 +37,11 @@ export function CreateHouseDialog({ open, onOpenChange }: CreateHouseDialogProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!houseName.trim()) return
+    if (!houseName.trim() || !selectedCountry) return
     setError('')
     setLoading(true)
     try {
-      await createHouse(houseName.trim(), country || undefined, selectedCountry?.currency)
+      await createHouse(houseName.trim(), selectedCountry.code, selectedCountry.currency)
       onOpenChange(false)
       navigate('/app', { replace: true })
     } catch (err) {
@@ -77,6 +77,7 @@ export function CreateHouseDialog({ open, onOpenChange }: CreateHouseDialogProps
               id="newHouseCountry"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
+              required
             >
               <option value="">{t('onboarding.selectCountry')}</option>
               {SUPPORTED_COUNTRIES.map((c) => (
@@ -92,9 +93,15 @@ export function CreateHouseDialog({ open, onOpenChange }: CreateHouseDialogProps
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading || !houseName.trim()}>
+          <Button type="submit" className="w-full" disabled={loading || !houseName.trim() || !selectedCountry}>
             {loading ? t('common.creating') : t('onboarding.createHouse')}
           </Button>
+          {!loading && houseName.trim() && !selectedCountry && (
+            <p className="text-xs text-muted-foreground text-center">{t('onboarding.selectCountryHint')}</p>
+          )}
+          {!loading && !houseName.trim() && selectedCountry && (
+            <p className="text-xs text-muted-foreground text-center">{t('onboarding.enterNameHint')}</p>
+          )}
         </form>
       </DialogContent>
     </Dialog>

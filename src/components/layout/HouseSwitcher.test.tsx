@@ -128,14 +128,37 @@ describe('CreateHouseDialog', () => {
     render(<CreateHouseDialog open={true} onOpenChange={onOpenChange} />)
 
     fireEvent.change(screen.getByLabelText('House name'), { target: { value: 'New House' } })
+    fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'ES' } })
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Create House' }))
     })
 
-    expect(mockCreateHouse).toHaveBeenCalledWith('New House', undefined, undefined)
+    expect(mockCreateHouse).toHaveBeenCalledWith('New House', 'ES', 'EUR')
     expect(onOpenChange).toHaveBeenCalledWith(false)
     expect(mockNavigate).toHaveBeenCalledWith('/app', { replace: true })
+  })
+
+  it('disables submit button when country is not selected', () => {
+    render(<CreateHouseDialog open={true} onOpenChange={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText('House name'), { target: { value: 'New House' } })
+
+    const button = screen.getByRole('button', { name: 'Create House' }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+  })
+
+  it('does NOT submit when country is not selected', async () => {
+    const onOpenChange = vi.fn()
+    render(<CreateHouseDialog open={true} onOpenChange={onOpenChange} />)
+
+    fireEvent.change(screen.getByLabelText('House name'), { target: { value: 'New House' } })
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create House' }))
+    })
+
+    expect(mockCreateHouse).not.toHaveBeenCalled()
   })
 
   it('does NOT navigate when creation fails', async () => {
@@ -145,6 +168,7 @@ describe('CreateHouseDialog', () => {
     render(<CreateHouseDialog open={true} onOpenChange={onOpenChange} />)
 
     fireEvent.change(screen.getByLabelText('House name'), { target: { value: 'New House' } })
+    fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'ES' } })
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Create House' }))
@@ -156,14 +180,50 @@ describe('CreateHouseDialog', () => {
     expect(screen.getByText(/something went wrong/i)).toBeTruthy()
   })
 
+  it('shows country hint when only name is filled', () => {
+    render(<CreateHouseDialog open={true} onOpenChange={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText('House name'), { target: { value: 'New House' } })
+
+    expect(screen.getByText('Select a country to continue')).toBeTruthy()
+    expect(screen.queryByText('Enter a house name to continue')).toBeNull()
+  })
+
+  it('shows name hint when only country is filled', () => {
+    render(<CreateHouseDialog open={true} onOpenChange={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'ES' } })
+
+    expect(screen.getByText('Enter a house name to continue')).toBeTruthy()
+    expect(screen.queryByText('Select a country to continue')).toBeNull()
+  })
+
+  it('shows no hint when form is empty or complete', () => {
+    render(<CreateHouseDialog open={true} onOpenChange={vi.fn()} />)
+
+    // Empty form — no hints
+    expect(screen.queryByText('Select a country to continue')).toBeNull()
+    expect(screen.queryByText('Enter a house name to continue')).toBeNull()
+
+    // Complete form — no hints
+    fireEvent.change(screen.getByLabelText('House name'), { target: { value: 'New House' } })
+    fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'ES' } })
+
+    expect(screen.queryByText('Select a country to continue')).toBeNull()
+    expect(screen.queryByText('Enter a house name to continue')).toBeNull()
+  })
+
   it('resets form state when dialog closes', () => {
     const onOpenChange = vi.fn()
     const { rerender } = render(<CreateHouseDialog open={true} onOpenChange={onOpenChange} />)
 
     const input = () => screen.getByLabelText('House name') as HTMLInputElement
+    const select = () => screen.getByLabelText('Country') as HTMLSelectElement
 
     fireEvent.change(input(), { target: { value: 'Typed Name' } })
+    fireEvent.change(select(), { target: { value: 'ES' } })
     expect(input().value).toBe('Typed Name')
+    expect(select().value).toBe('ES')
 
     // Close dialog
     rerender(<CreateHouseDialog open={false} onOpenChange={onOpenChange} />)
@@ -171,5 +231,6 @@ describe('CreateHouseDialog', () => {
     rerender(<CreateHouseDialog open={true} onOpenChange={onOpenChange} />)
 
     expect(input().value).toBe('')
+    expect(select().value).toBe('')
   })
 })

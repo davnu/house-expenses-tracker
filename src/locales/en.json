@@ -91,7 +91,9 @@
     "country": "Country",
     "selectCountry": "Select country...",
     "currency": "Currency: {{code}}",
-    "createHouse": "Create House"
+    "createHouse": "Create House",
+    "selectCountryHint": "Select a country to continue",
+    "enterNameHint": "Enter a house name to continue"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -199,7 +201,7 @@
     "annualRate": "Annual interest rate (%)",
     "fixedPeriod": "Fixed period (years)",
     "fixedPeriodTooltip": "How long your rate stays fixed before switching to variable.",
-    "noCountryWarning": "Set your country when creating the house for reference rate details.",
+    "noCountryWarning": "Country not set for this house — reference rate details are not available.",
     "variableBreakdown": "Variable rate breakdown",
     "afterFixedPeriod": "After the fixed period",
     "referenceRate": "Reference rate",

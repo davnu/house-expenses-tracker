@@ -32,7 +32,7 @@ interface HouseholdContextValue {
   houses: House[]
   members: HouseMember[]
   loading: boolean
-  createHouse: (name: string, country?: string, currency?: string) => Promise<void>
+  createHouse: (name: string, country: string, currency: string) => Promise<void>
   joinHouse: (inviteId: string) => Promise<void>
   generateInvite: () => Promise<string>
   updateDisplayName: (name: string) => Promise<void>
@@ -205,7 +205,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     }
   }, [user, userProfile?.houseId, membersRetry])
 
-  const createHouse = useCallback(async (name: string, country?: string, currency?: string) => {
+  const createHouse = useCallback(async (name: string, country: string, currency: string) => {
     if (!user) return
 
     // Fallback to Firebase Auth user for display name and email when userProfile
@@ -219,14 +219,14 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString()
     const color = MEMBER_COLOR_PALETTE[0]
 
-    const houseData: Record<string, unknown> = {
+    const houseData = {
       name,
       ownerId: user.uid,
       memberIds: [user.uid],
+      country,
+      currency,
       createdAt: now,
     }
-    if (country) houseData.country = country
-    if (currency) houseData.currency = currency
 
     // Suppress auto-select during multi-step creation so the UI doesn't transition
     // to the new house until folders are seeded (prevents empty Documents page).

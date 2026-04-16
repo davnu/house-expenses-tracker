@@ -91,7 +91,9 @@
     "country": "País",
     "selectCountry": "Seleciona o país...",
     "currency": "Moeda: {{code}}",
-    "createHouse": "Criar Casa"
+    "createHouse": "Criar Casa",
+    "selectCountryHint": "Seleciona um país para continuar",
+    "enterNameHint": "Introduz um nome para continuar"
   },
   "dashboard": {
     "title": "Painel",
@@ -199,7 +201,7 @@
     "annualRate": "Taxa de juro anual (%)",
     "fixedPeriod": "Período fixo (anos)",
     "fixedPeriodTooltip": "Durante quanto tempo a tua taxa se mantém fixa antes de passar a variável.",
-    "noCountryWarning": "Define o teu país ao criar a casa para ver detalhes da taxa de referência.",
+    "noCountryWarning": "Sem país definido — os detalhes da taxa de referência não estão disponíveis.",
     "variableBreakdown": "Composição da taxa variável",
     "afterFixedPeriod": "Após o período fixo",
     "referenceRate": "Taxa de referência",
