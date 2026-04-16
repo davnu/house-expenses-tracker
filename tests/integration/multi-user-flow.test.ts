@@ -106,14 +106,7 @@ describe('Full house creation and invite flow', () => {
       })
     )
 
-    // ── Step 10: Bob adds himself to memberIds (join flow updates both) ──
-    await assertSucceeds(
-      bobDb.doc(`houses/${HOUSE_ID}`).update({
-        memberIds: ['alice', 'bob'],
-      })
-    )
-
-    // ── Step 10b: Bob adds himself as member doc ──
+    // ── Step 10: Bob adds himself as member ──
     await assertSucceeds(
       bobDb.doc(`houses/${HOUSE_ID}/members/bob`).set({
         displayName: 'Bob',
@@ -165,6 +158,97 @@ describe('Full house creation and invite flow', () => {
       aliceDb.collection(`houses/${HOUSE_ID}/expenses`).get()
     )
     expect(allExpenses.size).toBe(2)
+  })
+
+  it('folder seeding: member can create folders immediately after house+member batch', async () => {
+    // This mirrors the actual createHouse() 2-batch pattern:
+    // Batch 1: house doc + member doc (no profile houseId yet)
+    // Batch 2: 7 default folders (member doc exists → isMember() passes)
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const aliceDb = alice.firestore()
+    const now = new Date().toISOString()
+
+    // Step 1: Create house + member (same as createHouse batch 1)
+    const batch = aliceDb.batch()
+    batch.set(aliceDb.doc(`houses/${HOUSE_ID}`), {
+      name: 'New House',
+      ownerId: 'alice',
+      memberIds: ['alice'],
+      createdAt: now,
+    })
+    batch.set(aliceDb.doc(`houses/${HOUSE_ID}/members/alice`), {
+      displayName: 'Alice',
+      email: 'alice@test.com',
+      color: '#3b82f6',
+      role: 'owner',
+      joinedAt: now,
+    })
+    await assertSucceeds(batch.commit())
+
+    // Step 2: Seed default folders in a separate batch (same as createHouse batch 2)
+    const folderBatch = aliceDb.batch()
+    const folderDefs = [
+      { name: 'purchase', icon: '📋', order: 0, translationKey: 'purchase' },
+      { name: 'mortgage', icon: '🏦', order: 1, translationKey: 'mortgage' },
+      { name: 'property', icon: '🏠', order: 2, translationKey: 'property' },
+      { name: 'tax', icon: '📊', order: 3, translationKey: 'tax' },
+      { name: 'insurance', icon: '🛡️', order: 4, translationKey: 'insurance' },
+      { name: 'inspections', icon: '🔍', order: 5, translationKey: 'inspections' },
+      { name: 'other', icon: '📁', order: 6, translationKey: 'other' },
+    ]
+    for (const folder of folderDefs) {
+      folderBatch.set(aliceDb.collection(`houses/${HOUSE_ID}/folders`).doc(), {
+        ...folder,
+        createdAt: now,
+        createdBy: 'alice',
+      })
+    }
+    await assertSucceeds(folderBatch.commit())
+
+    // Verify: all 7 folders exist and are readable
+    const foldersSnap = await assertSucceeds(
+      aliceDb.collection(`houses/${HOUSE_ID}/folders`).get()
+    )
+    expect(foldersSnap.size).toBe(7)
+
+    // Verify translationKeys are preserved
+    const keys = foldersSnap.docs.map(d => d.data().translationKey).sort()
+    expect(keys).toEqual(['inspections', 'insurance', 'mortgage', 'other', 'property', 'purchase', 'tax'])
+  })
+
+  it('folder seeding: folders survive house deletion cascade', async () => {
+    // Create house with member and folders
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      const now = new Date().toISOString()
+      await db.doc(`houses/${HOUSE_ID}`).set({
+        name: 'House', ownerId: 'alice', memberIds: ['alice'], createdAt: now,
+      })
+      await db.doc(`houses/${HOUSE_ID}/members/alice`).set({
+        displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: now,
+      })
+      // Seed 3 folders
+      await db.doc(`houses/${HOUSE_ID}/folders/f1`).set({ name: 'A', icon: '📋', order: 0, createdAt: now, createdBy: 'alice' })
+      await db.doc(`houses/${HOUSE_ID}/folders/f2`).set({ name: 'B', icon: '🏦', order: 1, createdAt: now, createdBy: 'alice' })
+      await db.doc(`houses/${HOUSE_ID}/folders/f3`).set({ name: 'C', icon: '🏠', order: 2, createdAt: now, createdBy: 'alice' })
+    })
+
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const aliceDb = alice.firestore()
+
+    // Verify folders exist
+    const before = await aliceDb.collection(`houses/${HOUSE_ID}/folders`).get()
+    expect(before.size).toBe(3)
+
+    // Owner soft-deletes
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).update({ deletedAt: new Date().toISOString() }))
+
+    // Cascade: delete folders, members, then house doc (matches deleteHouse subcollection list)
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/folders/f1`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/folders/f2`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/folders/f3`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/members/alice`).delete())
+    await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).delete())
   })
 
   it('outsider cannot access house data even with known house ID', async () => {

@@ -20,7 +20,8 @@ import { deleteAttachments } from '@/data/firebase-attachment-store'
 import { deleteDocumentFiles } from '@/data/firebase-document-store'
 import { useAuth } from './AuthContext'
 import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
-import { setCurrencyContext } from '@/lib/utils'
+import { setCurrencyContext, stripInvalid } from '@/lib/utils'
+import { FOLDER_DEFS } from '@/types/document'
 import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
 import type { UserProfile, House, HouseMember, Invite } from '@/types/expense'
 
@@ -56,8 +57,15 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [members, setMembers] = useState<HouseMember[]>([])
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [housesLoaded, setHousesLoaded] = useState(false)
+  const [membersReady, setMembersReady] = useState(false)
 
-  const loading = !profileLoaded || !housesLoaded
+  // Retry counter — when members listener gets permission-denied for a known
+  // member (propagation delay after house creation), incrementing this forces
+  // the effect to re-run and re-subscribe after a delay.
+  const [membersRetry, setMembersRetry] = useState(0)
+  const MAX_MEMBER_RETRIES = 5
+
+  const loading = !profileLoaded || !housesLoaded || (!!userProfile?.houseId && !membersReady)
 
   // Sync currency formatting to the active house's country
   useEffect(() => {
@@ -82,6 +90,8 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       setMembers([])
       setProfileLoaded(false)
       setHousesLoaded(false)
+      setMembersReady(false)
+      setMembersRetry(0)
       return
     }
 
@@ -131,15 +141,23 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     }
   }, [user, userProfile, houses, profileLoaded, housesLoaded])
 
-  // Listen to active house + members when houseId is set
+  // Reset retry counter when switching houses
+  useEffect(() => { setMembersRetry(0); setMembersReady(false) }, [userProfile?.houseId])
+
+  // Listen to active house + members when houseId is set.
+  // membersRetry in deps: when the members listener gets permission-denied
+  // for a known member (propagation delay), we increment membersRetry after
+  // a delay to re-run this effect and re-subscribe.
   useEffect(() => {
     if (!user || !userProfile?.houseId) {
       setHouse(null)
       setMembers([])
+      setMembersReady(false)
       return
     }
 
     const houseId = userProfile.houseId
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
 
     const unsubHouse = onSnapshot(doc(db, 'houses', houseId), (snap) => {
       if (snap.exists()) {
@@ -157,27 +175,34 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       collection(db, 'houses', houseId, 'members'),
       (snap) => {
         setMembers(snap.docs.map((d) => ({ uid: d.id, ...d.data() }) as HouseMember))
+        setMembersReady(true)
       },
       (error) => {
-        // PERMISSION_DENIED means user was removed from this house
         if (error.code === 'permission-denied') {
-          // If the houses query still lists this house (or hasn't loaded yet),
-          // the user is likely a known member — this is a transient propagation
-          // delay (e.g. right after house creation). Don't nuke state.
           const isKnownMember = !housesLoadedRef.current || housesRef.current.some(h => h.id === houseId)
-          if (isKnownMember) return
-          updateDoc(doc(db, 'users', user.uid), { houseId: null }).catch(() => {})
-          setHouse(null)
-          setMembers([])
+          if (isKnownMember && membersRetry < MAX_MEMBER_RETRIES) {
+            // Transient propagation delay — retry with exponential backoff
+            const delay = Math.min(500 * Math.pow(2, membersRetry), 4000)
+            retryTimer = setTimeout(() => setMembersRetry(c => c + 1), delay)
+            return
+          }
+          if (!isKnownMember) {
+            updateDoc(doc(db, 'users', user.uid), { houseId: null }).catch(() => {})
+            setHouse(null)
+            setMembers([])
+          }
         }
+        // After max retries or non-permission error, unblock so user isn't stuck forever
+        setMembersReady(true)
       }
     )
 
     return () => {
       unsubHouse()
       unsubMembers()
+      if (retryTimer) clearTimeout(retryTimer)
     }
-  }, [user, userProfile?.houseId])
+  }, [user, userProfile?.houseId, membersRetry])
 
   const createHouse = useCallback(async (name: string, country?: string, currency?: string) => {
     if (!user || !userProfile) return
@@ -196,17 +221,51 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     if (country) houseData.country = country
     if (currency) houseData.currency = currency
 
-    const batch = writeBatch(db)
-    batch.set(houseRef, houseData)
-    batch.set(doc(db, 'houses', houseId, 'members', user.uid), {
-      displayName: userProfile.displayName,
-      email: userProfile.email,
-      color,
-      role: 'owner',
-      joinedAt: now,
-    })
-    batch.update(doc(db, 'users', user.uid), { houseId })
-    await batch.commit()
+    // Suppress auto-select during multi-step creation so the UI doesn't transition
+    // to the new house until folders are seeded (prevents empty Documents page).
+    autoSelectingRef.current = true
+    try {
+      // Step 1: Create house + member (no profile houseId yet — keeps UI on onboarding)
+      const batch = writeBatch(db)
+      batch.set(houseRef, houseData)
+      batch.set(doc(db, 'houses', houseId, 'members', user.uid), {
+        displayName: userProfile.displayName,
+        email: userProfile.email,
+        color,
+        role: 'owner',
+        joinedAt: now,
+      })
+      await batch.commit()
+
+      // Step 2: Seed default folders (member doc now exists → isMember() passes).
+      // Separate batch because Firestore security rules evaluate each operation against
+      // the database state BEFORE the batch — the folders rule requires isMember() which
+      // checks exists(.../members/{uid}), but in a combined batch the member doc doesn't
+      // exist yet from the rules engine's perspective.
+      try {
+        const folderBatch = writeBatch(db)
+        for (const { key, icon, order } of FOLDER_DEFS) {
+          folderBatch.set(doc(collection(db, 'houses', houseId, 'folders')), stripInvalid({
+            name: key,
+            icon,
+            order,
+            translationKey: key,
+            createdAt: now,
+            createdBy: user.uid,
+          }))
+        }
+        await folderBatch.commit()
+      } catch (err) {
+        // Best-effort: fallback seeding in DocumentContext handles this
+        console.error('Folder seeding after house creation failed:', err)
+      }
+
+      // Step 3: Set houseId on profile LAST — this triggers the UI transition.
+      // By now the folders exist, so DocumentProvider will see them on first snapshot.
+      await updateDoc(doc(db, 'users', user.uid), { houseId })
+    } finally {
+      autoSelectingRef.current = false
+    }
   }, [user, userProfile])
 
   const joinHouse = useCallback(async (inviteId: string) => {

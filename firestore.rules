@@ -23,7 +23,7 @@ service cloud.firestore {
     // Houses
     match /houses/{houseId} {
       function isMember() {
-        return request.auth.uid in get(/databases/$(database)/documents/houses/$(houseId)).data.memberIds;
+        return exists(/databases/$(database)/documents/houses/$(houseId)/members/$(request.auth.uid));
       }
 
       function isOwner() {

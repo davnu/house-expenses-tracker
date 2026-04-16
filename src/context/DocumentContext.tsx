@@ -107,15 +107,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       async (snap) => {
         const serverFolders = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as DocFolder)
 
-        // Seed default folders on first load if collection is empty
+        // Seed default folders on first load if collection is empty (fallback for legacy houses)
         if (serverFolders.length === 0 && !foldersLoaded && !seedingRef.current) {
           seedingRef.current = true
           try {
-            await Promise.all(
+            const seeded = await Promise.all(
               getDefaultFolders().map((def) => repo.addFolder({ ...def, createdBy: user?.uid ?? '' }))
             )
-            // onSnapshot will fire again with the seeded folders
-          } catch {
+            setRawFolders(seeded)
+          } catch (err) {
+            console.error('Default folder seeding failed:', err)
             seedingRef.current = false
           }
           foldersLoaded = true
@@ -124,6 +125,11 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         }
 
         setRawFolders(serverFolders)
+        foldersLoaded = true
+        markReady()
+      },
+      (error) => {
+        console.error('Folders listener error:', error)
         foldersLoaded = true
         markReady()
       }
@@ -145,12 +151,18 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         })
         documentsLoaded = true
         markReady()
+      },
+      (error) => {
+        console.error('Documents listener error:', error)
+        documentsLoaded = true
+        markReady()
       }
     )
 
     return () => {
       unsubFolders()
       unsubDocuments()
+      seedingRef.current = false
     }
   }, [houseId, repo, user?.uid])
 

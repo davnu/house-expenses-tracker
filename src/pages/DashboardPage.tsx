@@ -128,8 +128,6 @@ export function DashboardPage() {
               </Link>
             </div>
 
-            <TodoCard />
-
             <QuickAddDialog open={addExpenseOpen} onOpenChange={setAddExpenseOpen} />
           </div>
         ) : (

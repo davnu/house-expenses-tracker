@@ -754,6 +754,38 @@ describe('Folders (/houses/{houseId}/folders/{folderId})', () => {
       alice.firestore().doc('houses/house1/folders/folder1').update({ description: 'Updated description' })
     )
   })
+
+  it('cannot create folders in the same batch as the member doc (rules pre-batch state)', async () => {
+    // This test documents WHY createHouse uses two separate batches.
+    // Firestore security rules evaluate each operation against the database state
+    // BEFORE the batch — the member doc from the same batch is invisible to isMember().
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const aliceDb = alice.firestore()
+
+    const batch = aliceDb.batch()
+    batch.set(aliceDb.doc('houses/house-new'), {
+      name: 'New House', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+    })
+    batch.set(aliceDb.doc('houses/house-new/members/alice'), {
+      displayName: 'Alice', email: 'a@t.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+    })
+    // This folder write requires isMember() which calls exists(.../members/alice),
+    // but the member doc doesn't exist yet from the rules engine's perspective.
+    batch.set(aliceDb.doc('houses/house-new/folders/folder1'), {
+      name: 'Test', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+    })
+    await assertFails(batch.commit())
+  })
+
+  it('unverified user cannot create folders', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const unverified = testEnv.authenticatedContext('alice', { email_verified: false })
+    await assertFails(
+      unverified.firestore().doc('houses/house1/folders/folder-new').set({
+        name: 'Test', icon: '📁', order: 0, createdAt: new Date().toISOString(), createdBy: 'alice',
+      })
+    )
+  })
 })
 
 // ── Documents ───────────────────────────────────────────────────────

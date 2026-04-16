@@ -25,7 +25,7 @@ export interface HouseDocument {
   updatedAt: string
 }
 
-const FOLDER_DEFS = [
+export const FOLDER_DEFS = [
   { key: 'purchase', icon: '📋', order: 0 },
   { key: 'mortgage', icon: '🏦', order: 1 },
   { key: 'property', icon: '🏠', order: 2 },

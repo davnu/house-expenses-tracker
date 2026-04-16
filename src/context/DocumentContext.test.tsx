@@ -404,6 +404,170 @@ describe('DocumentContext', () => {
     })
   })
 
+  // ── Folder seeding ──
+
+  describe('folder seeding', () => {
+    it('does not attempt seeding when folders already present in snapshot', async () => {
+      // Override onSnapshot to fire with pre-existing folders on first call
+      const { onSnapshot: mockOnSnapshot } = await import('firebase/firestore')
+      const origImpl = vi.mocked(mockOnSnapshot).getMockImplementation()
+
+      const preExisting = [
+        makeFolder({ id: 'f1', name: 'purchase', translationKey: 'purchase', order: 0 }),
+        makeFolder({ id: 'f2', name: 'mortgage', translationKey: 'mortgage', order: 1 }),
+      ]
+      let callIdx = 0
+      vi.mocked(mockOnSnapshot).mockImplementation((_query: unknown, callback: unknown) => {
+        const cb = callback as (snap: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void
+        if (callIdx === 0) {
+          // Folders listener — fire with existing folders (simulates batch-created)
+          folderSnapshotCallback = cb as typeof folderSnapshotCallback
+          cb({ docs: preExisting.map(f => firestoreDoc(f as unknown as Record<string, unknown> & { id: string })) })
+        } else {
+          // Documents listener
+          documentSnapshotCallback = cb as typeof documentSnapshotCallback
+          cb({ docs: [] })
+        }
+        callIdx++
+        return vi.fn()
+      })
+
+      folderSnapshotCallback = null
+      documentSnapshotCallback = null
+      const { result } = renderHook(() => useDocuments(), { wrapper })
+      await act(async () => {})
+
+      // No seeding calls — folders were already present
+      expect(mockRepo.addFolder).not.toHaveBeenCalled()
+      expect(result.current.folders).toHaveLength(2)
+
+      // Restore original mock
+      vi.mocked(mockOnSnapshot).mockImplementation(origImpl!)
+    })
+
+    it('completes loading even when seeding fails (no infinite spinner)', async () => {
+      // Make addFolder fail
+      mockRepo.addFolder.mockRejectedValue(new Error('Permission denied'))
+
+      folderSnapshotCallback = null
+      documentSnapshotCallback = null
+      const { result } = renderHook(() => useDocuments(), { wrapper })
+      await act(async () => {})
+
+      // Seeding failed but loading should still complete — user sees empty folder grid
+      expect(result.current.loading).toBe(false)
+      expect(result.current.folders).toHaveLength(0)
+    })
+
+    it('retries seeding on remount after failure', async () => {
+      // Make addFolder fail on first mount
+      mockRepo.addFolder.mockRejectedValue(new Error('Permission denied'))
+
+      folderSnapshotCallback = null
+      documentSnapshotCallback = null
+      const { unmount } = renderHook(() => useDocuments(), { wrapper })
+      await act(async () => {})
+
+      // Unmount triggers cleanup which resets seedingRef
+      unmount()
+
+      // Fix addFolder for second mount
+      mockRepo.addFolder.mockClear()
+      mockRepo.addFolder.mockImplementation(async (input: Partial<DocFolder>) => ({
+        id: `seeded-${input.order}`,
+        ...input,
+        createdAt: '2026-04-12T00:00:00Z',
+      }))
+
+      // Remount — simulates page refresh
+      folderSnapshotCallback = null
+      documentSnapshotCallback = null
+      const { result } = renderHook(() => useDocuments(), { wrapper })
+      await act(async () => {})
+
+      // Should have retried and succeeded
+      expect(mockRepo.addFolder).toHaveBeenCalledTimes(7)
+      expect(result.current.folders).toHaveLength(7)
+    })
+  })
+
+  // ── Seeding edge cases ──
+
+  describe('folder seeding — edge cases', () => {
+    it('does not double-seed when snapshot fires again during async seeding', async () => {
+      // Simulate: first snapshot triggers seeding (async), second snapshot arrives
+      // while seeding is still in progress. Should not start a second seeding round.
+      let resolveAddFolder: (() => void) | null = null
+      let addFolderCallCount = 0
+
+      mockRepo.addFolder.mockImplementation(async (input: Partial<DocFolder>) => {
+        addFolderCallCount++
+        // First call blocks until we manually resolve it
+        if (addFolderCallCount <= 7) {
+          await new Promise<void>(resolve => { resolveAddFolder = resolve })
+        }
+        return { id: `folder-${addFolderCallCount}`, ...input, createdAt: '2026-04-12T00:00:00Z' }
+      })
+
+      folderSnapshotCallback = null
+      documentSnapshotCallback = null
+      renderHook(() => useDocuments(), { wrapper })
+
+      // Wait for initial render + first snapshot (empty → seeding starts)
+      await act(async () => {})
+
+      // Seeding is in progress (addFolder is blocking). Fire another empty snapshot.
+      await act(async () => {
+        folderSnapshotCallback?.({ docs: [] })
+      })
+
+      // Resolve the blocked addFolder calls
+      await act(async () => {
+        resolveAddFolder?.()
+      })
+
+      // Only 7 calls total (one seeding round), not 14
+      expect(addFolderCallCount).toBe(7)
+    })
+
+    it('skips seeding when user creates a folder manually on empty collection', async () => {
+      // After initial empty snapshot triggers seeding, user creates a folder.
+      // When the next snapshot arrives with user's folder, seeding should not run again.
+      const { result } = await setupHook()
+      mockRepo.addFolder.mockClear()
+
+      // User manually creates a folder
+      await act(async () => {
+        await result.current.addFolder('My Folder', '📁')
+      })
+
+      // Simulate snapshot arriving with user's folder
+      const userFolder = makeFolder({ id: 'user-folder', name: 'My Folder' })
+      await act(async () => {
+        folderSnapshotCallback?.({
+          docs: [firestoreDoc(userFolder as unknown as Record<string, unknown> & { id: string })],
+        })
+      })
+
+      // addFolder was called once (for user's manual creation), not 7 more times
+      expect(mockRepo.addFolder).toHaveBeenCalledTimes(1)
+    })
+
+    it('fallback seeding sets translationKey on all 7 default folders', async () => {
+      // When fallback seeding triggers (empty collection), verify translationKeys are correct
+      folderSnapshotCallback = null
+      documentSnapshotCallback = null
+      const { result } = renderHook(() => useDocuments(), { wrapper })
+      await act(async () => {})
+
+      // addFolder should have been called with translationKey for each default
+      const calls = mockRepo.addFolder.mock.calls
+      expect(calls).toHaveLength(7)
+      const keys = calls.map(([input]: [Partial<DocFolder>]) => input.translationKey).sort()
+      expect(keys).toEqual(['inspections', 'insurance', 'mortgage', 'other', 'property', 'purchase', 'tax'])
+    })
+  })
+
   // ── translationKey — dynamic folder name i18n ──
 
   describe('translationKey', () => {
