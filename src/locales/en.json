@@ -104,6 +104,8 @@
     "totalHouseCost": "Total House Cost",
     "expenseCount_one": "{{count}} expense ({{total}})",
     "expenseCount_other": "{{count}} expenses ({{total}})",
+    "paidAmount": "{{total}} paid",
+    "unpaidAmount": "{{total}} unpaid",
     "mortgageAmount": "Mortgage ({{total}})",
     "byCategory": "By Category",
     "spendingByMonth": "Spending by Month",
@@ -129,7 +131,9 @@
     "category": "Category",
     "clearAllFilters": "Clear all filters",
     "allCategories": "All categories",
-    "allMembers": "All members"
+    "allMembers": "All members",
+    "status": "Status",
+    "allStatuses": "All"
   },
   "expenses": {
     "title": "Expenses",
@@ -156,7 +160,13 @@
     "clearFilters": "Clear filters",
     "failedToSave": "Failed to save expense. Please try again.",
     "failedToUpdate": "Failed to update expense. Please try again.",
-    "selectWhoPaid": "Select who paid"
+    "selectWhoPaid": "Select who paid",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "markAsPaid": "Mark as paid",
+    "markAsUnpaid": "Mark as unpaid",
+    "paidStatus": "Already paid",
+    "unpaidStatus": "Not yet paid — a planned or expected cost"
   },
   "files": {
     "dropOrBrowse": "Drop files here or <1>browse</1>",

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { PayerSelect } from './PayerSelect'
 import { FileDropZone } from './FileDropZone'
+import { Switch } from '@/components/ui/switch'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { EXPENSE_CATEGORIES, SHARED_PAYER } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -24,6 +25,7 @@ function createExpenseSchema(t: (key: string) => string) {
     payer: z.string().min(1, t('common.required')),
     description: z.string().optional(),
     date: z.string().min(1, t('common.required')),
+    paid: z.boolean(),
   })
 }
 
@@ -54,6 +56,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
       payer: defaultPayer,
       description: '',
       date: format(new Date(), 'yyyy-MM-dd'),
+      paid: true,
       ...defaultValues,
     },
   })
@@ -66,6 +69,7 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
         payer: data.payer,
         description: data.description ?? '',
         date: data.date,
+        paid: data.paid,
       },
       files
     )
@@ -141,6 +145,26 @@ export function ExpenseForm({ onSubmit, defaultValues, hideAttachments, submitLa
         <Label htmlFor="description">{t('expenses.description')}</Label>
         <Input id="description" placeholder={t('expenses.descriptionPlaceholder')} {...register('description')} />
       </div>
+
+      <Controller
+        name="paid"
+        control={control}
+        render={({ field }) => (
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="paid" className="cursor-pointer">{field.value ? t('expenses.paid') : t('expenses.unpaid')}</Label>
+              <p className="text-xs text-muted-foreground">
+                {field.value ? t('expenses.paidStatus') : t('expenses.unpaidStatus')}
+              </p>
+            </div>
+            <Switch
+              id="paid"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          </div>
+        )}
+      />
 
       {!hideAttachments && (
         <div className="space-y-2">

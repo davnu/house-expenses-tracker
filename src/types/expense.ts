@@ -30,6 +30,7 @@ export interface Expense {
   payer: string // uid of household member, or 'shared' for jointly-paid expenses
   description: string
   date: string // YYYY-MM-DD
+  paid?: boolean // defaults to true; false = planned/expected cost not yet paid
   attachments?: Attachment[]
   createdAt: string
   updatedAt: string

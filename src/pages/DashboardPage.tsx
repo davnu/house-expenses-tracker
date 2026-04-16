@@ -22,7 +22,7 @@ import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { getMortgageStats } from '@/lib/mortgage-utils'
-import { applyFilters, type DashboardFilters as Filters } from '@/lib/expense-utils'
+import { applyFilters, isExpensePaid, type DashboardFilters as Filters } from '@/lib/expense-utils'
 import type { ExpenseCategory } from '@/types/expense'
 
 export function DashboardPage() {
@@ -41,6 +41,8 @@ export function DashboardPage() {
     () => [...new Set(expenses.map((e) => e.category))] as ExpenseCategory[],
     [expenses]
   )
+
+  const hasUnpaid = useMemo(() => expenses.some((e) => !isExpensePaid(e)), [expenses])
 
   const mortgagePaid = useMemo(() => {
     if (!mortgage) return 0
@@ -85,6 +87,7 @@ export function DashboardPage() {
             filters={filters}
             onChange={setFilters}
             usedCategories={usedCategories}
+            hasUnpaid={hasUnpaid}
           />
         )}
 

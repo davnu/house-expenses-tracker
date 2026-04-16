@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal, Loader2 } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Paperclip, Plus, ArrowUpDown, Search, SlidersHorizontal, Loader2, CircleCheck, Circle } from 'lucide-react'
 import { getFileTypeInfo, getExtensionBadgeClasses } from '@/lib/file-type-info'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,8 +11,8 @@ import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { cn, formatCurrency, friendlyError, getDateLocale } from '@/lib/utils'
-import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, getSharedPayerLabel, getCategoryLabel } from '@/lib/constants'
-import { groupExpensesByMonth } from '@/lib/expense-utils'
+import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, UNPAID_BADGE_CLASSES, getSharedPayerLabel, getCategoryLabel } from '@/lib/constants'
+import { groupExpensesByMonth, isExpensePaid } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
 
@@ -30,16 +30,17 @@ interface ExpenseListProps {
 
 export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseListProps) {
   const { t } = useTranslation()
-  const { expenses, deleteExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
+  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
   const isMultiMember = members.length > 1
   const [filterCategory, setFilterCategory] = useState('')
   const [filterPayer, setFilterPayer] = useState('')
   const [filterFrom, setFilterFrom] = useState('')
   const [filterTo, setFilterTo] = useState('')
+  const [filterStatus, setFilterStatus] = useState<'' | 'paid' | 'unpaid'>('')
   const [search, setSearch] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category' | 'payer'>('date')
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'category' | 'payer' | 'status'>('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
@@ -71,6 +72,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
       setFilterPayer('')
       setFilterFrom('')
       setFilterTo('')
+      setFilterStatus('')
       setSearch('')
     }
   }, [highlightExpenseId])
@@ -120,6 +122,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
       .filter((e) => !filterPayer || e.payer === filterPayer)
       .filter((e) => !filterFrom || e.date >= filterFrom)
       .filter((e) => !filterTo || e.date <= filterTo)
+      .filter((e) => !filterStatus || (filterStatus === 'paid' ? isExpensePaid(e) : !isExpensePaid(e)))
       .filter((e) => !search || e.description.toLowerCase().includes(searchLower) || getCategoryLabel(e.category).toLowerCase().includes(searchLower))
       .sort((a, b) => {
         const dir = sortDir === 'asc' ? 1 : -1
@@ -127,14 +130,18 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
           case 'amount': return (a.amount - b.amount) * dir
           case 'category': return a.category.localeCompare(b.category) * dir
           case 'payer': return getMemberName(a.payer).localeCompare(getMemberName(b.payer)) * dir
+          case 'status': {
+            const s = (Number(isExpensePaid(a)) - Number(isExpensePaid(b))) * dir
+            return s !== 0 ? s : b.date.localeCompare(a.date) // secondary: newest first
+          }
           default: return a.date.localeCompare(b.date) * dir
         }
       })
-  }, [expenses, filterCategory, filterPayer, filterFrom, filterTo, search, sortBy, sortDir, getMemberName])
+  }, [expenses, filterCategory, filterPayer, filterFrom, filterTo, filterStatus, search, sortBy, sortDir, getMemberName])
 
   const filteredTotal = useMemo(() => filtered.reduce((s, e) => s + e.amount, 0), [filtered])
-  const hasFilters = filterCategory || filterPayer || filterFrom || filterTo
-  const activeFilterCount = [filterCategory, filterPayer, filterFrom, filterTo].filter(Boolean).length
+  const hasFilters = filterCategory || filterPayer || filterFrom || filterTo || filterStatus
+  const activeFilterCount = [filterCategory, filterPayer, filterFrom, filterTo, filterStatus].filter(Boolean).length
 
   // Group by month when sorting by date (the default "daily check" view)
   const shouldGroup = sortBy === 'date'
@@ -184,15 +191,22 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
     setFilterPayer('')
     setFilterFrom('')
     setFilterTo('')
+    setFilterStatus('')
     setSearch('')
   }
 
   // ── Expense row (shared between grouped and flat views) ──
 
+  const togglePaid = useCallback((expense: Expense) => {
+    const newPaid = !isExpensePaid(expense)
+    withErrorHandling(async () => updateExpense(expense.id, { paid: newPaid }))
+  }, [updateExpense, withErrorHandling])
+
   const renderExpenseRow = (expense: Expense) => {
     const isPendingExpense = pendingExpenseIds.has(expense.id)
     const isHighlighted = activeHighlight === expense.id
     const categoryColor = CATEGORY_COLORS[expense.category] || '#6b7280'
+    const paid = isExpensePaid(expense)
     return (
       <div
         key={expense.id}
@@ -202,14 +216,35 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
           'transition-[background-color,box-shadow] duration-500',
           isPendingExpense ? 'opacity-60' : 'hover:bg-accent/50',
           isHighlighted && 'ring-2 ring-primary bg-primary/5',
+          !paid && 'border-dashed',
         )}
         style={{ borderLeftColor: categoryColor }}
       >
+        {/* Paid toggle */}
+        <button
+          className={cn(
+            'shrink-0 p-1.5 -m-1.5 rounded-full transition-colors cursor-pointer',
+            isPendingExpense && 'pointer-events-none',
+            paid ? 'text-primary hover:text-primary/70' : 'text-amber-500 hover:text-amber-600',
+          )}
+          onClick={() => togglePaid(expense)}
+          title={paid ? t('expenses.markAsUnpaid') : t('expenses.markAsPaid')}
+        >
+          {paid
+            ? <CircleCheck className="h-5 w-5" />
+            : <Circle className="h-5 w-5" />}
+        </button>
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold">{formatCurrency(expense.amount)}</span>
+            <span className={cn('font-semibold', !paid && 'text-muted-foreground')}>{formatCurrency(expense.amount)}</span>
             <span className="text-sm text-muted-foreground">{format(new Date(expense.date), 'MMM d, yyyy', { locale: getDateLocale() })}</span>
             <Badge variant="secondary">{getCategoryLabel(expense.category)}</Badge>
+            {!paid && (
+              <Badge variant="outline" className={UNPAID_BADGE_CLASSES}>
+                {t('expenses.unpaid')}
+              </Badge>
+            )}
             {isMultiMember && (
               <Badge variant="outline" className="gap-1">
                 <span
@@ -368,6 +403,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
             <option value="amount">{t('common.amount')}</option>
             <option value="category">{t('filters.category')}</option>
             {isMultiMember && <option value="payer">{t('expenses.member')}</option>}
+            <option value="status">{t('filters.status')}</option>
           </Select>
           <Button
             size="icon"
@@ -407,6 +443,15 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
               ))}
             </Select>
           )}
+          <Select
+            className="w-[calc(50%-4px)] sm:w-32"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+          >
+            <option value="">{t('filters.allStatuses')}</option>
+            <option value="paid">{t('expenses.paid')}</option>
+            <option value="unpaid">{t('expenses.unpaid')}</option>
+          </Select>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-xs text-muted-foreground shrink-0">{t('common.from')}</span>
             <Input

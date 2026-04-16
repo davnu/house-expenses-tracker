@@ -104,6 +104,8 @@
     "totalHouseCost": "Coste total de la casa",
     "expenseCount_one": "{{count}} gasto ({{total}})",
     "expenseCount_other": "{{count}} gastos ({{total}})",
+    "paidAmount": "{{total}} pagado",
+    "unpaidAmount": "{{total}} pendiente",
     "mortgageAmount": "Hipoteca ({{total}})",
     "byCategory": "Por categoría",
     "spendingByMonth": "Gastos por mes",
@@ -129,7 +131,9 @@
     "category": "Categoría",
     "clearAllFilters": "Limpiar todos los filtros",
     "allCategories": "Todas las categorías",
-    "allMembers": "Todos los miembros"
+    "allMembers": "Todos los miembros",
+    "status": "Estado",
+    "allStatuses": "Todos"
   },
   "expenses": {
     "title": "Gastos",
@@ -156,7 +160,13 @@
     "clearFilters": "Limpiar filtros",
     "failedToSave": "Error al guardar el gasto. Inténtalo de nuevo.",
     "failedToUpdate": "Error al actualizar el gasto. Inténtalo de nuevo.",
-    "selectWhoPaid": "Selecciona quién pagó"
+    "selectWhoPaid": "Selecciona quién pagó",
+    "paid": "Pagado",
+    "unpaid": "Pendiente",
+    "markAsPaid": "Marcar como pagado",
+    "markAsUnpaid": "Marcar como pendiente",
+    "paidStatus": "Ya pagado",
+    "unpaidStatus": "Aún no pagado — un gasto previsto"
   },
   "files": {
     "dropOrBrowse": "Arrastra archivos aquí o <1>selecciona</1>",

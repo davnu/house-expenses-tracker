@@ -26,6 +26,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
         payer: data.payer,
         description: data.description,
         date: data.date,
+        paid: data.paid,
       })
       onOpenChange(false)
     } catch (err) {
@@ -50,6 +51,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
             payer: expense.payer,
             description: expense.description,
             date: expense.date,
+            paid: expense.paid !== false,
           }}
           hideAttachments
           submitLabel={t('expenses.saveChanges')}

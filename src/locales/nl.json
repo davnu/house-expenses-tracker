@@ -104,6 +104,8 @@
     "totalHouseCost": "Totale woningkosten",
     "expenseCount_one": "{{count}} uitgave ({{total}})",
     "expenseCount_other": "{{count}} uitgaven ({{total}})",
+    "paidAmount": "{{total}} betaald",
+    "unpaidAmount": "{{total}} openstaand",
     "mortgageAmount": "Hypotheek ({{total}})",
     "byCategory": "Per categorie",
     "spendingByMonth": "Uitgaven per maand",
@@ -129,7 +131,9 @@
     "category": "Categorie",
     "clearAllFilters": "Alle filters wissen",
     "allCategories": "Alle categorieën",
-    "allMembers": "Alle leden"
+    "allMembers": "Alle leden",
+    "status": "Status",
+    "allStatuses": "Alle"
   },
   "expenses": {
     "title": "Uitgaven",
@@ -156,7 +160,13 @@
     "clearFilters": "Filters wissen",
     "failedToSave": "Uitgave opslaan mislukt. Probeer het opnieuw.",
     "failedToUpdate": "Uitgave bijwerken mislukt. Probeer het opnieuw.",
-    "selectWhoPaid": "Selecteer wie heeft betaald"
+    "selectWhoPaid": "Selecteer wie heeft betaald",
+    "paid": "Betaald",
+    "unpaid": "Openstaand",
+    "markAsPaid": "Markeer als betaald",
+    "markAsUnpaid": "Markeer als openstaand",
+    "paidStatus": "Al betaald",
+    "unpaidStatus": "Nog niet betaald — een geplande uitgave"
   },
   "files": {
     "dropOrBrowse": "Sleep bestanden hierheen of <1>blader</1>",

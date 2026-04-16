@@ -251,6 +251,53 @@ describe('Full house creation and invite flow', () => {
     await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}`).delete())
   })
 
+  it('expense with paid field can be created, read, and toggled', async () => {
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const aliceDb = alice.firestore()
+
+    // Setup house
+    await aliceDb.doc(`houses/${HOUSE_ID}`).set({
+      name: 'Casa Bella', ownerId: 'alice', memberIds: ['alice'], createdAt: new Date().toISOString(),
+    })
+    await aliceDb.doc(`houses/${HOUSE_ID}/members/alice`).set({
+      displayName: 'Alice', email: 'alice@test.com', color: '#3b82f6', role: 'owner', joinedAt: new Date().toISOString(),
+    })
+
+    // Create a paid expense (explicit paid: true)
+    const paidRef = await assertSucceeds(
+      aliceDb.collection(`houses/${HOUSE_ID}/expenses`).add({
+        amount: 250000, category: 'notary_legal', payer: 'alice', description: 'Notary fees',
+        date: '2025-07-15', paid: true,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    )
+
+    // Create an unpaid expense
+    const unpaidRef = await assertSucceeds(
+      aliceDb.collection(`houses/${HOUSE_ID}/expenses`).add({
+        amount: 50000, category: 'home_inspection', payer: 'alice', description: 'Upcoming inspection',
+        date: '2025-08-01', paid: false,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      })
+    )
+
+    // Read and verify paid status
+    const paidSnap = await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/expenses/${paidRef.id}`).get())
+    expect(paidSnap.data()?.paid).toBe(true)
+
+    const unpaidSnap = await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/expenses/${unpaidRef.id}`).get())
+    expect(unpaidSnap.data()?.paid).toBe(false)
+
+    // Toggle unpaid to paid via update
+    await assertSucceeds(
+      aliceDb.doc(`houses/${HOUSE_ID}/expenses/${unpaidRef.id}`).update({
+        paid: true, updatedAt: new Date().toISOString(),
+      })
+    )
+    const toggledSnap = await assertSucceeds(aliceDb.doc(`houses/${HOUSE_ID}/expenses/${unpaidRef.id}`).get())
+    expect(toggledSnap.data()?.paid).toBe(true)
+  })
+
   it('outsider cannot access house data even with known house ID', async () => {
     // Seed a house with Alice
     await testEnv.withSecurityRulesDisabled(async (ctx) => {

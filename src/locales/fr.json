@@ -104,6 +104,8 @@
     "totalHouseCost": "Coût total du logement",
     "expenseCount_one": "{{count}} dépense ({{total}})",
     "expenseCount_other": "{{count}} dépenses ({{total}})",
+    "paidAmount": "{{total}} payé",
+    "unpaidAmount": "{{total}} à payer",
     "mortgageAmount": "Prêt immobilier ({{total}})",
     "byCategory": "Par catégorie",
     "spendingByMonth": "Dépenses par mois",
@@ -129,7 +131,9 @@
     "category": "Catégorie",
     "clearAllFilters": "Effacer tous les filtres",
     "allCategories": "Toutes les catégories",
-    "allMembers": "Tous les membres"
+    "allMembers": "Tous les membres",
+    "status": "Statut",
+    "allStatuses": "Tous"
   },
   "expenses": {
     "title": "Dépenses",
@@ -156,7 +160,13 @@
     "clearFilters": "Effacer les filtres",
     "failedToSave": "Impossible d'enregistrer la dépense. Veuillez réessayer.",
     "failedToUpdate": "Impossible de mettre à jour la dépense. Veuillez réessayer.",
-    "selectWhoPaid": "Sélectionner le payeur"
+    "selectWhoPaid": "Sélectionner le payeur",
+    "paid": "Payé",
+    "unpaid": "À payer",
+    "markAsPaid": "Marquer comme payé",
+    "markAsUnpaid": "Marquer comme à payer",
+    "paidStatus": "Déjà payé",
+    "unpaidStatus": "Pas encore payé — une dépense prévue"
   },
   "files": {
     "dropOrBrowse": "Dépose des fichiers ici ou <1>parcourir</1>",

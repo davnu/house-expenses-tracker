@@ -4,8 +4,9 @@ import { Link } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useHousehold } from '@/context/HouseholdContext'
-import { formatCurrency, getDateLocale } from '@/lib/utils'
-import { getCategoryLabel } from '@/lib/constants'
+import { cn, formatCurrency, getDateLocale } from '@/lib/utils'
+import { getCategoryLabel, UNPAID_BADGE_CLASSES } from '@/lib/constants'
+import { isExpensePaid } from '@/lib/expense-utils'
 import { ArrowRight } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Expense } from '@/types/expense'
@@ -57,6 +58,11 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                     {getCategoryLabel(expense.category)}
                   </Badge>
+                  {!isExpensePaid(expense) && (
+                    <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', UNPAID_BADGE_CLASSES)}>
+                      {t('expenses.unpaid')}
+                    </Badge>
+                  )}
                 </div>
                 {expense.description && (
                   <p className="text-xs text-muted-foreground truncate">{expense.description}</p>

@@ -104,6 +104,8 @@
     "totalHouseCost": "Gesamte Hauskosten",
     "expenseCount_one": "{{count}} Ausgabe ({{total}})",
     "expenseCount_other": "{{count}} Ausgaben ({{total}})",
+    "paidAmount": "{{total}} bezahlt",
+    "unpaidAmount": "{{total}} ausstehend",
     "mortgageAmount": "Hypothek ({{total}})",
     "byCategory": "Nach Kategorie",
     "spendingByMonth": "Ausgaben nach Monat",
@@ -129,7 +131,9 @@
     "category": "Kategorie",
     "clearAllFilters": "Alle Filter zurücksetzen",
     "allCategories": "Alle Kategorien",
-    "allMembers": "Alle Mitglieder"
+    "allMembers": "Alle Mitglieder",
+    "status": "Status",
+    "allStatuses": "Alle"
   },
   "expenses": {
     "title": "Ausgaben",
@@ -156,7 +160,13 @@
     "clearFilters": "Filter zurücksetzen",
     "failedToSave": "Ausgabe konnte nicht gespeichert werden. Bitte versuche es erneut.",
     "failedToUpdate": "Ausgabe konnte nicht aktualisiert werden. Bitte versuche es erneut.",
-    "selectWhoPaid": "Wähle aus, wer bezahlt hat"
+    "selectWhoPaid": "Wähle aus, wer bezahlt hat",
+    "paid": "Bezahlt",
+    "unpaid": "Ausstehend",
+    "markAsPaid": "Als bezahlt markieren",
+    "markAsUnpaid": "Als ausstehend markieren",
+    "paidStatus": "Bereits bezahlt",
+    "unpaidStatus": "Noch nicht bezahlt — eine geplante Ausgabe"
   },
   "files": {
     "dropOrBrowse": "Dateien hierher ziehen oder <1>durchsuchen</1>",

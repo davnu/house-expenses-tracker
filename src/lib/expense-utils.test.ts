@@ -4,6 +4,8 @@ import {
   filterByDateRange,
   filterByCategory,
   filterBySearch,
+  filterByStatus,
+  isExpensePaid,
   applyFilters,
   groupExpensesByMonth,
 } from './expense-utils'
@@ -336,5 +338,111 @@ describe('shared payer filtering', () => {
     expect(applyFilters(allShared, {})).toHaveLength(2)
     expect(applyFilters(allShared, { payer: SHARED_PAYER })).toHaveLength(2)
     expect(applyFilters(allShared, { payer: 'alice' })).toHaveLength(0)
+  })
+})
+
+// ── isExpensePaid ──────────────────────────────────
+
+describe('isExpensePaid', () => {
+  it('treats undefined paid field as paid (backward compatibility)', () => {
+    expect(isExpensePaid(expense())).toBe(true)
+  })
+
+  it('treats paid=true as paid', () => {
+    expect(isExpensePaid(expense({ paid: true }))).toBe(true)
+  })
+
+  it('treats paid=false as unpaid', () => {
+    expect(isExpensePaid(expense({ paid: false }))).toBe(false)
+  })
+})
+
+// ── filterByStatus ─────────────────────────────────
+
+describe('filterByStatus', () => {
+  const mixedPaid: Expense[] = [
+    expense({ id: 'p1', paid: true }),
+    expense({ id: 'p2', paid: false }),
+    expense({ id: 'p3' }), // undefined = paid
+    expense({ id: 'p4', paid: false }),
+  ]
+
+  it('filters paid expenses', () => {
+    const result = filterByStatus(mixedPaid, 'paid')
+    expect(result).toHaveLength(2)
+    expect(result.map((e) => e.id)).toEqual(['p1', 'p3'])
+  })
+
+  it('filters unpaid expenses', () => {
+    const result = filterByStatus(mixedPaid, 'unpaid')
+    expect(result).toHaveLength(2)
+    expect(result.map((e) => e.id)).toEqual(['p2', 'p4'])
+  })
+
+  it('all paid when none unpaid', () => {
+    const allPaid: Expense[] = [
+      expense({ id: 'a1', paid: true }),
+      expense({ id: 'a2' }),
+    ]
+    expect(filterByStatus(allPaid, 'paid')).toHaveLength(2)
+    expect(filterByStatus(allPaid, 'unpaid')).toHaveLength(0)
+  })
+
+  it('all unpaid when all marked false', () => {
+    const allUnpaid: Expense[] = [
+      expense({ id: 'u1', paid: false }),
+      expense({ id: 'u2', paid: false }),
+    ]
+    expect(filterByStatus(allUnpaid, 'unpaid')).toHaveLength(2)
+    expect(filterByStatus(allUnpaid, 'paid')).toHaveLength(0)
+  })
+})
+
+// ── applyFilters with status ────────────────────────
+
+describe('applyFilters with status', () => {
+  const statusExpenses: Expense[] = [
+    expense({ id: 's1', payer: 'alice', category: 'notary_legal', date: '2025-07-15', paid: true }),
+    expense({ id: 's2', payer: 'alice', category: 'taxes', date: '2025-07-20', paid: false }),
+    expense({ id: 's3', payer: 'bob', category: 'notary_legal', date: '2025-08-01', paid: false }),
+    expense({ id: 's4', payer: 'bob', category: 'taxes', date: '2025-08-15' }), // undefined = paid
+  ]
+
+  it('applies status filter alone', () => {
+    expect(applyFilters(statusExpenses, { status: 'paid' })).toHaveLength(2)
+    expect(applyFilters(statusExpenses, { status: 'unpaid' })).toHaveLength(2)
+  })
+
+  it('returns all when no status filter', () => {
+    expect(applyFilters(statusExpenses, {})).toHaveLength(4)
+  })
+
+  it('combines status with payer', () => {
+    const result = applyFilters(statusExpenses, { status: 'unpaid', payer: 'alice' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('s2')
+  })
+
+  it('combines status with category', () => {
+    const result = applyFilters(statusExpenses, { status: 'paid', category: 'taxes' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('s4')
+  })
+
+  it('combines status with date range', () => {
+    const result = applyFilters(statusExpenses, { status: 'unpaid', dateStart: '2025-08-01' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('s3')
+  })
+
+  it('all filters combined', () => {
+    const result = applyFilters(statusExpenses, {
+      status: 'unpaid',
+      payer: 'bob',
+      dateStart: '2025-08-01',
+      dateEnd: '2025-08-31',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('s3')
   })
 })

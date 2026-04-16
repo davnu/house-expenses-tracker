@@ -14,6 +14,7 @@ interface DashboardFiltersProps {
   filters: Filters
   onChange: (filters: Filters) => void
   usedCategories: ExpenseCategory[]
+  hasUnpaid?: boolean
 }
 
 function getPresetDates(preset: string): { start?: string; end?: string } {
@@ -31,7 +32,7 @@ function getPresetDates(preset: string): { start?: string; end?: string } {
   }
 }
 
-export function DashboardFilters({ filters, onChange, usedCategories }: DashboardFiltersProps) {
+export function DashboardFilters({ filters, onChange, usedCategories, hasUnpaid }: DashboardFiltersProps) {
   const { t } = useTranslation()
   const { members } = useHousehold()
   const [expanded, setExpanded] = useState(false)
@@ -45,7 +46,7 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
     { label: t('filters.custom'), value: 'custom' },
   ]
 
-  const activeCount = [filters.dateStart, filters.payer, filters.category].filter(Boolean).length
+  const activeCount = [filters.dateStart, filters.payer, filters.category, filters.status].filter(Boolean).length
 
   const setDateFilter = (preset: string) => {
     setDatePreset(preset)
@@ -205,6 +206,46 @@ export function DashboardFilters({ filters, onChange, usedCategories }: Dashboar
               </div>
             </div>
           )}
+
+          {/* Status — only show when there are unpaid expenses */}
+          {hasUnpaid && <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">{t('filters.status')}</p>
+            <div className="flex gap-1.5 flex-wrap">
+              <button
+                onClick={() => onChange({ ...filters, status: undefined })}
+                className={cn(
+                  'text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer',
+                  !filters.status
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-input hover:bg-accent'
+                )}
+              >
+                {t('filters.allStatuses')}
+              </button>
+              <button
+                onClick={() => onChange({ ...filters, status: filters.status === 'paid' ? undefined : 'paid' })}
+                className={cn(
+                  'text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer',
+                  filters.status === 'paid'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-input hover:bg-accent'
+                )}
+              >
+                {t('expenses.paid')}
+              </button>
+              <button
+                onClick={() => onChange({ ...filters, status: filters.status === 'unpaid' ? undefined : 'unpaid' })}
+                className={cn(
+                  'text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer',
+                  filters.status === 'unpaid'
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'border-input hover:bg-accent'
+                )}
+              >
+                {t('expenses.unpaid')}
+              </button>
+            </div>
+          </div>}
 
           {/* Clear all */}
           {activeCount > 0 && (

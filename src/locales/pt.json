@@ -104,6 +104,8 @@
     "totalHouseCost": "Custo Total da Casa",
     "expenseCount_one": "{{count}} despesa ({{total}})",
     "expenseCount_other": "{{count}} despesas ({{total}})",
+    "paidAmount": "{{total}} pago",
+    "unpaidAmount": "{{total}} pendente",
     "mortgageAmount": "Crédito habitação ({{total}})",
     "byCategory": "Por Categoria",
     "spendingByMonth": "Gastos por Mês",
@@ -129,7 +131,9 @@
     "category": "Categoria",
     "clearAllFilters": "Limpar todos os filtros",
     "allCategories": "Todas as categorias",
-    "allMembers": "Todos os membros"
+    "allMembers": "Todos os membros",
+    "status": "Estado",
+    "allStatuses": "Todos"
   },
   "expenses": {
     "title": "Despesas",
@@ -156,7 +160,13 @@
     "clearFilters": "Limpar filtros",
     "failedToSave": "Não foi possível guardar a despesa. Tenta novamente.",
     "failedToUpdate": "Não foi possível atualizar a despesa. Tenta novamente.",
-    "selectWhoPaid": "Seleciona quem pagou"
+    "selectWhoPaid": "Seleciona quem pagou",
+    "paid": "Pago",
+    "unpaid": "Pendente",
+    "markAsPaid": "Marcar como pago",
+    "markAsUnpaid": "Marcar como pendente",
+    "paidStatus": "Já pago",
+    "unpaidStatus": "Ainda não pago — uma despesa prevista"
   },
   "files": {
     "dropOrBrowse": "Arrasta ficheiros para aqui ou <1>procura</1>",

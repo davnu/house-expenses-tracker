@@ -70,11 +70,21 @@ export function filterBySearch(expenses: Expense[], query: string, categoryLabel
   )
 }
 
+/** Treats undefined/missing `paid` as true (backward-compatible default) */
+export function isExpensePaid(expense: Expense): boolean {
+  return expense.paid !== false
+}
+
+export function filterByStatus(expenses: Expense[], status: 'paid' | 'unpaid'): Expense[] {
+  return expenses.filter((e) => status === 'paid' ? isExpensePaid(e) : !isExpensePaid(e))
+}
+
 export interface DashboardFilters {
   dateStart?: string
   dateEnd?: string
   payer?: string
   category?: ExpenseCategory
+  status?: 'paid' | 'unpaid'
 }
 
 export function applyFilters(expenses: Expense[], filters: DashboardFilters): Expense[] {
@@ -87,6 +97,9 @@ export function applyFilters(expenses: Expense[], filters: DashboardFilters): Ex
   }
   if (filters.category) {
     result = filterByCategory(result, filters.category)
+  }
+  if (filters.status) {
+    result = filterByStatus(result, filters.status)
   }
   return result
 }

@@ -1,8 +1,10 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
 import { Home } from 'lucide-react'
 import { getBudgetStatus, getBudgetStatusColor } from '@/lib/budget-utils'
+import { isExpensePaid } from '@/lib/expense-utils'
 import type { Expense } from '@/types/expense'
 import type { BudgetConfig } from '@/types/budget'
 
@@ -14,7 +16,14 @@ interface TotalCostCardProps {
 
 export function TotalCostCard({ expenses, mortgagePaid, budget }: TotalCostCardProps) {
   const { t } = useTranslation()
-  const expenseTotal = expenses.reduce((s, e) => s + e.amount, 0)
+  const { expenseTotal, unpaidTotal } = useMemo(() => {
+    let total = 0, unpaid = 0
+    for (const e of expenses) {
+      total += e.amount
+      if (!isExpensePaid(e)) unpaid += e.amount
+    }
+    return { expenseTotal: total, unpaidTotal: unpaid }
+  }, [expenses])
   const total = expenseTotal + mortgagePaid
 
   const hasBudget = budget && budget.totalBudget > 0
@@ -53,9 +62,14 @@ export function TotalCostCard({ expenses, mortgagePaid, budget }: TotalCostCardP
           </div>
         )}
 
-        <div className="flex gap-4 mt-3 text-sm text-muted-foreground">
+        <div className="flex gap-4 mt-3 text-sm text-muted-foreground flex-wrap">
           <span>{t('dashboard.expenseCount', { count: expenses.length, total: formatCurrency(expenseTotal) })}</span>
           {mortgagePaid > 0 && <span>{t('dashboard.mortgageAmount', { total: formatCurrency(mortgagePaid) })}</span>}
+          {unpaidTotal > 0 && (
+            <span className="text-amber-600 dark:text-amber-400">
+              {t('dashboard.unpaidAmount', { total: formatCurrency(unpaidTotal) })}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

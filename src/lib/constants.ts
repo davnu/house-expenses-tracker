@@ -80,6 +80,9 @@ export function getSharedPayerLabel(): string { return i18next.t('common.shared'
 /** Translated "Former member" label -- call during render */
 export function getFormerMemberLabel(): string { return i18next.t('common.formerMember') }
 
+// Unpaid badge styling — shared across ExpenseList, RecentExpenses, etc.
+export const UNPAID_BADGE_CLASSES = 'text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800'
+
 export const MEMBER_COLOR_PALETTE = [
   '#2a9d90',
   '#e76e50',
