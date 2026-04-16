@@ -7,7 +7,7 @@ import { BudgetProvider } from '@/context/BudgetContext'
 import { DocumentProvider } from '@/context/DocumentContext'
 import { TodoProvider } from '@/context/TodoContext'
 import { AppShell } from '@/components/layout/AppShell'
-import { LoadingScreen } from '@/components/ui/loading'
+import { LoadingScreen, PageSkeleton } from '@/components/ui/loading'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -26,10 +26,8 @@ import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 function AppRoutes() {
   const { house, houses, userProfile, loading } = useHousehold()
 
-  if (loading) return <LoadingScreen />
-
   // User has no houses — show onboarding
-  if (!house && !userProfile?.houseId && houses.length === 0) {
+  if (!loading && !house && !userProfile?.houseId && houses.length === 0) {
     return (
       <Routes>
         <Route path="*" element={<OnboardingPage />} />
@@ -37,8 +35,17 @@ function AppRoutes() {
     )
   }
 
-  // House doc hasn't loaded yet
-  if (!house) return <LoadingScreen />
+  // Household loading or house doc not ready — show app shell with skeleton content.
+  // The navigation chrome appears instantly; only the content area shows placeholders.
+  if (loading || !house) {
+    return (
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route path="*" element={<PageSkeleton />} />
+        </Route>
+      </Routes>
+    )
+  }
 
   return (
     <ExpenseProvider>

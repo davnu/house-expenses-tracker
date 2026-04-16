@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { LoadingInline } from '@/components/ui/loading'
+import { DocumentsSkeleton } from '@/components/ui/loading'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { FolderView } from '@/components/documents/FolderView'
 import { CreateFolderDialog } from '@/components/documents/CreateFolderDialog'
@@ -208,7 +208,7 @@ export function DocumentsPage() {
     />
   )
 
-  if (loading) return <LoadingInline />
+  if (loading) return <DocumentsSkeleton />
 
   if (liveFolder && !search.trim()) {
     return (

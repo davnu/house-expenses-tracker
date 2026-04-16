@@ -16,6 +16,7 @@ import { QuickAddDialog } from '@/components/expenses/QuickAddDialog'
 import { BudgetSetupDialog } from '@/components/budget/BudgetSetupDialog'
 import { BudgetHealthCard } from '@/components/budget/BudgetHealthCard'
 import { TodoCard } from '@/components/todos/TodoCard'
+import { PageSkeleton } from '@/components/ui/loading'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
@@ -26,8 +27,8 @@ import type { ExpenseCategory } from '@/types/expense'
 
 export function DashboardPage() {
   const { t } = useTranslation()
-  const { expenses } = useExpenses()
-  const { mortgage } = useMortgage()
+  const { expenses, loading: expensesLoading } = useExpenses()
+  const { mortgage, loading: mortgageLoading } = useMortgage()
   const { budget } = useBudget()
   const { house } = useHousehold()
   const [filters, setFilters] = useState<Filters>({})
@@ -48,6 +49,8 @@ export function DashboardPage() {
   }, [mortgage])
 
   const hasData = expenses.length > 0 || mortgage
+
+  if (expensesLoading || mortgageLoading) return <PageSkeleton />
 
   return (
     <>
