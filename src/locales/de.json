@@ -335,7 +335,32 @@
     "recalculated": "(neu berechnet)",
     "asOf": "Stand {{date}}",
     "correctionHint": "Wenn die berechnete Restschuld nicht mit deinem Kontoauszug übereinstimmt, füge hier eine Korrektur hinzu.",
-    "until": "bis {{date}}"
+    "until": "bis {{date}}",
+    "compare": {
+      "title": "Was wäre wenn?",
+      "desc": "Schau dir an, wie ein anderer Zinssatz, eine andere Laufzeit oder Sondertilgungen deine Kosten verändern würden.",
+      "yourMortgage": "Dein Darlehen",
+      "scenario": "Szenario",
+      "difference": "Differenz",
+      "monthlyDiff": "Monatsrate",
+      "interestDiff": "Gesamtzinsen",
+      "timeDiff": "Laufzeit",
+      "morePerMonth": "mehr pro Monat",
+      "lessPerMonth": "weniger pro Monat",
+      "moreInterest": "mehr Zinsen",
+      "lessInterest": "weniger Zinsen",
+      "longerTerm": "längere Tilgung",
+      "shorterTerm": "schneller getilgt",
+      "reset": "Zurücksetzen",
+      "balanceComparison": "Restschuld",
+      "paymentBreakdown": "Tilgung vs Zinsen",
+      "atAGlance": "Jahr für Jahr",
+      "year": "Jahr",
+      "balanceDiff": "Differenz",
+      "paidOff": "Getilgt",
+      "perMonth": "/Mt.",
+      "extraEffect": "Strategie"
+    }
   },
   "budget": {
     "setBudget": "Limits festlegen",

@@ -335,7 +335,32 @@
     "recalculated": "(recalculada)",
     "asOf": "A fecha {{date}}",
     "correctionHint": "Si el saldo calculado no coincide con tu extracto bancario, añade una corrección aquí.",
-    "until": "hasta {{date}}"
+    "until": "hasta {{date}}",
+    "compare": {
+      "title": "Y si...?",
+      "desc": "Mira cómo un tipo de interés, plazo o amortización anticipada diferente cambiaría lo que pagas.",
+      "yourMortgage": "Tu hipoteca",
+      "scenario": "Escenario",
+      "difference": "Diferencia",
+      "monthlyDiff": "Cuota mensual",
+      "interestDiff": "Intereses totales",
+      "timeDiff": "Plazo",
+      "morePerMonth": "más al mes",
+      "lessPerMonth": "menos al mes",
+      "moreInterest": "más en intereses",
+      "lessInterest": "menos en intereses",
+      "longerTerm": "más tiempo pagando",
+      "shorterTerm": "se paga antes",
+      "reset": "Restablecer",
+      "balanceComparison": "Capital pendiente",
+      "paymentBreakdown": "Capital vs intereses",
+      "atAGlance": "Año a año",
+      "year": "Año",
+      "balanceDiff": "Diferencia",
+      "paidOff": "Amortizado",
+      "perMonth": "/mes",
+      "extraEffect": "Estrategia"
+    }
   },
   "budget": {
     "setBudget": "Pon tus límites",

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { getDateLocale } from '@/lib/utils'
+import { getDateLocale, getCurrencySymbol } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { AmortizationRow } from '@/types/mortgage'
 
@@ -41,9 +41,9 @@ export function AmortizationChart({ schedule, currentMonth }: AmortizationChartP
           <AreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${getCurrencySymbol()}${(v / 1000).toFixed(0)}k`} />
             <Tooltip
-              formatter={(value) => `€${Number(value).toLocaleString()}`}
+              formatter={(value) => `${getCurrencySymbol()}${Number(value).toLocaleString()}`}
               labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() })}
             />
             <Area

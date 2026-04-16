@@ -58,6 +58,14 @@ export function formatCurrency(cents: number, currency?: string): string {
   }).format(cents / 100)
 }
 
+/** Returns just the currency symbol (e.g. "€", "£", "$") for use in chart axis labels */
+export function getCurrencySymbol(): string {
+  return new Intl.NumberFormat(_currencyLocale, {
+    style: 'currency',
+    currency: _defaultCurrency,
+  }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? _defaultCurrency
+}
+
 export function parseCurrencyInput(value: string): number {
   const num = parseFloat(value)
   if (isNaN(num)) return 0

@@ -111,3 +111,20 @@ export interface MortgageImpact {
   originalTotalInterest: number // cents
   newTotalInterest: number // cents
 }
+
+export interface ComparisonScenario {
+  principal: number // cents
+  annualRate: number // e.g. 3.5
+  termYears: number
+  amortizationType: AmortizationType
+  extraRepayments: ExtraRepayment[]
+}
+
+export interface ComparisonResult {
+  monthlyPayment: number // cents (first month for Italian)
+  totalInterest: number // cents
+  totalPayments: number // cents
+  totalMonths: number
+  payoffDate: string // YYYY-MM
+  schedule: AmortizationRow[]
+}

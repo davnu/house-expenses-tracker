@@ -1,11 +1,49 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts'
+import type { TooltipProps } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { getDateLocale } from '@/lib/utils'
+import { getDateLocale, getCurrencySymbol } from '@/lib/utils'
 import { format } from 'date-fns'
 import type { AmortizationRow } from '@/types/mortgage'
+
+export function PaymentTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  const { t } = useTranslation()
+  if (!active || !payload?.length) return null
+
+  const principal = payload.find((p) => p.dataKey === 'principal')?.value ?? 0
+  const interest = payload.find((p) => p.dataKey === 'interest')?.value ?? 0
+  const total = principal + interest
+  const sym = getCurrencySymbol()
+  const dateStr = label ? format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() }) : ''
+
+  return (
+    <div className="rounded-lg border bg-background p-2.5 shadow-md text-xs">
+      <p className="font-medium mb-1.5">{dateStr}</p>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#2a9d90]" />
+            {t('mortgage.principal')}
+          </span>
+          <span className="tabular-nums">{sym}{Number(principal).toLocaleString()}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[#e76e50]" />
+            {t('mortgage.interest')}
+          </span>
+          <span className="tabular-nums">{sym}{Number(interest).toLocaleString()}</span>
+        </div>
+        <div className="border-t pt-1 flex items-center justify-between gap-4 font-medium">
+          <span>{t('mortgage.payment')}</span>
+          <span className="tabular-nums">{sym}{Number(total).toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface PaymentBreakdownChartProps {
   schedule: AmortizationRow[]
@@ -42,13 +80,8 @@ export function PaymentBreakdownChart({ schedule, currentMonth }: PaymentBreakdo
           <AreaChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} />
-            <Tooltip
-              formatter={(value, name) =>
-                [`€${Number(value).toLocaleString()}`, String(name) === 'principal' ? t('mortgage.principal') : t('mortgage.interest')]
-              }
-              labelFormatter={(label) => format(new Date(label + '-01'), 'MMM yyyy', { locale: getDateLocale() })}
-            />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${getCurrencySymbol()}${v}`} />
+            <Tooltip content={<PaymentTooltip />} />
             <Legend formatter={(value) => value === 'principal' ? t('mortgage.principal') : t('mortgage.interest')} />
             <Area
               type="monotone"

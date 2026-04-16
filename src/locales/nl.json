@@ -335,7 +335,32 @@
     "recalculated": "(herberekend)",
     "asOf": "Per {{date}}",
     "correctionHint": "Als het berekende saldo niet overeenkomt met je bankafschrift, voeg hier een correctie toe.",
-    "until": "tot {{date}}"
+    "until": "tot {{date}}",
+    "compare": {
+      "title": "Wat als?",
+      "desc": "Bekijk hoe een andere rente, looptijd of extra aflossingen je maandlasten en totale kosten beïnvloeden.",
+      "yourMortgage": "Jouw hypotheek",
+      "scenario": "Scenario",
+      "difference": "Verschil",
+      "monthlyDiff": "Maandlast",
+      "interestDiff": "Totale rente",
+      "timeDiff": "Looptijd",
+      "morePerMonth": "meer per maand",
+      "lessPerMonth": "minder per maand",
+      "moreInterest": "meer rente",
+      "lessInterest": "minder rente",
+      "longerTerm": "langer aflossen",
+      "shorterTerm": "eerder afgelost",
+      "reset": "Herstellen",
+      "balanceComparison": "Restschuld",
+      "paymentBreakdown": "Aflossing vs rente",
+      "atAGlance": "Jaar na jaar",
+      "year": "Jaar",
+      "balanceDiff": "Verschil",
+      "paidOff": "Afgelost",
+      "perMonth": "/mnd",
+      "extraEffect": "Strategie"
+    }
   },
   "budget": {
     "setBudget": "Stel je limieten in",

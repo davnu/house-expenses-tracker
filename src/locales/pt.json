@@ -335,7 +335,32 @@
     "recalculated": "(recalculada)",
     "asOf": "Em {{date}}",
     "correctionHint": "Se o saldo calculado não coincidir com o teu extrato bancário, adiciona uma correção aqui.",
-    "until": "até {{date}}"
+    "until": "até {{date}}",
+    "compare": {
+      "title": "E se...?",
+      "desc": "Vê como uma taxa, um prazo ou amortizações antecipadas diferentes mudariam o que pagas.",
+      "yourMortgage": "O teu crédito",
+      "scenario": "Cenário",
+      "difference": "Diferença",
+      "monthlyDiff": "Prestação mensal",
+      "interestDiff": "Juros totais",
+      "timeDiff": "Prazo",
+      "morePerMonth": "mais por mês",
+      "lessPerMonth": "menos por mês",
+      "moreInterest": "mais em juros",
+      "lessInterest": "menos em juros",
+      "longerTerm": "mais tempo a pagar",
+      "shorterTerm": "liquidado mais cedo",
+      "reset": "Repor",
+      "balanceComparison": "Capital em dívida",
+      "paymentBreakdown": "Capital vs juros",
+      "atAGlance": "Ano a ano",
+      "year": "Ano",
+      "balanceDiff": "Diferença",
+      "paidOff": "Liquidado",
+      "perMonth": "/mês",
+      "extraEffect": "Estratégia"
+    }
   },
   "budget": {
     "setBudget": "Definir limites",

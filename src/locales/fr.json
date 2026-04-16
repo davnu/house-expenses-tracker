@@ -335,7 +335,32 @@
     "recalculated": "(recalculé)",
     "asOf": "Au {{date}}",
     "correctionHint": "Si le solde calculé ne correspond pas à ton relevé bancaire, ajoute une correction ici.",
-    "until": "jusqu'au {{date}}"
+    "until": "jusqu'au {{date}}",
+    "compare": {
+      "title": "Et si... ?",
+      "desc": "Regarde comment un taux, une durée ou des remboursements anticipés différents changeraient ce que tu paies.",
+      "yourMortgage": "Ton prêt",
+      "scenario": "Scénario",
+      "difference": "Écart",
+      "monthlyDiff": "Mensualité",
+      "interestDiff": "Intérêts totaux",
+      "timeDiff": "Durée du prêt",
+      "morePerMonth": "de plus par mois",
+      "lessPerMonth": "de moins par mois",
+      "moreInterest": "d'intérêts en plus",
+      "lessInterest": "d'intérêts en moins",
+      "longerTerm": "plus long à rembourser",
+      "shorterTerm": "remboursé plus tôt",
+      "reset": "Réinitialiser",
+      "balanceComparison": "Capital restant dû",
+      "paymentBreakdown": "Capital vs intérêts",
+      "atAGlance": "Année par année",
+      "year": "Année",
+      "balanceDiff": "Écart",
+      "paidOff": "Soldé",
+      "perMonth": "/mois",
+      "extraEffect": "Stratégie"
+    }
   },
   "budget": {
     "setBudget": "Fixer vos limites",

@@ -335,7 +335,32 @@
     "recalculated": "(recalculated)",
     "asOf": "As of {{date}}",
     "correctionHint": "If the calculated balance doesn't match your bank statement, add a correction here.",
-    "until": "until {{date}}"
+    "until": "until {{date}}",
+    "compare": {
+      "title": "What If?",
+      "desc": "See how a different interest rate, loan term, or extra repayments would change what you pay.",
+      "yourMortgage": "Your Mortgage",
+      "scenario": "Scenario",
+      "difference": "Difference",
+      "monthlyDiff": "Monthly Payment",
+      "interestDiff": "Total Interest",
+      "timeDiff": "Loan Term",
+      "morePerMonth": "more per month",
+      "lessPerMonth": "less per month",
+      "moreInterest": "more in interest",
+      "lessInterest": "less in interest",
+      "longerTerm": "longer to pay off",
+      "shorterTerm": "paid off sooner",
+      "reset": "Reset",
+      "balanceComparison": "Remaining Balance",
+      "paymentBreakdown": "Principal vs Interest",
+      "atAGlance": "Year by Year",
+      "year": "Year",
+      "balanceDiff": "Difference",
+      "paidOff": "Paid off",
+      "perMonth": "/mo",
+      "extraEffect": "Strategy"
+    }
   },
   "budget": {
     "setBudget": "Set Your Limits",

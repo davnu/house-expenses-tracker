@@ -12,6 +12,7 @@ import { AmortizationTable } from '@/components/mortgage/AmortizationTable'
 import { RatePeriodsCard } from '@/components/mortgage/RatePeriodsCard'
 import { ExtraRepaymentsCard } from '@/components/mortgage/ExtraRepaymentsCard'
 import { BalanceCorrectionCard } from '@/components/mortgage/BalanceCorrectionCard'
+import { MortgageComparisonSection } from '@/components/mortgage/MortgageComparisonSection'
 import { Button } from '@/components/ui/button'
 import { Landmark, Edit2, Trash2 } from 'lucide-react'
 
@@ -92,6 +93,9 @@ export function MortgagePage() {
 
       {/* Section 2: Details — reference info */}
       <MortgageOverviewCard config={mortgage} />
+
+      {/* What-If Comparison */}
+      <MortgageComparisonSection config={mortgage} stats={stats} />
 
       {/* Section 3: Management — rate history, extra repayments, corrections */}
       {showRateManagement ? (
