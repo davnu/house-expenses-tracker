@@ -173,7 +173,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
               onBlur={handleNotesSave}
               autoFocus
               placeholder={t('documents.addNote')}
-              className="text-xs bg-transparent border-b border-input focus:border-primary outline-none w-full py-0.5"
+              className="text-base sm:text-xs bg-transparent border-b border-input focus:border-primary outline-none w-full py-0.5"
               maxLength={200}
             />
           </div>

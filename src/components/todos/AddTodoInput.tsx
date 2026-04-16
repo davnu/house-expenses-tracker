@@ -35,7 +35,7 @@ export function AddTodoInput() {
           }
         }}
         placeholder={t('todos.addPlaceholder')}
-        className="w-full pl-8 pr-3 py-2 text-sm bg-transparent border-b border-dashed border-border placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none transition-colors"
+        className="w-full pl-8 pr-3 py-2 text-base sm:text-sm bg-transparent border-b border-dashed border-border placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none transition-colors"
       />
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>
