@@ -557,13 +557,13 @@ describe('DocumentContext', () => {
       // When fallback seeding triggers (empty collection), verify translationKeys are correct
       folderSnapshotCallback = null
       documentSnapshotCallback = null
-      const { result } = renderHook(() => useDocuments(), { wrapper })
+      renderHook(() => useDocuments(), { wrapper })
       await act(async () => {})
 
       // addFolder should have been called with translationKey for each default
       const calls = mockRepo.addFolder.mock.calls
       expect(calls).toHaveLength(7)
-      const keys = calls.map(([input]: [Partial<DocFolder>]) => input.translationKey).sort()
+      const keys = calls.map((args: unknown[]) => (args[0] as Partial<DocFolder>).translationKey).sort()
       expect(keys).toEqual(['inspections', 'insurance', 'mortgage', 'other', 'property', 'purchase', 'tax'])
     })
   })

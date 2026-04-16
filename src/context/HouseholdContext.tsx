@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  setDoc,
   updateDoc,
   deleteDoc,
   collection,
@@ -205,7 +206,13 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   }, [user, userProfile?.houseId, membersRetry])
 
   const createHouse = useCallback(async (name: string, country?: string, currency?: string) => {
-    if (!user || !userProfile) return
+    if (!user) return
+
+    // Fallback to Firebase Auth user for display name and email when userProfile
+    // hasn't loaded yet (Google sign-up race: ensureUserProfile runs fire-and-forget
+    // in onAuthStateChanged, so the profile doc may not exist when this runs).
+    const displayName = userProfile?.displayName ?? user.displayName ?? user.email?.split('@')[0] ?? 'User'
+    const email = userProfile?.email ?? user.email ?? ''
 
     const houseRef = doc(collection(db, 'houses'))
     const houseId = houseRef.id
@@ -229,8 +236,8 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       const batch = writeBatch(db)
       batch.set(houseRef, houseData)
       batch.set(doc(db, 'houses', houseId, 'members', user.uid), {
-        displayName: userProfile.displayName,
-        email: userProfile.email,
+        displayName,
+        email,
         color,
         role: 'owner',
         joinedAt: now,
@@ -262,7 +269,15 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
       // Step 3: Set houseId on profile LAST — this triggers the UI transition.
       // By now the folders exist, so DocumentProvider will see them on first snapshot.
-      await updateDoc(doc(db, 'users', user.uid), { houseId })
+      // Use setDoc+merge (not updateDoc) because the profile doc may not exist yet
+      // for Google sign-up — ensureUserProfile runs fire-and-forget and might not
+      // have completed. merge:true creates the doc if missing or updates if it exists.
+      await setDoc(doc(db, 'users', user.uid), {
+        displayName,
+        email,
+        houseId,
+        createdAt: now,
+      }, { merge: true })
     } finally {
       autoSelectingRef.current = false
     }

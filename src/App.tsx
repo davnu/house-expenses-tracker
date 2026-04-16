@@ -35,16 +35,22 @@ function AppRoutes() {
     )
   }
 
-  // Household loading or house doc not ready — show app shell with skeleton content.
-  // The navigation chrome appears instantly; only the content area shows placeholders.
+  // Still loading or house doc not ready.
+  // If we already know the user has a house (profile loaded with houseId), show the app
+  // shell with skeleton content — navigation appears instantly, only content area pulses.
+  // Otherwise (profile still loading, or user has no house yet), show the basic loader
+  // to avoid flashing AppShell before OnboardingPage for new users.
   if (loading || !house) {
-    return (
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route path="*" element={<PageSkeleton />} />
-        </Route>
-      </Routes>
-    )
+    if (userProfile?.houseId) {
+      return (
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="*" element={<PageSkeleton />} />
+          </Route>
+        </Routes>
+      )
+    }
+    return <LoadingScreen />
   }
 
   return (
