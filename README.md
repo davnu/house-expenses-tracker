@@ -61,6 +61,34 @@ src/
 - **Security rules**: `firestore.rules`, `storage.rules`
 - **Hosting**: `firebase.json` — serves from `dist/`, SPA rewrites
 
+## Infrastructure & services
+
+CasaTab runs across four external services. Full operational runbook in
+[`docs/INFRA.md`](./docs/INFRA.md).
+
+| Service | What it does | Where it lives |
+|---|---|---|
+| **Firebase** | App backend + hosting: Auth, Firestore, Storage, `casatab.com` site | console.firebase.google.com |
+| **Umami** (self-hosted) | Cookieless analytics on public pages only | Vercel + Neon Postgres (EU) |
+| **Neon** | Postgres database for Umami | console.neon.tech |
+| **Google Search Console** | SEO monitoring (organic queries, CTR, rank) | search.google.com/search-console |
+
+**What's tracked where:**
+- **Public pages** (`/`, `/es/…pt/`, `/login`, `/privacy`, `/invite/:id`) — Umami (cookieless, no consent banner, never sends to Google or Meta)
+- **App pages** (`/app/*`, post-login) — **zero analytics by design**. Enforced at the code level by `isAppRoute()` in `src/lib/analytics.ts`. This is the backbone of the "zero tracking inside the app" promise in the privacy policy.
+
+**Env vars used in production** (see `.env.example` for the template):
+- `VITE_FIREBASE_*` — Firebase SDK config
+- `VITE_UMAMI_HOST` + `VITE_UMAMI_WEBSITE_ID` — analytics target (leave empty to disable)
+- Google Search Console verification: meta tag in `index.html` line ~41
+
+See [`docs/INFRA.md`](./docs/INFRA.md) for:
+- Exact deploy procedures
+- How to rotate secrets
+- How to set up the optional `analytics.casatab.com` subdomain
+- Architecture decisions (why Umami, why self-hosted, why no cookie banner)
+- Troubleshooting
+
 ## Development
 
 ```bash

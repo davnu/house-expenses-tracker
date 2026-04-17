@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
+import { track } from '@/lib/analytics'
+import { useAnalytics } from '@/hooks/useAnalytics'
+import { PrivacyShield } from '@/components/marketing/PrivacyShield'
 import {
   LayoutDashboard, BarChart3, Landmark, Users, FolderOpen, Globe,
   Shield, Download, Trash2, Ban, ChevronDown, ChevronUp, ArrowRight, Menu, X,
@@ -82,13 +85,17 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 
 /* ────────────────────────── FAQ accordion item ────────────────────────── */
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+function FAQItem({ question, answer, questionId }: { question: string; answer: string; questionId: string }) {
   const [open, setOpen] = useState(false)
 
   return (
     <div className="border-b border-border last:border-0">
       <button
-        onClick={() => setOpen(v => !v)}
+        onClick={() => {
+          const next = !open
+          setOpen(next)
+          if (next) track('faq_expand', { question_id: questionId })
+        }}
         aria-expanded={open}
         className="flex w-full items-center justify-between py-5 text-left font-medium text-[15px] cursor-pointer hover:text-brand transition-colors"
       >
@@ -198,6 +205,18 @@ export function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
+  useAnalytics()
+
+  const switchLanguage = (next: string) => {
+    const from = i18n.language?.split('-')[0] ?? 'unknown'
+    if (from === next) return
+    track('language_switch', { from, to: next })
+    i18n.changeLanguage(next)
+  }
+
+  const handleCta = (location: string, label: string) => {
+    track('cta_click', { cta_location: location, cta_label: label })
+  }
 
   /* ── Sticky header scroll detection ── */
   useEffect(() => {
@@ -260,6 +279,7 @@ export function LandingPage() {
   const faqItems = Array.from({ length: 6 }, (_, i) => ({
     question: t(`landing.faq.q${i + 1}`),
     answer: t(`landing.faq.a${i + 1}`),
+    id: `q${i + 1}`,
   }))
 
   const currentLang = SUPPORTED_LANGUAGES.find(l => i18n.language.startsWith(l.code))
@@ -307,7 +327,7 @@ export function LandingPage() {
                   {SUPPORTED_LANGUAGES.map(lang => (
                     <button
                       key={lang.code}
-                      onClick={() => { i18n.changeLanguage(lang.code); setLangOpen(false) }}
+                      onClick={() => { switchLanguage(lang.code); setLangOpen(false) }}
                       className={cn(
                         'w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer',
                         i18n.language.startsWith(lang.code) && 'font-medium text-brand',
@@ -321,12 +341,17 @@ export function LandingPage() {
             </div>
 
             {!user && (
-              <Link to="/login" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <Link
+                to="/login"
+                onClick={() => handleCta('header', 'log_in')}
+                className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
                 {t('landing.nav.logIn')}
               </Link>
             )}
             <Link
               to={user ? '/app' : '/login?mode=signup'}
+              onClick={() => handleCta('header', user ? 'open_app' : 'get_started')}
               className="inline-flex items-center gap-1.5 bg-brand text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-brand-hover transition-colors shadow-sm"
             >
               {user ? t('landing.nav.openApp') : t('landing.nav.getStarted')}
@@ -359,9 +384,16 @@ export function LandingPage() {
             <button onClick={() => scrollTo('features')} className="cursor-pointer">{t('landing.nav.features')}</button>
             <button onClick={() => scrollTo('how-it-works')} className="cursor-pointer">{t('landing.nav.howItWorks')}</button>
             <button onClick={() => scrollTo('faq')} className="cursor-pointer">{t('landing.nav.faq')}</button>
-            <Link to="/login" className="text-muted-foreground">{t('landing.nav.logIn')}</Link>
+            <Link
+              to="/login"
+              onClick={() => handleCta('mobile_menu', 'log_in')}
+              className="text-muted-foreground"
+            >
+              {t('landing.nav.logIn')}
+            </Link>
             <Link
               to="/login?mode=signup"
+              onClick={() => handleCta('mobile_menu', 'get_started')}
               className="bg-brand text-white font-medium px-8 py-3 rounded-lg hover:bg-brand-hover transition-colors"
             >
               {t('landing.nav.getStarted')}
@@ -370,7 +402,7 @@ export function LandingPage() {
               {SUPPORTED_LANGUAGES.map(lang => (
                 <button
                   key={lang.code}
-                  onClick={() => { i18n.changeLanguage(lang.code); setMobileMenu(false) }}
+                  onClick={() => { switchLanguage(lang.code); setMobileMenu(false) }}
                   className={cn(
                     'px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer',
                     i18n.language.startsWith(lang.code) ? 'bg-brand/10 text-brand font-medium' : 'text-muted-foreground hover:bg-muted/50',
@@ -394,9 +426,12 @@ export function LandingPage() {
         {/* Centered copy */}
         <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
           <Reveal>
-            <div className="inline-flex items-center gap-2 bg-brand/[.06] text-brand text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full rounded-full bg-brand opacity-50 animate-ping" /><span className="relative inline-flex h-2 w-2 rounded-full bg-brand" /></span>
-              {t('landing.hero.badge')}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 bg-brand/[.06] text-brand text-xs font-semibold px-3 py-1.5 rounded-full">
+                <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full rounded-full bg-brand opacity-50 animate-ping" /><span className="relative inline-flex h-2 w-2 rounded-full bg-brand" /></span>
+                {t('landing.hero.badge')}
+              </div>
+              <PrivacyShield />
             </div>
           </Reveal>
 
@@ -416,13 +451,14 @@ export function LandingPage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 to={user ? '/app' : '/login?mode=signup'}
+                onClick={() => handleCta('hero', user ? 'open_app' : 'start_tracking')}
                 className="inline-flex items-center gap-2 bg-brand text-white font-semibold px-6 py-3 rounded-xl hover:bg-brand-hover transition-[background-color,box-shadow] shadow-[0_4px_14px_rgba(134,59,255,0.35)] hover:shadow-[0_6px_20px_rgba(134,59,255,0.45)]"
               >
                 {user ? t('landing.nav.openApp') : t('landing.hero.cta')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <button
-                onClick={() => scrollTo('how-it-works')}
+                onClick={() => { handleCta('hero', 'see_how_it_works'); scrollTo('how-it-works') }}
                 className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl border border-border hover:bg-muted/50 transition-colors cursor-pointer"
               >
                 {t('landing.hero.ctaSecondary')}
@@ -622,7 +658,7 @@ export function LandingPage() {
           <Reveal delay={100}>
             <div className="bg-white rounded-2xl border border-border/60 px-6 sm:px-8 shadow-sm">
               {faqItems.map((item, i) => (
-                <FAQItem key={i} question={item.question} answer={item.answer} />
+                <FAQItem key={i} question={item.question} answer={item.answer} questionId={item.id} />
               ))}
             </div>
           </Reveal>
@@ -646,6 +682,7 @@ export function LandingPage() {
               </p>
               <Link
                 to="/login?mode=signup"
+                onClick={() => handleCta('closing_cta', 'get_started')}
                 className="relative inline-flex items-center gap-2 bg-white text-brand font-semibold px-8 py-3.5 rounded-xl mt-8 hover:bg-white/90 transition-colors shadow-lg"
               >
                 {t('landing.cta.button')}
@@ -709,7 +746,7 @@ export function LandingPage() {
               {SUPPORTED_LANGUAGES.map(lang => (
                 <button
                   key={lang.code}
-                  onClick={() => i18n.changeLanguage(lang.code)}
+                  onClick={() => switchLanguage(lang.code)}
                   className={cn(
                     'px-2 py-1 rounded text-xs transition-colors cursor-pointer',
                     i18n.language.startsWith(lang.code) ? 'bg-brand/10 text-brand font-medium' : 'hover:bg-muted/50',

@@ -8,13 +8,15 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { CasaTabLogo } from '@/components/brand/CasaTabLogo'
 import { friendlyError } from '@/lib/utils'
+import { track } from '@/lib/analytics'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 interface LoginPageProps {
   subtitle?: string
 }
 
 export function LoginPage({ subtitle }: LoginPageProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { signInEmail, signUpEmail, signInGoogle } = useAuth()
   const [searchParams] = useSearchParams()
   const [displayName, setDisplayName] = useState('')
@@ -24,16 +26,20 @@ export function LoginPage({ subtitle }: LoginPageProps) {
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  useAnalytics()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+    track(isSignUp ? 'signup_start' : 'login_start', { method: 'email' })
     try {
       if (isSignUp) {
         await signUpEmail(email, password, displayName)
+        track('sign_up', { method: 'email', language: i18n.language })
       } else {
         await signInEmail(email, password)
+        track('login', { method: 'email' })
       }
     } catch (err) {
       setError(friendlyError(err))
@@ -45,8 +51,12 @@ export function LoginPage({ subtitle }: LoginPageProps) {
   const handleGoogle = async () => {
     setError('')
     setLoading(true)
+    track(isSignUp ? 'signup_start' : 'login_start', { method: 'google' })
     try {
       await signInGoogle()
+      // Google popup can't distinguish first-timer vs returning without a profile read —
+      // fire 'login' to avoid double-counting. Email flow above handles sign_up cleanly.
+      track('login', { method: 'google' })
     } catch (err) {
       setError(friendlyError(err))
     } finally {

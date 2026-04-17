@@ -7,6 +7,8 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { LoginPage } from './LoginPage'
 import { AlertCircle, UserPlus } from 'lucide-react'
 import { LoadingScreen } from '@/components/ui/loading'
+import { track } from '@/lib/analytics'
+import { useAnalytics } from '@/hooks/useAnalytics'
 import type { Invite } from '@/types/expense'
 
 export function InviteLandingPage() {
@@ -14,17 +16,24 @@ export function InviteLandingPage() {
   const { inviteId } = useParams<{ inviteId: string }>()
   const [invite, setInvite] = useState<Invite | null>(null)
   const [loading, setLoading] = useState(true)
+  useAnalytics()
 
   useEffect(() => {
     if (!inviteId) return
     getDoc(doc(db, 'invites', inviteId))
       .then((snap) => {
         if (snap.exists()) {
-          setInvite({ id: snap.id, ...snap.data() } as Invite)
+          const data = { id: snap.id, ...snap.data() } as Invite
+          setInvite(data)
+          track('invite_landed', {
+            status: data.usedBy ? 'used' : new Date(data.expiresAt) < new Date() ? 'expired' : 'valid',
+          })
+        } else {
+          track('invite_landed', { status: 'not_found' })
         }
       })
       .catch(() => {
-        // Permission denied or network error
+        track('invite_landed', { status: 'error' })
       })
       .finally(() => setLoading(false))
   }, [inviteId])

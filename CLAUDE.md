@@ -33,6 +33,12 @@ down_payment, notary, taxes, financial_advisor, renovations, furniture, moving, 
 - Rules: `firestore.rules` (membership-based), `storage.rules`
 - Deploy: `npm run build && firebase deploy`
 
+## Analytics & infrastructure
+- **Analytics**: self-hosted Umami on Vercel + Neon Postgres. Cookieless, no consent banner, **never fires inside `/app/*`** — enforced by `isAppRoute()` in `src/lib/analytics.ts`. Tracker loads from `VITE_UMAMI_HOST` with `VITE_UMAMI_WEBSITE_ID` (both gitignored in `.env`, empty = no-op in dev).
+- **Event instrumentation** (public routes only): `page_view`, `cta_click`, `language_switch`, `faq_expand`, `signup_start`, `login_start`, `sign_up`, `login`, `invite_landed`.
+- **SEO**: Google Search Console verified via meta tag in `index.html` (content value is public, not secret).
+- **Full operational runbook**: `docs/INFRA.md` — deploy procedures, env var reference, secret rotation, `analytics.casatab.com` optional subdomain setup, troubleshooting, architecture decisions.
+
 ## i18n & SEO
 - **6 languages**: en, es, fr, de, nl, pt — locale files in `src/locales/*.json`
 - **Landing page**: pre-rendered in all 6 languages for SEO (`/`, `/es/`, `/fr/`, `/de/`, `/nl/`, `/pt/`)
