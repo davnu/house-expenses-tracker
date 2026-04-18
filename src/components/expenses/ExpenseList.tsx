@@ -11,8 +11,8 @@ import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { cn, formatCurrency, friendlyError, getDateLocale } from '@/lib/utils'
-import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, UNPAID_BADGE_CLASSES, getSharedPayerLabel, getCategoryLabel } from '@/lib/constants'
-import { groupExpensesByMonth, isExpensePaid } from '@/lib/expense-utils'
+import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SPLIT_PAYER, UNPAID_BADGE_CLASSES, getSharedPayerLabel, getSplitPayerLabel, getCategoryLabel } from '@/lib/constants'
+import { filterByPayer, groupExpensesByMonth, isExpensePaid } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
 
@@ -117,9 +117,9 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
 
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase()
-    return expenses
+    const payerFiltered = filterPayer ? filterByPayer(expenses, filterPayer) : expenses
+    return payerFiltered
       .filter((e) => !filterCategory || e.category === filterCategory)
-      .filter((e) => !filterPayer || e.payer === filterPayer)
       .filter((e) => !filterFrom || e.date >= filterFrom)
       .filter((e) => !filterTo || e.date <= filterTo)
       .filter((e) => !filterStatus || (filterStatus === 'paid' ? isExpensePaid(e) : !isExpensePaid(e)))
@@ -245,7 +245,35 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
                 {t('expenses.unpaid')}
               </Badge>
             )}
-            {isMultiMember && (
+            {isMultiMember && expense.payer === SPLIT_PAYER ? (() => {
+              // Split payment: show a rich badge with the per-person breakdown
+              // as a tooltip so users can scan the list without opening each one.
+              const splits = expense.splits ?? []
+              const positive = splits.filter((s) => s.shareCents > 0)
+              const title = positive.length > 0
+                ? positive.map((s) => `${getMemberName(s.uid)} ${formatCurrency(s.shareCents)}`).join(' · ')
+                : getSplitPayerLabel()
+              const overflow = positive.length - 3
+              return (
+                <Badge variant="outline" className="gap-1" title={title}>
+                  <span className="flex -space-x-1">
+                    {positive.slice(0, 3).map((s) => (
+                      <span
+                        key={s.uid}
+                        className="h-2 w-2 rounded-full ring-1 ring-background"
+                        style={{ backgroundColor: getMemberColor(s.uid) }}
+                      />
+                    ))}
+                  </span>
+                  {getSplitPayerLabel()}
+                  {overflow > 0 && (
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      +{overflow}
+                    </span>
+                  )}
+                </Badge>
+              )
+            })() : isMultiMember && (
               <Badge variant="outline" className="gap-1">
                 <span
                   className="h-1.5 w-1.5 rounded-full shrink-0 inline-block"
@@ -438,6 +466,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
             >
               <option value="">{t('filters.allMembers')}</option>
               <option value={SHARED_PAYER}>{getSharedPayerLabel()}</option>
+              <option value={SPLIT_PAYER}>{getSplitPayerLabel()}</option>
               {members.map((m) => (
                 <option key={m.uid} value={m.uid}>{m.displayName}</option>
               ))}

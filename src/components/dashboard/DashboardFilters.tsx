@@ -4,7 +4,7 @@ import { Filter, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useHousehold } from '@/context/HouseholdContext'
-import { EXPENSE_CATEGORIES, SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
+import { EXPENSE_CATEGORIES, SHARED_PAYER, SHARED_PAYER_COLOR, SPLIT_PAYER, SPLIT_PAYER_COLOR, getSharedPayerLabel, getSplitPayerLabel } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { DashboardFilters as Filters } from '@/lib/expense-utils'
 import type { ExpenseCategory } from '@/types/expense'
@@ -150,6 +150,19 @@ export function DashboardFilters({ filters, onChange, usedCategories, hasUnpaid 
                 >
                   <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: SHARED_PAYER_COLOR }} />
                   {getSharedPayerLabel()}
+                </button>
+                <button
+                  onClick={() => onChange({ ...filters, payer: filters.payer === SPLIT_PAYER ? undefined : SPLIT_PAYER })}
+                  className={cn(
+                    'text-xs px-2.5 py-1 rounded-full border transition-colors cursor-pointer flex items-center gap-1.5',
+                    filters.payer === SPLIT_PAYER
+                      ? 'text-white border-transparent'
+                      : 'border-input hover:bg-accent'
+                  )}
+                  style={filters.payer === SPLIT_PAYER ? { backgroundColor: SPLIT_PAYER_COLOR } : undefined}
+                >
+                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: SPLIT_PAYER_COLOR }} />
+                  {getSplitPayerLabel()}
                 </button>
                 {members.map((m) => (
                   <button

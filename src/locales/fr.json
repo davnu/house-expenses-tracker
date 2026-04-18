@@ -33,6 +33,7 @@
     "signOut": "Se déconnecter",
     "formerMember": "Ancien membre",
     "shared": "Partagé",
+    "splitPayer": "Paiement à plusieurs",
     "date": "Date",
     "amount": "Montant",
     "type": "Type",
@@ -174,6 +175,7 @@
     "member": "Membre",
     "paidBy": "Payé par",
     "paidShared": "Payé avec les fonds communs du foyer",
+    "paidSplit": "Chacun a payé une part de sa poche",
     "paidPersonally": "Payé personnellement par {{name}}",
     "description": "Description",
     "descriptionPlaceholder": "ex. Versement de l'apport, frais de notaire, diagnostic immobilier...",
@@ -564,6 +566,42 @@
     "deletingOwnedHouses": "Suppression des logements possédés",
     "cleaningMemberships": "Nettoyage des appartenances",
     "removingProfile": "Suppression du profil"
+  },
+  "costSharing": {
+    "title": "Partage des frais",
+    "description": "Définissez comment les frais de la maison sont répartis entre les membres. La valeur par défaut s'applique à chaque nouvelle dépense — vous pouvez toujours la modifier au cas par cas.",
+    "equalLabel": "À parts égales",
+    "equalHint_one": "Chaque dépense compte pareil pour {{count}} membre.",
+    "equalHint_other": "Chaque dépense est répartie à parts égales entre {{count}} membres.",
+    "customLabel": "Proportion personnalisée",
+    "customHint": "Choisissez un pourcentage fixe par membre dont le total fait 100 %.",
+    "total": "Total",
+    "toAdjust": "à ajuster",
+    "saved": "Enregistré",
+    "previewTitle": "Aperçu sur {{total}} enregistrés à ce jour",
+    "cardTitle": "Nos apports",
+    "sharedPool": "Partagé (fonds communs)"
+  },
+  "splitEditor": {
+    "title": "Qui a payé combien ?",
+    "subtitle": "Répartir {{amount}} entre les membres.",
+    "equalTab": "À parts égales",
+    "exactTab": "Montants exacts",
+    "equalHint": "Choisissez qui a contribué — le montant se divise à parts égales entre eux.",
+    "exactHint": "Indiquez ce que chacun a payé de sa poche.",
+    "balanced": "Équilibré",
+    "remaining": "Reste {{amount}} à répartir",
+    "overAllocated": "{{amount}} en trop",
+    "saveHint": "Le total doit atteindre {{amount}} pour enregistrer.",
+    "presetsLabel": "Répartitions rapides"
+  },
+  "splitChip": {
+    "configure": "Indiquer les montants",
+    "tapToAdjust": "toucher pour ajuster",
+    "amountChanged": "Montant modifié — rouvrez pour saisir les nouveaux montants.",
+    "equal": "Divisé à parts égales",
+    "equalSubset": "Divisé entre {{count}} sur {{total}} membres",
+    "custom": "Montants personnalisés"
   },
   "invite": {
     "invalidInvite": "Invitation invalide",

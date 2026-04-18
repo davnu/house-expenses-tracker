@@ -1,168 +1,146 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Home } from 'lucide-react'
+import { Home, Users } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useHouseAllocation } from '@/hooks/use-house-allocation'
+import { sumSharedPool } from '@/lib/cost-split'
+import { SHARED_PAYER_COLOR } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
-import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
 import type { Expense } from '@/types/expense'
 
 interface PersonSplitCardProps {
   expenses: Expense[]
 }
 
-interface PayerSlice {
+interface Row {
+  kind: 'member' | 'shared' | 'former'
   key: string
-  name: string
+  label: string
   color: string
-  total: number
+  amount: number
   percent: number
+  Icon?: typeof Home
 }
 
+/**
+ * "Who's paying for the house?" card.
+ * Shows each member's direct contributions (single-payer expenses + their
+ * share of split payments) and the joint-pool total as a separate row.
+ * No balance math — the user asked for totals, not settlements.
+ */
 export function PersonSplitCard({ expenses }: PersonSplitCardProps) {
   const { t } = useTranslation()
-  const { members } = useHousehold()
+  const { members, getMemberName, getMemberColor } = useHousehold()
+  const { cash } = useHouseAllocation(expenses)
 
-  const data = useMemo(() => {
-    const total = expenses.reduce((s, e) => s + e.amount, 0)
+  const { rows, grandTotal } = useMemo(() => {
+    // Compute the Shared pool directly from the source of truth, not by
+    // subtracting cashTotal from total — any gap in cash (e.g. a malformed
+    // SPLIT expense) would otherwise silently leak into the Shared row.
+    const sharedTotal = sumSharedPool(expenses)
+    const memberOrder = new Map(members.map((m, i) => [m.uid, i]))
 
-    // Single pass: group all expenses by payer
-    const byPayer = new Map<string, number>()
-    for (const e of expenses) {
-      byPayer.set(e.payer, (byPayer.get(e.payer) ?? 0) + e.amount)
-    }
-
-    const slices: PayerSlice[] = []
-    const accounted = new Set<string>()
-
-    // Shared slice (first)
-    const sharedTotal = byPayer.get(SHARED_PAYER) ?? 0
-    if (sharedTotal > 0) {
-      slices.push({ key: SHARED_PAYER, name: getSharedPayerLabel(), color: SHARED_PAYER_COLOR, total: sharedTotal, percent: total > 0 ? (sharedTotal / total) * 100 : 0 })
-      accounted.add(SHARED_PAYER)
-    }
-
-    // Known members (in member order)
-    for (const m of members) {
-      const memberTotal = byPayer.get(m.uid) ?? 0
-      if (memberTotal > 0) {
-        slices.push({ key: m.uid, name: m.displayName, color: m.color, total: memberTotal, percent: total > 0 ? (memberTotal / total) * 100 : 0 })
-        accounted.add(m.uid)
+    const memberRows: Row[] = []
+    const formerRows: Row[] = []
+    for (const [uid, amount] of cash) {
+      if (amount === 0) continue
+      if (memberOrder.has(uid)) {
+        memberRows.push({
+          kind: 'member',
+          key: uid,
+          label: getMemberName(uid),
+          color: getMemberColor(uid),
+          amount,
+          percent: 0, // filled below
+        })
+      } else {
+        formerRows.push({
+          kind: 'former',
+          key: uid,
+          label: getMemberName(uid),
+          color: '#6b7280',
+          amount,
+          percent: 0,
+        })
       }
     }
+    memberRows.sort((a, b) => (memberOrder.get(a.key)! - memberOrder.get(b.key)!))
 
-    // Former members (anyone not accounted for)
-    let orphanedTotal = 0
-    for (const [payer, amount] of byPayer) {
-      if (!accounted.has(payer)) orphanedTotal += amount
-    }
-    if (orphanedTotal > 0) {
-      slices.push({ key: '__former__', name: t('common.formerMember'), color: '#6b7280', total: orphanedTotal, percent: total > 0 ? (orphanedTotal / total) * 100 : 0 })
-    }
+    const sharedRow: Row | null =
+      sharedTotal > 0
+        ? {
+            kind: 'shared',
+            key: '__shared__',
+            label: t('costSharing.sharedPool'),
+            color: SHARED_PAYER_COLOR,
+            amount: sharedTotal,
+            percent: 0,
+            Icon: Home,
+          }
+        : null
 
-    return slices
-  }, [expenses, members, t])
+    const combined = [...memberRows, ...(sharedRow ? [sharedRow] : []), ...formerRows]
+    const grand = combined.reduce((s, r) => s + r.amount, 0)
+    for (const r of combined) r.percent = grand > 0 ? (r.amount / grand) * 100 : 0
 
-  if (members.length < 2) return null
+    return { rows: combined, grandTotal: grand }
+  }, [expenses, cash, members, getMemberName, getMemberColor, t])
 
-  const total = data.reduce((s, d) => s + d.total, 0)
-  if (total === 0) return null
-
-  const allShared = data.length === 1 && data[0].key === SHARED_PAYER
-  const sharedSlice = data.find((d) => d.key === SHARED_PAYER)
-  const individualSlices = data.filter((d) => d.key !== SHARED_PAYER)
-  const isSharedDominant = sharedSlice !== undefined && sharedSlice.percent > 50
-
-  // All expenses are shared — lightweight informational card
-  if (allShared) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3">
-            <div
-              className="h-8 w-8 rounded-full flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${SHARED_PAYER_COLOR}15` }}
-            >
-              <Home className="h-4 w-4" style={{ color: SHARED_PAYER_COLOR }} />
-            </div>
-            <div className="space-y-1">
-              <p className="text-lg font-semibold">{formatCurrency(total)}</p>
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.allExpensesShared')}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  // Hide for single-member households, or when there's nothing to show
+  if (members.length < 2 || grandTotal === 0) return null
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{t('dashboard.expenseSplit')}</CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            {t('costSharing.cardTitle')}
+          </CardTitle>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {formatCurrency(grandTotal)}
+          </span>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Stacked bar */}
-        <div className="h-3 rounded-full overflow-hidden flex">
-          {data.map((d) => (
+      <CardContent className="space-y-4">
+        {/* Stacked bar at the top — one segment per row, in the same colors as the rows below */}
+        <div className="h-2 rounded-full overflow-hidden flex bg-muted">
+          {rows.map((r) => (
             <div
-              key={d.key}
+              key={r.key}
               className="h-full transition-all"
-              style={{ width: `${d.percent}%`, backgroundColor: d.color }}
+              style={{ width: `${r.percent}%`, backgroundColor: r.color }}
+              aria-hidden="true"
             />
           ))}
         </div>
 
-        {isSharedDominant && sharedSlice ? (
-          /* Shared-dominant: shared is primary, individuals are secondary */
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} />
-              <span className="text-sm font-medium">{getSharedPayerLabel()}</span>
-              <span className="ml-auto text-base font-semibold">{formatCurrency(sharedSlice.total)}</span>
-              <span className="text-xs text-muted-foreground w-10 text-right">{sharedSlice.percent.toFixed(0)}%</span>
+        {/* Per-row breakdown */}
+        <div className="space-y-2">
+          {rows.map((r) => (
+            <div key={r.key} className="flex items-center justify-between gap-3 text-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                {r.Icon ? (
+                  <r.Icon className="h-4 w-4 shrink-0" style={{ color: r.color }} aria-hidden="true" />
+                ) : (
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: r.color }}
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="truncate">{r.label}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-medium tabular-nums">{formatCurrency(r.amount)}</span>
+                <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
+                  {r.percent.toFixed(0)}%
+                </span>
+              </div>
             </div>
-
-            {individualSlices.length > 0 && (
-              <div className="border-t pt-3 space-y-1.5">
-                <p className="text-xs text-muted-foreground">{t('dashboard.individualContributions')}</p>
-                {individualSlices.map((d) => (
-                  <div key={d.key} className="flex items-center justify-between text-sm pl-6">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-muted-foreground">{d.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>{formatCurrency(d.total)}</span>
-                      <span className="text-xs text-muted-foreground w-10 text-right">{d.percent.toFixed(0)}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Equal-weight: flat legend */
-          <div className="space-y-2">
-            {data.map((d) => (
-              <div key={d.key} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  {d.key === SHARED_PAYER ? (
-                    <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} />
-                  ) : (
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                  )}
-                  <span>{d.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{formatCurrency(d.total)}</span>
-                  <span className="text-xs text-muted-foreground w-10 text-right">{d.percent.toFixed(0)}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

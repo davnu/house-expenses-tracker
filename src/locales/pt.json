@@ -33,6 +33,7 @@
     "signOut": "Terminar sessão",
     "formerMember": "Ex-membro",
     "shared": "Partilhado",
+    "splitPayer": "Pago por vários",
     "date": "Data",
     "amount": "Valor",
     "type": "Tipo",
@@ -174,6 +175,7 @@
     "member": "Membro",
     "paidBy": "Pago por",
     "paidShared": "Pago com fundos partilhados do agregado",
+    "paidSplit": "Cada um pagou uma parte do próprio bolso",
     "paidPersonally": "Pago pessoalmente por {{name}}",
     "description": "Descrição",
     "descriptionPlaceholder": "ex. Sinal da entrada, custos do notário, inspeção ao imóvel...",
@@ -564,6 +566,42 @@
     "deletingOwnedHouses": "A eliminar casas próprias",
     "cleaningMemberships": "A limpar participações",
     "removingProfile": "A remover perfil"
+  },
+  "costSharing": {
+    "title": "Partilha de custos",
+    "description": "Define como os custos da casa são distribuídos entre os membros. O valor predefinido aplica-se a cada nova despesa — podes sempre alterá-lo despesa a despesa.",
+    "equalLabel": "Em partes iguais",
+    "equalHint_one": "Cada despesa conta igual para {{count}} membro.",
+    "equalHint_other": "Cada despesa é dividida por igual entre {{count}} membros.",
+    "customLabel": "Proporção personalizada",
+    "customHint": "Escolhe uma percentagem fixa por membro que some 100 %.",
+    "total": "Total",
+    "toAdjust": "por ajustar",
+    "saved": "Guardado",
+    "previewTitle": "Pré-visualização sobre {{total}} registados até agora",
+    "cardTitle": "As nossas contribuições",
+    "sharedPool": "Partilhado (fundos comuns)"
+  },
+  "splitEditor": {
+    "title": "Quem pagou quanto?",
+    "subtitle": "Distribuir {{amount}} entre os membros.",
+    "equalTab": "Em partes iguais",
+    "exactTab": "Valores exatos",
+    "equalHint": "Escolhe quem contribuiu — o valor é dividido por igual.",
+    "exactHint": "Indica o que cada um pagou do próprio bolso.",
+    "balanced": "Certo",
+    "remaining": "Faltam {{amount}} por distribuir",
+    "overAllocated": "{{amount}} a mais",
+    "saveHint": "O total tem de ser {{amount}} para poder guardar.",
+    "presetsLabel": "Divisões rápidas"
+  },
+  "splitChip": {
+    "configure": "Definir valores",
+    "tapToAdjust": "toca para ajustar",
+    "amountChanged": "Valor alterado — abre de novo para definir os valores.",
+    "equal": "Dividido em partes iguais",
+    "equalSubset": "Dividido entre {{count}} de {{total}} membros",
+    "custom": "Valores personalizados"
   },
   "invite": {
     "invalidInvite": "Convite Inválido",

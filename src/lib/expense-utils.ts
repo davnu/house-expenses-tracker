@@ -1,4 +1,5 @@
 import type { Expense, ExpenseCategory } from '@/types/expense'
+import { SPLIT_PAYER } from './constants'
 
 // ── Month grouping ──────────────────────────────────
 
@@ -49,8 +50,20 @@ export function groupExpensesByMonth(
 
 // ── Filters ─────────────────────────────────────────
 
+/**
+ * Filter expenses by payer. When `uid` is a member id, the result also
+ * includes Split-payment expenses where that member contributed a positive
+ * amount — a strict `e.payer === uid` check would silently drop those and
+ * surprise users who filter by their own name.
+ */
 export function filterByPayer(expenses: Expense[], uid: string): Expense[] {
-  return expenses.filter((e) => e.payer === uid)
+  return expenses.filter((e) => {
+    if (e.payer === uid) return true
+    if (e.payer === SPLIT_PAYER && uid !== SPLIT_PAYER) {
+      return e.splits?.some((s) => s.uid === uid && s.shareCents > 0) ?? false
+    }
+    return false
+  })
 }
 
 export function filterByDateRange(expenses: Expense[], start: string, end: string): Expense[] {

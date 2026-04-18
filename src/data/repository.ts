@@ -1,4 +1,12 @@
-import type { Expense, AppSettings } from '@/types/expense'
+import type { Expense, ExpenseSplit, AppSettings } from '@/types/expense'
+
+/**
+ * Update payload for expenses. Allows `splits: null` as a sentinel meaning
+ * "clear the override" — the repository translates it to deleteField().
+ */
+export type ExpenseUpdate = Omit<Partial<Expense>, 'splits'> & {
+  splits?: ExpenseSplit[] | null
+}
 import type { MortgageConfig } from '@/types/mortgage'
 import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
@@ -7,7 +15,7 @@ import type { Todo } from '@/types/todo'
 export interface ExpenseRepository {
   getExpenses(): Promise<Expense[]>
   addExpense(expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>): Promise<Expense>
-  updateExpense(id: string, updates: Partial<Expense>): Promise<Expense>
+  updateExpense(id: string, updates: ExpenseUpdate): Promise<Expense>
   deleteExpense(id: string): Promise<void>
 
   getSettings(): Promise<AppSettings>

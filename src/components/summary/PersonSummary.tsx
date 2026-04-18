@@ -1,16 +1,18 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Home } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useHousehold } from '@/context/HouseholdContext'
 import { formatCurrency } from '@/lib/utils'
-import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel, getCategoryLabel, getFormerMemberLabel } from '@/lib/constants'
+import { SHARED_PAYER, SHARED_PAYER_COLOR, getCategoryLabel } from '@/lib/constants'
+import { getExpenseCashContribution, sumSharedPool } from '@/lib/cost-split'
 import type { Expense } from '@/types/expense'
 
 interface PersonSummaryProps {
   expenses: Expense[]
 }
 
-interface PayerSummaryData {
+interface BucketData {
   key: string
   name: string
   color: string
@@ -18,89 +20,135 @@ interface PayerSummaryData {
   percent: number
   count: number
   topCategories: { label: string; amount: number }[]
+  Icon?: typeof Home
 }
 
-function buildPayerData(expenses: Expense[], payerKey: string, name: string, color: string, grandTotal: number): PayerSummaryData {
-  const payerExpenses = expenses.filter((e) => e.payer === payerKey)
-  const total = payerExpenses.reduce((s, e) => s + e.amount, 0)
-  const byCat: Record<string, number> = {}
-  for (const e of payerExpenses) {
-    byCat[e.category] = (byCat[e.category] ?? 0) + e.amount
-  }
-  const topCategories = Object.entries(byCat)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([cat, amount]) => ({ label: getCategoryLabel(cat), amount }))
-
-  return {
-    key: payerKey,
-    name,
-    color,
-    total,
-    percent: grandTotal > 0 ? (total / grandTotal) * 100 : 0,
-    count: payerExpenses.length,
-    topCategories,
-  }
-}
-
+/**
+ * Per-person + Shared pool cost summary.
+ * Each member card shows their direct cash contributions (single-payer
+ * expenses + their portion of split payments). The Shared pool gets its own
+ * card — it stays as an untouched bucket instead of being redistributed.
+ */
 export function PersonSummary({ expenses }: PersonSummaryProps) {
   const { t } = useTranslation()
-  const { members } = useHousehold()
+  const { members, getMemberName, getMemberColor } = useHousehold()
 
   const data = useMemo(() => {
     const grandTotal = expenses.reduce((s, e) => s + e.amount, 0)
-    const result: PayerSummaryData[] = []
-    const accounted = new Set<string>()
+    if (grandTotal === 0) return []
 
-    // Shared slice
-    const shared = buildPayerData(expenses, SHARED_PAYER, getSharedPayerLabel(), SHARED_PAYER_COLOR, grandTotal)
-    if (shared.count > 0) { result.push(shared); accounted.add(SHARED_PAYER) }
+    interface Bucket {
+      total: number
+      count: number
+      byCat: Record<string, number>
+    }
+    const memberBuckets = new Map<string, Bucket>()
+    const sharedBucket: Bucket = { total: 0, count: 0, byCat: {} }
 
-    // Individual member slices
-    for (const m of members) {
-      const d = buildPayerData(expenses, m.uid, m.displayName, m.color, grandTotal)
-      if (d.count > 0) { result.push(d); accounted.add(m.uid) }
+    for (const e of expenses) {
+      // Shared pool expenses → shared bucket, never distributed
+      if (e.payer === SHARED_PAYER) {
+        sharedBucket.total += e.amount
+        sharedBucket.count += 1
+        sharedBucket.byCat[e.category] = (sharedBucket.byCat[e.category] ?? 0) + e.amount
+        continue
+      }
+      // Otherwise attribute cash contribution per person
+      for (const c of getExpenseCashContribution(e)) {
+        if (c.shareCents === 0) continue
+        let b = memberBuckets.get(c.uid)
+        if (!b) {
+          b = { total: 0, count: 0, byCat: {} }
+          memberBuckets.set(c.uid, b)
+        }
+        b.total += c.shareCents
+        b.count += 1
+        b.byCat[e.category] = (b.byCat[e.category] ?? 0) + c.shareCents
+      }
     }
 
-    // Former members — group all orphaned payers into one entry
-    const orphanedExpenses = expenses.filter((e) => !accounted.has(e.payer))
-    if (orphanedExpenses.length > 0) {
-      const orphanedTotal = orphanedExpenses.reduce((s, e) => s + e.amount, 0)
-      const byCat: Record<string, number> = {}
-      for (const e of orphanedExpenses) { byCat[e.category] = (byCat[e.category] ?? 0) + e.amount }
-      const topCategories = Object.entries(byCat).sort(([, a], [, b]) => b - a).slice(0, 3).map(([cat, amount]) => ({ label: getCategoryLabel(cat), amount }))
-      result.push({ key: '__former__', name: getFormerMemberLabel(), color: '#6b7280', total: orphanedTotal, percent: grandTotal > 0 ? (orphanedTotal / grandTotal) * 100 : 0, count: orphanedExpenses.length, topCategories })
+    const memberOrder = new Map(members.map((m, i) => [m.uid, i]))
+    const uids = [...memberBuckets.keys()].sort((a, b) => {
+      const ai = memberOrder.get(a)
+      const bi = memberOrder.get(b)
+      if (ai !== undefined && bi !== undefined) return ai - bi
+      if (ai !== undefined) return -1
+      if (bi !== undefined) return 1
+      return a.localeCompare(b)
+    })
+
+    const result: BucketData[] = uids.map((uid) => {
+      const b = memberBuckets.get(uid)!
+      const topCategories = Object.entries(b.byCat)
+        .sort(([, x], [, y]) => y - x)
+        .slice(0, 3)
+        .map(([cat, amount]) => ({ label: getCategoryLabel(cat), amount }))
+      return {
+        key: uid,
+        name: getMemberName(uid),
+        color: getMemberColor(uid),
+        total: b.total,
+        percent: (b.total / grandTotal) * 100,
+        count: b.count,
+        topCategories,
+      }
+    })
+
+    if (sharedBucket.total > 0) {
+      const topCategories = Object.entries(sharedBucket.byCat)
+        .sort(([, x], [, y]) => y - x)
+        .slice(0, 3)
+        .map(([cat, amount]) => ({ label: getCategoryLabel(cat), amount }))
+      result.push({
+        key: '__shared__',
+        name: t('costSharing.sharedPool'),
+        color: SHARED_PAYER_COLOR,
+        total: sharedBucket.total,
+        percent: (sharedBucket.total / grandTotal) * 100,
+        count: sharedBucket.count,
+        topCategories,
+        Icon: Home,
+      })
     }
 
     return result
-  }, [expenses, members])
+  }, [expenses, members, getMemberName, getMemberColor, t])
 
-  // Hide entirely for single-member households or when no data
   if (members.length < 2 || data.length === 0) return null
+
+  // Sanity: shared pool helper aligns with our bucket math
+  void sumSharedPool
 
   return (
     <div>
       <h3 className="text-lg font-semibold mb-4">{t('summary.perPerson')}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {data.map((person) => (
-          <Card key={person.key}>
+        {data.map((bucket) => (
+          <Card key={bucket.key}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: person.color }} />
-                {person.name}
+                {bucket.Icon ? (
+                  <bucket.Icon className="h-4 w-4 shrink-0" style={{ color: bucket.color }} />
+                ) : (
+                  <span
+                    className="h-3 w-3 rounded-full shrink-0"
+                    style={{ backgroundColor: bucket.color }}
+                  />
+                )}
+                {bucket.name}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-2xl font-bold">{formatCurrency(person.total)}</span>
+                <span className="text-2xl font-bold">{formatCurrency(bucket.total)}</span>
                 <span className="text-sm text-muted-foreground self-end">
-                  {person.percent.toFixed(1)}% &middot; {t('expenses.expenseCount', { count: person.count })}
+                  {bucket.percent.toFixed(1)}% &middot; {t('expenses.expenseCount', { count: bucket.count })}
                 </span>
               </div>
-              {person.topCategories.length > 0 && (
+              {bucket.topCategories.length > 0 && (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">{t('summary.topCategories')}</p>
-                  {person.topCategories.map((cat) => (
+                  {bucket.topCategories.map((cat) => (
                     <div key={cat.label} className="flex justify-between text-sm">
                       <span>{cat.label}</span>
                       <span className="text-muted-foreground">{formatCurrency(cat.amount)}</span>

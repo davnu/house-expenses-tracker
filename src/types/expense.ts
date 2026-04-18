@@ -23,11 +23,19 @@ export interface Attachment {
   thumbnailUrl?: string // Small JPEG thumbnail URL (generated client-side at upload)
 }
 
+/** Per-member allocation of a single expense's cost. sum(shareCents) must equal Expense.amount. */
+export interface ExpenseSplit {
+  uid: string
+  shareCents: number
+}
+
 export interface Expense {
   id: string
   amount: number // cents
   category: ExpenseCategory
   payer: string // uid of household member, or 'shared' for jointly-paid expenses
+  /** Per-member cost allocation. If omitted, the household default ratio applies at read time. */
+  splits?: ExpenseSplit[]
   description: string
   date: string // YYYY-MM-DD
   paid?: boolean // defaults to true; false = planned/expected cost not yet paid
@@ -49,6 +57,12 @@ export interface UserProfile {
   createdAt: string
 }
 
+/** Household ownership ratio. Shares are in basis points (10000 = 100%) and must sum to 10000. */
+export interface CostSplitShare {
+  uid: string
+  shareBps: number
+}
+
 export interface House {
   id: string
   name: string
@@ -56,6 +70,8 @@ export interface House {
   memberIds: string[]
   country?: string // ISO 3166-1 alpha-2 (e.g. 'ES', 'GB', 'US')
   currency?: string // ISO 4217 (e.g. 'EUR', 'GBP', 'USD')
+  /** Optional household-wide cost allocation ratio. Omitted = split equally across current members. */
+  costSplit?: CostSplitShare[]
   createdAt: string
 }
 

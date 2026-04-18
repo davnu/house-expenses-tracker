@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import type { Expense, Attachment } from '@/types/expense'
-import type { ExpenseRepository } from '@/data/repository'
+import type { ExpenseRepository, ExpenseUpdate } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
 import { uploadAttachment, uploadAttachmentThumbnail, deleteAttachment, deleteAttachments } from '@/data/firebase-attachment-store'
 import { generateThumbnail } from '@/lib/thumbnail'
@@ -16,7 +16,7 @@ interface ExpenseContextValue {
   pendingAttachmentIds: Set<string>
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   addExpenseWithFiles: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
-  updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>
+  updateExpense: (id: string, updates: ExpenseUpdate) => Promise<void>
   deleteExpense: (id: string) => Promise<void>
   addAttachmentsToExpense: (expenseId: string, files: File[]) => Promise<void>
   removeAttachment: (expenseId: string, attachmentId: string) => Promise<void>
@@ -167,14 +167,18 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     }
   }, [repo, houseId])
 
-  const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
+  const updateExpense = useCallback(async (id: string, updates: ExpenseUpdate) => {
     if (!repo) return
     const previous = expensesRef.current.find((e) => e.id === id)
     if (!previous) return
 
-    // Optimistic: apply updates immediately
+    // Optimistic: apply updates immediately. Null on `splits` is the "clear"
+    // sentinel — reflect it as undefined locally so UI aggregators read it as absent.
+    const optimistic = { ...updates } as Partial<Expense>
+    if (updates.splits === null) optimistic.splits = undefined
+
     setExpenses((prev) => prev.map((e) =>
-      e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e
+      e.id === id ? { ...e, ...optimistic, updatedAt: new Date().toISOString() } : e
     ))
 
     try {

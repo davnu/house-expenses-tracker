@@ -20,6 +20,12 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
     if (!expense) return
     setError('')
     try {
+      // If the expense previously had an override and the user cleared it,
+      // signal the repository to delete the field (rather than leaving it stale).
+      const hadOverride = !!(expense.splits && expense.splits.length > 0)
+      const hasOverride = !!(data.splits && data.splits.length > 0)
+      const splitsUpdate = hadOverride && !hasOverride ? null : data.splits
+
       await updateExpense(expense.id, {
         amount: data.amount,
         category: data.category,
@@ -27,6 +33,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
         description: data.description,
         date: data.date,
         paid: data.paid,
+        splits: splitsUpdate,
       })
       onOpenChange(false)
     } catch (err) {
@@ -53,6 +60,7 @@ export function EditExpenseDialog({ expense, onOpenChange }: EditExpenseDialogPr
             date: expense.date,
             paid: expense.paid !== false,
           }}
+          defaultSplits={expense.splits ?? null}
           hideAttachments
           submitLabel={t('expenses.saveChanges')}
         />

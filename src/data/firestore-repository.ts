@@ -7,10 +7,12 @@ import {
   updateDoc,
   deleteDoc,
   setDoc,
+  deleteField,
   query,
   type Firestore,
 } from 'firebase/firestore'
 import type { Expense, AppSettings } from '@/types/expense'
+import type { ExpenseUpdate } from './repository'
 import type { MortgageConfig } from '@/types/mortgage'
 import type { BudgetConfig } from '@/types/budget'
 import type { DocFolder, HouseDocument } from '@/types/document'
@@ -51,10 +53,13 @@ export class FirestoreRepository implements ExpenseRepository {
     return { id: ref.id, ...data } as Expense
   }
 
-  async updateExpense(id: string, updates: Partial<Expense>): Promise<Expense> {
+  async updateExpense(id: string, updates: ExpenseUpdate): Promise<Expense> {
     const ref = this.docRef('expenses', id)
-    const toUpdate = stripInvalid({ ...updates, updatedAt: new Date().toISOString() })
-    await updateDoc(ref, toUpdate)
+    const cleaned = stripInvalid({ ...updates, updatedAt: new Date().toISOString() }) as Record<string, unknown>
+    // Null on `splits` is the sentinel for "clear this override" — remove the
+    // field from the document so future reads fall back to the household default.
+    if (cleaned.splits === null) cleaned.splits = deleteField()
+    await updateDoc(ref, cleaned)
     const snap = await getDoc(ref)
     return { id: snap.id, ...snap.data() } as Expense
   }

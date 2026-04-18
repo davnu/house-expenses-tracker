@@ -6,11 +6,103 @@ import { useHousehold } from '@/context/HouseholdContext'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatCurrency } from '@/lib/utils'
 import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
+import { getExpenseCashContribution } from '@/lib/cost-split'
 import type { Expense } from '@/types/expense'
 
 interface MonthlyTrendProps {
   expenses: Expense[]
   title?: string
+}
+
+export const FORMER_KEY = '__former__'
+
+export interface MonthlyTrendSegment {
+  key: string
+  label: string
+  color: string
+}
+
+export interface MonthlyTrendBucket {
+  segments: MonthlyTrendSegment[]
+  data: Record<string, string | number>[]
+}
+
+/**
+ * Pure aggregation that turns an expense list into the segments + per-month
+ * stacked values the chart consumes. Extracted so tests can assert the bucket
+ * shape without rendering Recharts (which renders nothing in jsdom without
+ * explicit dimensions).
+ *
+ * Bucket rules:
+ *   - SHARED_PAYER expenses → `SHARED_PAYER` key (stays as its own series).
+ *   - Single-payer + SPLIT_PAYER → distributed per `getExpenseCashContribution`
+ *     into per-member keys. Malformed SPLIT with no splits falls back to
+ *     `FORMER_KEY` rather than vanishing.
+ *   - Unknown uids (members who left) → `FORMER_KEY`.
+ */
+export function computeMonthlyTrend(
+  expenses: Expense[],
+  opts: {
+    memberIds: Set<string>
+    labels: Record<string, string>
+    colors: Record<string, string>
+    memberOrder: string[]
+    sharedLabel: string
+    formerLabel: string
+  },
+): MonthlyTrendBucket {
+  const { memberIds, labels, colors, memberOrder, sharedLabel, formerLabel } = opts
+  const byMonth: Record<string, Record<string, number>> = {}
+  const usedKeys = new Set<string>()
+
+  const add = (month: string, key: string, cents: number) => {
+    if (cents <= 0) return
+    if (!byMonth[month]) byMonth[month] = {}
+    byMonth[month][key] = (byMonth[month][key] ?? 0) + cents
+    usedKeys.add(key)
+  }
+
+  for (const exp of expenses) {
+    const month = exp.date.substring(0, 7)
+    if (exp.payer === SHARED_PAYER) {
+      add(month, SHARED_PAYER, exp.amount)
+      continue
+    }
+    const contribs = getExpenseCashContribution(exp)
+    if (contribs.length === 0) {
+      // Malformed SPLIT with no splits: surface the whole amount under the
+      // Former-member catchall so data is never silently dropped.
+      add(month, FORMER_KEY, exp.amount)
+      continue
+    }
+    for (const c of contribs) {
+      const key = memberIds.has(c.uid) ? c.uid : FORMER_KEY
+      add(month, key, c.shareCents)
+    }
+  }
+
+  const segments: MonthlyTrendSegment[] = []
+  if (usedKeys.has(SHARED_PAYER)) {
+    segments.push({ key: SHARED_PAYER, label: sharedLabel, color: SHARED_PAYER_COLOR })
+  }
+  for (const uid of memberOrder) {
+    if (usedKeys.has(uid)) {
+      segments.push({ key: uid, label: labels[uid] ?? uid, color: colors[uid] ?? '#6b7280' })
+    }
+  }
+  if (usedKeys.has(FORMER_KEY)) {
+    segments.push({ key: FORMER_KEY, label: formerLabel, color: '#6b7280' })
+  }
+
+  const data = Object.entries(byMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, vals]) => {
+      const entry: Record<string, string | number> = { month }
+      for (const seg of segments) entry[seg.key] = vals[seg.key] ?? 0
+      return entry
+    })
+
+  return { segments, data }
 }
 
 export function MonthlyTrend({ expenses, title }: MonthlyTrendProps) {
@@ -21,50 +113,17 @@ export function MonthlyTrend({ expenses, title }: MonthlyTrendProps) {
 
   const displayTitle = title ?? t('dashboard.spendingByMonth')
 
-  // Build the list of payer segments for chart bars
-  const segments = useMemo(() => {
-    const segs: { key: string; label: string; color: string }[] = []
-    const knownKeys = new Set<string>()
-
-    if (expenses.some((e) => e.payer === SHARED_PAYER)) {
-      segs.push({ key: SHARED_PAYER, label: getSharedPayerLabel(), color: SHARED_PAYER_COLOR })
-      knownKeys.add(SHARED_PAYER)
-    }
-    for (const m of members) {
-      segs.push({ key: m.uid, label: m.displayName, color: getMemberColor(m.uid) })
-      knownKeys.add(m.uid)
-    }
-
-    // Former members — include if any expenses have unknown payer uids
-    if (expenses.some((e) => !knownKeys.has(e.payer))) {
-      segs.push({ key: '__former__', label: t('common.formerMember'), color: '#6b7280' })
-    }
-
-    return segs
-  }, [expenses, members, getMemberColor, t])
-
-  const data = useMemo(() => {
-    const knownKeys = new Set(segments.map((s) => s.key))
-    const byMonth: Record<string, Record<string, number>> = {}
-
-    for (const exp of expenses) {
-      const month = exp.date.substring(0, 7)
-      if (!byMonth[month]) byMonth[month] = {}
-      // Map orphaned payers to the __former__ key
-      const key = knownKeys.has(exp.payer) ? exp.payer : '__former__'
-      byMonth[month][key] = (byMonth[month][key] ?? 0) + exp.amount
-    }
-
-    return Object.entries(byMonth)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, vals]) => {
-        const entry: Record<string, string | number> = { month }
-        for (const seg of segments) {
-          entry[seg.key] = vals[seg.key] ?? 0
-        }
-        return entry
-      })
-  }, [expenses, segments])
+  const { segments, data } = useMemo(
+    () => computeMonthlyTrend(expenses, {
+      memberIds: new Set(members.map((m) => m.uid)),
+      memberOrder: members.map((m) => m.uid),
+      labels: Object.fromEntries(members.map((m) => [m.uid, m.displayName])),
+      colors: Object.fromEntries(members.map((m) => [m.uid, getMemberColor(m.uid)])),
+      sharedLabel: getSharedPayerLabel(),
+      formerLabel: t('common.formerMember'),
+    }),
+    [expenses, members, getMemberColor, t],
+  )
 
   if (data.length === 0) return null
 

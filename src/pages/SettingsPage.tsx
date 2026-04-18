@@ -16,6 +16,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
 import { CreateHouseDialog } from '@/components/layout/CreateHouseDialog'
+import { CostSharingCard } from '@/components/settings/CostSharingCard'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
 
 export function SettingsPage() {
@@ -391,6 +392,9 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Cost sharing — only relevant once there are multiple members */}
+      <CostSharingCard />
 
       {/* Data */}
       <Card>

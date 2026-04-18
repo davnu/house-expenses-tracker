@@ -33,6 +33,7 @@
     "signOut": "Cerrar sesión",
     "formerMember": "Antiguo miembro",
     "shared": "Compartido",
+    "splitPayer": "Pago dividido",
     "date": "Fecha",
     "amount": "Importe",
     "type": "Tipo",
@@ -174,6 +175,7 @@
     "member": "Miembro",
     "paidBy": "Pagado por",
     "paidShared": "Pagado con fondos compartidos del hogar",
+    "paidSplit": "Cada uno pagó una parte con su dinero",
     "paidPersonally": "Pagado personalmente por {{name}}",
     "description": "Descripción",
     "descriptionPlaceholder": "p. ej. Señal de la entrada, gastos de notaría, inspección técnica...",
@@ -564,6 +566,42 @@
     "deletingOwnedHouses": "Eliminando casas propias",
     "cleaningMemberships": "Limpiando membresías",
     "removingProfile": "Eliminando perfil"
+  },
+  "costSharing": {
+    "title": "Reparto de gastos",
+    "description": "Define cómo se reparten los costes de la casa entre los miembros. El valor por defecto se aplica a cada nuevo gasto — siempre puedes cambiarlo en cada gasto concreto.",
+    "equalLabel": "A partes iguales",
+    "equalHint_one": "Cada gasto cuenta igual para {{count}} miembro.",
+    "equalHint_other": "Cada gasto se reparte por igual entre {{count}} miembros.",
+    "customLabel": "Proporción personalizada",
+    "customHint": "Elige un porcentaje fijo por miembro que sume 100 %.",
+    "total": "Total",
+    "toAdjust": "por ajustar",
+    "saved": "Guardado",
+    "previewTitle": "Vista previa sobre {{total}} registrados hasta ahora",
+    "cardTitle": "Nuestras aportaciones",
+    "sharedPool": "Compartido (fondos comunes)"
+  },
+  "splitEditor": {
+    "title": "¿Cuánto pagó cada uno?",
+    "subtitle": "Reparte {{amount}} entre los miembros.",
+    "equalTab": "A partes iguales",
+    "exactTab": "Cantidades exactas",
+    "equalHint": "Elige quién aportó — el importe se divide por igual entre ellos.",
+    "exactHint": "Indica lo que pagó cada uno con su dinero.",
+    "balanced": "Cuadrado",
+    "remaining": "Faltan {{amount}} por repartir",
+    "overAllocated": "Sobran {{amount}}",
+    "saveHint": "El total debe sumar {{amount}} para poder guardar.",
+    "presetsLabel": "Divisiones rápidas"
+  },
+  "splitChip": {
+    "configure": "Indicar importes",
+    "tapToAdjust": "toca para ajustar",
+    "amountChanged": "Importe cambiado — vuelve a abrir para indicar los importes.",
+    "equal": "Dividido a partes iguales",
+    "equalSubset": "Dividido entre {{count}} de {{total}} miembros",
+    "custom": "Cantidades personalizadas"
   },
   "invite": {
     "invalidInvite": "Invitación no válida",

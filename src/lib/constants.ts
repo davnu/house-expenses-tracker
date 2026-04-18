@@ -71,12 +71,31 @@ export const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ]
 
-// Shared payer sentinel — used instead of a uid when an expense is paid jointly
+// Shared payer sentinel — used when an expense comes from the household/joint pool.
+// Stays as its own bucket on the dashboard; never redistributed to individuals.
 export const SHARED_PAYER = 'shared' as const
 export const SHARED_PAYER_COLOR = '#6366f1'
 export const SHARED_PAYER_LABEL = 'Shared'
 /** Translated "Shared" label -- call during render */
 export function getSharedPayerLabel(): string { return i18next.t('common.shared') }
+
+// Split-payment sentinel — each person contributed part of this expense from their
+// own money. The `splits` array stores per-person cash contributions (which equal
+// allocation in this model). Contributions flow into each person's column.
+export const SPLIT_PAYER = 'split' as const
+// Sky-700: distinct from SHARED indigo and the member palette's teal/orange/pink.
+// Deliberately blue-leaning so a 2-person household with member[0] in teal and
+// this badge in sky can't confuse them at a glance.
+export const SPLIT_PAYER_COLOR = '#0369a1'
+export const SPLIT_PAYER_LABEL = 'Split payment'
+/** Translated "Split payment" label -- call during render */
+export function getSplitPayerLabel(): string { return i18next.t('common.splitPayer') }
+
+/** True if the payer is one of the pool/split sentinels, not a member uid. */
+export function isReservedPayer(payer: string): boolean {
+  return payer === SHARED_PAYER || payer === SPLIT_PAYER
+}
+
 /** Translated "Former member" label -- call during render */
 export function getFormerMemberLabel(): string { return i18next.t('common.formerMember') }
 

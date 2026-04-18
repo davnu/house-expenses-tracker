@@ -33,6 +33,7 @@
     "signOut": "Uitloggen",
     "formerMember": "Voormalig lid",
     "shared": "Gedeeld",
+    "splitPayer": "Door meerdere betaald",
     "date": "Datum",
     "amount": "Bedrag",
     "type": "Type",
@@ -174,6 +175,7 @@
     "member": "Lid",
     "paidBy": "Betaald door",
     "paidShared": "Betaald uit gedeelde huishoudkas",
+    "paidSplit": "Ieder betaalde een deel uit eigen zak",
     "paidPersonally": "Persoonlijk betaald door {{name}}",
     "description": "Omschrijving",
     "descriptionPlaceholder": "bijv. Aanbetaling, notariskosten, bouwkundige keuring...",
@@ -564,6 +566,42 @@
     "deletingOwnedHouses": "Eigen woningen verwijderen",
     "cleaningMemberships": "Lidmaatschappen opruimen",
     "removingProfile": "Profiel verwijderen"
+  },
+  "costSharing": {
+    "title": "Kostenverdeling",
+    "description": "Stel in hoe de huiskosten tussen de leden worden verdeeld. De standaardinstelling geldt voor elke nieuwe uitgave — je kunt dit per uitgave altijd aanpassen.",
+    "equalLabel": "Gelijk verdelen",
+    "equalHint_one": "Elke uitgave telt gelijk voor {{count}} lid.",
+    "equalHint_other": "Elke uitgave wordt gelijk verdeeld over {{count}} leden.",
+    "customLabel": "Eigen verhouding",
+    "customHint": "Kies een vast percentage per lid dat samen 100 % is.",
+    "total": "Totaal",
+    "toAdjust": "aan te passen",
+    "saved": "Opgeslagen",
+    "previewTitle": "Voorbeeld op basis van {{total}} tot nu toe",
+    "cardTitle": "Onze inbreng",
+    "sharedPool": "Gedeeld (gezamenlijke kas)"
+  },
+  "splitEditor": {
+    "title": "Wie betaalde hoeveel?",
+    "subtitle": "Verdeel {{amount}} tussen de leden.",
+    "equalTab": "Gelijk",
+    "exactTab": "Vaste bedragen",
+    "equalHint": "Kies wie heeft bijgedragen — het bedrag wordt gelijk verdeeld.",
+    "exactHint": "Geef aan wat ieder uit eigen zak betaalde.",
+    "balanced": "Klopt",
+    "remaining": "Nog {{amount}} te verdelen",
+    "overAllocated": "{{amount}} te veel",
+    "saveHint": "Totaal moet {{amount}} zijn om op te slaan.",
+    "presetsLabel": "Snelle verdelingen"
+  },
+  "splitChip": {
+    "configure": "Bedragen invullen",
+    "tapToAdjust": "tik om aan te passen",
+    "amountChanged": "Bedrag gewijzigd — open opnieuw om bedragen in te vullen.",
+    "equal": "Gelijk verdeeld",
+    "equalSubset": "Verdeeld tussen {{count}} van {{total}} leden",
+    "custom": "Eigen bedragen"
   },
   "invite": {
     "invalidInvite": "Ongeldige uitnodiging",

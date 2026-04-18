@@ -33,6 +33,7 @@
     "signOut": "Abmelden",
     "formerMember": "Ehemaliges Mitglied",
     "shared": "Gemeinsam",
+    "splitPayer": "Von mehreren bezahlt",
     "date": "Datum",
     "amount": "Betrag",
     "type": "Typ",
@@ -174,6 +175,7 @@
     "member": "Mitglied",
     "paidBy": "Bezahlt von",
     "paidShared": "Aus gemeinsamer Haushaltskasse bezahlt",
+    "paidSplit": "Jede Person hat einen Teil aus eigener Tasche bezahlt",
     "paidPersonally": "Persönlich bezahlt von {{name}}",
     "description": "Beschreibung",
     "descriptionPlaceholder": "z. B. Anzahlung, Notargebühren, Hausinspektion...",
@@ -564,6 +566,42 @@
     "deletingOwnedHouses": "Eigene Häuser werden gelöscht",
     "cleaningMemberships": "Mitgliedschaften werden bereinigt",
     "removingProfile": "Profil wird entfernt"
+  },
+  "costSharing": {
+    "title": "Kostenverteilung",
+    "description": "Legt fest, wie die Hauskosten zwischen den Mitgliedern aufgeteilt werden. Die Voreinstellung gilt für jede neue Ausgabe — du kannst sie pro Ausgabe überschreiben.",
+    "equalLabel": "Gleichmäßig",
+    "equalHint_one": "Jede Ausgabe zählt gleich für {{count}} Mitglied.",
+    "equalHint_other": "Jede Ausgabe wird gleichmäßig auf {{count}} Mitglieder verteilt.",
+    "customLabel": "Eigenes Verhältnis",
+    "customHint": "Wähle einen festen Prozentsatz pro Mitglied, der zusammen 100 % ergibt.",
+    "total": "Summe",
+    "toAdjust": "anzupassen",
+    "saved": "Gespeichert",
+    "previewTitle": "Vorschau auf bisher erfasste {{total}}",
+    "cardTitle": "Unsere Beiträge",
+    "sharedPool": "Gemeinsam (Haushaltskasse)"
+  },
+  "splitEditor": {
+    "title": "Wer hat wie viel bezahlt?",
+    "subtitle": "Verteile {{amount}} zwischen den Mitgliedern.",
+    "equalTab": "Gleichmäßig",
+    "exactTab": "Feste Beträge",
+    "equalHint": "Wähle, wer beigetragen hat — der Betrag wird gleichmäßig aufgeteilt.",
+    "exactHint": "Gib ein, was jede Person aus eigener Tasche bezahlt hat.",
+    "balanced": "Ausgeglichen",
+    "remaining": "{{amount}} noch zu verteilen",
+    "overAllocated": "{{amount}} zu viel",
+    "saveHint": "Summe muss genau {{amount}} ergeben, um zu speichern.",
+    "presetsLabel": "Schnelle Aufteilungen"
+  },
+  "splitChip": {
+    "configure": "Beträge festlegen",
+    "tapToAdjust": "zum Ändern tippen",
+    "amountChanged": "Betrag geändert — erneut öffnen, um die neuen Beträge einzugeben.",
+    "equal": "Gleich aufgeteilt",
+    "equalSubset": "Aufgeteilt auf {{count}} von {{total}} Mitgliedern",
+    "custom": "Eigene Beträge"
   },
   "invite": {
     "invalidInvite": "Ungültige Einladung",

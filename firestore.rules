@@ -30,8 +30,19 @@ service cloud.firestore {
         return get(/databases/$(database)/documents/houses/$(houseId)).data.ownerId == request.auth.uid;
       }
 
+      // Defence-in-depth shape check for the household cost-sharing ratio.
+      // Full sum / per-uid validation is enforced client-side; rules just reject
+      // garbage types and size mismatches a buggy client could otherwise write.
+      function costSplitShapeOk() {
+        return !('costSplit' in request.resource.data)
+               || request.resource.data.costSplit == null
+               || (request.resource.data.costSplit is list
+                   && request.resource.data.costSplit.size() == request.resource.data.memberIds.size());
+      }
+
       allow create: if request.auth != null && isVerifiedEmail()
-                    && request.resource.data.ownerId == request.auth.uid;
+                    && request.resource.data.ownerId == request.auth.uid
+                    && costSplitShapeOk();
       // Any authenticated user can read house doc (needed for invite join flow)
       // House IDs are not guessable and data is not sensitive (just name + memberIds)
       allow read: if request.auth != null;
@@ -42,7 +53,10 @@ service cloud.firestore {
                             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])))
                     // Only the owner can set deletedAt (soft-delete)
                     && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['deletedAt'])
-                        || resource.data.ownerId == request.auth.uid);
+                        || resource.data.ownerId == request.auth.uid)
+                    // Cost split shape check only applies when the field is being touched
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['costSplit'])
+                        || costSplitShapeOk());
       allow delete: if request.auth != null && isVerifiedEmail()
                     && request.auth.uid == resource.data.ownerId;
 

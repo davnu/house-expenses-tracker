@@ -1,6 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { SHARED_PAYER } from '@/lib/constants'
+
+beforeAll(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  })
+})
 
 // ── Mocks (hoisted) ──
 
@@ -16,6 +30,12 @@ const { mockMembers } = vi.hoisted(() => ({
 vi.mock('@/context/HouseholdContext', () => ({
   useHousehold: () => ({
     members: mockMembers.current,
+    houseSplit: mockMembers.current.length > 0
+      ? mockMembers.current.map((m) => ({
+          uid: m.uid,
+          shareBps: Math.floor(10000 / mockMembers.current.length),
+        }))
+      : [],
     getMemberName: (uid: string) => {
       if (uid === SHARED_PAYER) return 'Shared'
       return mockMembers.current.find((m) => m.uid === uid)?.displayName ?? 'Unknown'
@@ -132,5 +152,68 @@ describe('ExpenseForm payer behavior', () => {
       const categoryGrid = container.querySelector('#category')?.closest('.grid')
       expect(categoryGrid?.className).not.toContain('sm:grid-cols-2')
     })
+  })
+})
+
+describe('ExpenseForm split chip', () => {
+  beforeEach(() => {
+    mockMembers.current = [...twoMembers]
+  })
+
+  it('does not render the split chip when payer is Shared (no amounts to configure)', async () => {
+    const user = userEvent.setup()
+    render(<ExpenseForm onSubmit={noopSubmit} />)
+    const amount = document.getElementById('amount') as HTMLInputElement
+    await user.type(amount, '100')
+    // Default payer is Shared → no chip
+    expect(screen.queryByText(/tap to adjust/i)).toBeNull()
+  })
+
+  it('does not render the split chip when amount is empty', () => {
+    render(<ExpenseForm onSubmit={noopSubmit} defaultValues={{ payer: 'split' }} />)
+    expect(screen.queryByText(/tap to adjust/i)).toBeNull()
+  })
+
+  it('renders the split chip when payer is Split payment and amount is positive', async () => {
+    const user = userEvent.setup()
+    render(<ExpenseForm onSubmit={noopSubmit} defaultValues={{ payer: 'split' }} />)
+    const amount = document.getElementById('amount') as HTMLInputElement
+    await user.type(amount, '100')
+    expect(screen.getByText(/tap to adjust/i)).toBeTruthy()
+  })
+
+  it('auto-opens the split editor on first pick of Split payment', async () => {
+    const user = userEvent.setup()
+    render(<ExpenseForm onSubmit={noopSubmit} defaultValues={{ amount: '100' }} />)
+    // Pick Split payment
+    const trigger = document.getElementById('payer') as HTMLElement
+    await user.click(trigger)
+    const splitOption = await screen.findByRole('option', { name: /split payment|pago dividido|paiement à plusieurs|mehreren|meerdere|por vários/i })
+    await user.click(splitOption)
+    // Dialog title appears (editor auto-opened)
+    expect(await screen.findByText(/who paid how much|cuánto pagó|payé combien|wer hat wie viel|wie betaalde|quem pagou/i)).toBeTruthy()
+  })
+
+  it('clears splits on amount change and shows a reopen notice', async () => {
+    const user = userEvent.setup()
+    render(
+      <ExpenseForm
+        onSubmit={noopSubmit}
+        defaultValues={{ amount: '100', payer: 'split' }}
+        defaultSplits={[
+          { uid: 'alice', shareCents: 7000 },
+          { uid: 'bob', shareCents: 3000 },
+        ]}
+      />,
+    )
+    const amount = document.getElementById('amount') as HTMLInputElement
+    // Sanity: chip starts in custom state
+    expect(screen.getByText(/custom amounts/i)).toBeTruthy()
+    // Changing the amount clears the stale splits and surfaces a notice
+    await user.clear(amount)
+    await user.type(amount, '200')
+    expect(screen.getByText(/reopen|vuelve a abrir|rouvrez|erneut öffnen|open opnieuw|abre de novo/i)).toBeTruthy()
+    // Previous custom amounts are gone — chip shows the "set amounts" action
+    expect(screen.queryByText(/custom amounts/i)).toBeNull()
   })
 })

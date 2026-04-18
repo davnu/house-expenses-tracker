@@ -62,6 +62,7 @@ vi.mock('@/context/HouseholdContext', () => ({
   useHousehold: () => ({
     house: { id: 'h1', name: 'Test House', ownerId: 'alice', memberIds: ['alice'], createdAt: '' },
     members: [{ uid: 'alice', displayName: 'Alice', email: 'a@a.com', color: '#3b82f6', role: 'owner', joinedAt: '' }],
+    houseSplit: [{ uid: 'alice', shareBps: 10000 }],
     getMemberName: () => 'Alice',
     getMemberColor: () => '#3b82f6',
   }),

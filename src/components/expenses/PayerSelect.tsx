@@ -1,8 +1,15 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Home, ChevronDown, Check } from 'lucide-react'
+import { Home, Users, ChevronDown, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SHARED_PAYER, SHARED_PAYER_COLOR, getSharedPayerLabel } from '@/lib/constants'
+import {
+  SHARED_PAYER,
+  SHARED_PAYER_COLOR,
+  SPLIT_PAYER,
+  SPLIT_PAYER_COLOR,
+  getSharedPayerLabel,
+  getSplitPayerLabel,
+} from '@/lib/constants'
 import type { HouseMember } from '@/types/expense'
 
 interface PayerSelectProps {
@@ -21,8 +28,17 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
   const triggerRef = useRef<HTMLButtonElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
 
-  // Items: 1 shared + N members
-  const itemCount = 1 + members.length
+  // Pool options (Shared, Split) come first; then members. Order is stable.
+  const poolOptions = useMemo(
+    () => [
+      { kind: 'shared' as const, value: SHARED_PAYER, label: getSharedPayerLabel(), color: SHARED_PAYER_COLOR, Icon: Home },
+      { kind: 'split' as const, value: SPLIT_PAYER, label: getSplitPayerLabel(), color: SPLIT_PAYER_COLOR, Icon: Users },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  )
+
+  const itemCount = poolOptions.length + members.length
 
   const selectedMember = members.find((m) => m.uid === value)
 
@@ -37,7 +53,6 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
     close()
   }, [onChange, close])
 
-  // Close on outside pointer
   useEffect(() => {
     if (!open) return
     const handlePointer = (e: PointerEvent) => {
@@ -49,7 +64,6 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
     return () => document.removeEventListener('pointerdown', handlePointer)
   }, [open, close])
 
-  // Keyboard navigation
   useEffect(() => {
     if (!open) return
     const handleKey = (e: KeyboardEvent) => {
@@ -83,7 +97,6 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, close, itemCount])
 
-  // Focus active item
   useEffect(() => {
     if (focusIndex >= 0) {
       itemRefs.current[focusIndex]?.focus()
@@ -111,9 +124,10 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
         : 'hover:bg-accent text-foreground'
     )
 
+  const selectedPool = poolOptions.find((o) => o.value === value)
+
   return (
     <div ref={containerRef} className="relative">
-      {/* Trigger */}
       <button
         ref={triggerRef}
         type="button"
@@ -127,10 +141,10 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
         onKeyDown={handleTriggerKeyDown}
       >
         <span className="flex items-center gap-2 truncate">
-          {value === SHARED_PAYER ? (
+          {selectedPool ? (
             <>
-              <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} aria-hidden="true" />
-              <span>{getSharedPayerLabel()}</span>
+              <selectedPool.Icon className="h-4 w-4 shrink-0" style={{ color: selectedPool.color }} aria-hidden="true" />
+              <span>{selectedPool.label}</span>
             </>
           ) : selectedMember ? (
             <>
@@ -154,55 +168,58 @@ export function PayerSelect({ value, onChange, members, id, ...props }: PayerSel
         />
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div
           role="listbox"
           aria-label={t('expenses.selectWhoPaid')}
           className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border bg-card shadow-lg overflow-hidden"
         >
-          {/* Shared option */}
+          {/* Pool options: Shared + Split payment */}
           <div className="py-1">
-            <button
-              ref={(el) => { itemRefs.current[0] = el }}
-              type="button"
-              role="option"
-              aria-selected={value === SHARED_PAYER}
-              tabIndex={focusIndex === 0 ? 0 : -1}
-              className={optionClass(value === SHARED_PAYER)}
-              onClick={() => select(SHARED_PAYER)}
-            >
-              <Home className="h-4 w-4 shrink-0" style={{ color: SHARED_PAYER_COLOR }} aria-hidden="true" />
-              <span className="flex-1 truncate">{getSharedPayerLabel()}</span>
-              {value === SHARED_PAYER && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
-            </button>
-          </div>
-
-          {/* Separator */}
-          <div className="border-t" />
-
-          {/* Member options */}
-          <div className="py-1">
-            {members.map((m, i) => (
+            {poolOptions.map((opt, i) => (
               <button
-                key={m.uid}
-                ref={(el) => { itemRefs.current[i + 1] = el }}
+                key={opt.value}
+                ref={(el) => { itemRefs.current[i] = el }}
                 type="button"
                 role="option"
-                aria-selected={value === m.uid}
-                tabIndex={focusIndex === i + 1 ? 0 : -1}
-                className={optionClass(value === m.uid)}
-                onClick={() => select(m.uid)}
+                aria-selected={value === opt.value}
+                tabIndex={focusIndex === i ? 0 : -1}
+                className={optionClass(value === opt.value)}
+                onClick={() => select(opt.value)}
               >
-                <span
-                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: m.color }}
-                  aria-hidden="true"
-                />
-                <span className="flex-1 truncate">{m.displayName}</span>
-                {value === m.uid && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                <opt.Icon className="h-4 w-4 shrink-0" style={{ color: opt.color }} aria-hidden="true" />
+                <span className="flex-1 truncate">{opt.label}</span>
+                {value === opt.value && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
               </button>
             ))}
+          </div>
+
+          <div className="border-t" />
+
+          <div className="py-1">
+            {members.map((m, i) => {
+              const index = poolOptions.length + i
+              return (
+                <button
+                  key={m.uid}
+                  ref={(el) => { itemRefs.current[index] = el }}
+                  type="button"
+                  role="option"
+                  aria-selected={value === m.uid}
+                  tabIndex={focusIndex === index ? 0 : -1}
+                  className={optionClass(value === m.uid)}
+                  onClick={() => select(m.uid)}
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: m.color }}
+                    aria-hidden="true"
+                  />
+                  <span className="flex-1 truncate">{m.displayName}</span>
+                  {value === m.uid && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}

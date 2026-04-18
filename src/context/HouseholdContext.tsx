@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import {
   doc,
   getDoc,
@@ -6,6 +6,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   collection,
   addDoc,
   query,
@@ -20,23 +21,28 @@ import { db } from '@/data/firebase'
 import { deleteAttachments } from '@/data/firebase-attachment-store'
 import { deleteDocumentFiles } from '@/data/firebase-document-store'
 import { useAuth } from './AuthContext'
-import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL } from '@/lib/constants'
+import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL, SPLIT_PAYER, SPLIT_PAYER_COLOR, SPLIT_PAYER_LABEL } from '@/lib/constants'
 import { setCurrencyContext, stripInvalid } from '@/lib/utils'
+import { getEffectiveHouseSplit } from '@/lib/cost-split'
 import { FOLDER_DEFS } from '@/types/document'
 import type { CascadeProgressCallback } from '@/hooks/use-cascade-progress'
-import type { UserProfile, House, HouseMember, Invite } from '@/types/expense'
+import type { UserProfile, House, HouseMember, Invite, CostSplitShare } from '@/types/expense'
 
 interface HouseholdContextValue {
   userProfile: UserProfile | null
   house: House | null
   houses: House[]
   members: HouseMember[]
+  /** Effective house split (always sums to 10000 bps). Falls back to equal when none is stored. */
+  houseSplit: CostSplitShare[]
   loading: boolean
   createHouse: (name: string, country: string, currency: string) => Promise<void>
   joinHouse: (inviteId: string) => Promise<void>
   generateInvite: () => Promise<string>
   updateDisplayName: (name: string) => Promise<void>
   updateHouseName: (name: string) => Promise<void>
+  /** Pass null to clear the stored split (reverts to equal). */
+  updateCostSplit: (split: CostSplitShare[] | null) => Promise<void>
   removeMember: (uid: string) => Promise<void>
   switchHouse: (houseId: string) => Promise<void>
   leaveHouse: () => Promise<void>
@@ -358,6 +364,13 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     await updateDoc(doc(db, 'houses', house.id), { name })
   }, [house])
 
+  const updateCostSplit = useCallback(async (split: CostSplitShare[] | null) => {
+    if (!house) return
+    await updateDoc(doc(db, 'houses', house.id), {
+      costSplit: split === null ? deleteField() : split,
+    })
+  }, [house])
+
   const removeMember = useCallback(async (uid: string) => {
     if (!house) return
     if (uid === house.ownerId) throw new Error('Cannot remove the house owner')
@@ -490,13 +503,20 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     onProgress?.('finalize', 'completed')
   }, [user, house])
 
+  const houseSplit = useMemo(
+    () => getEffectiveHouseSplit(members.map((m) => m.uid), house?.costSplit),
+    [members, house?.costSplit],
+  )
+
   const getMemberName = useCallback((uid: string) => {
     if (uid === SHARED_PAYER) return SHARED_PAYER_LABEL
+    if (uid === SPLIT_PAYER) return SPLIT_PAYER_LABEL
     return members.find((m) => m.uid === uid)?.displayName ?? 'Former member'
   }, [members])
 
   const getMemberColor = useCallback((uid: string) => {
     if (uid === SHARED_PAYER) return SHARED_PAYER_COLOR
+    if (uid === SPLIT_PAYER) return SPLIT_PAYER_COLOR
     return members.find((m) => m.uid === uid)?.color ?? '#6b7280'
   }, [members])
 
@@ -507,12 +527,14 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         house,
         houses,
         members,
+        houseSplit,
         loading,
         createHouse,
         joinHouse,
         generateInvite,
         updateDisplayName,
         updateHouseName,
+        updateCostSplit,
         removeMember,
         switchHouse,
         leaveHouse,

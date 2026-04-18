@@ -57,8 +57,8 @@ describe('PayerSelect', () => {
       renderSelect()
       fireEvent.click(screen.getByRole('combobox'))
       const options = screen.getAllByRole('option')
-      // 1 shared + 2 members = 3 options
-      expect(options).toHaveLength(3)
+      // 2 pool options (Shared + Split payment) + 2 members = 4 options
+      expect(options).toHaveLength(4)
     })
 
     it('marks the selected option with aria-selected=true', () => {
@@ -176,6 +176,9 @@ describe('PayerSelect', () => {
       fireEvent.keyDown(document, { key: 'ArrowDown' })
       expect(document.activeElement).toBe(options[2])
 
+      fireEvent.keyDown(document, { key: 'ArrowDown' })
+      expect(document.activeElement).toBe(options[3])
+
       // Wraps around
       fireEvent.keyDown(document, { key: 'ArrowDown' })
       expect(document.activeElement).toBe(options[0])
@@ -188,7 +191,7 @@ describe('PayerSelect', () => {
       const options = screen.getAllByRole('option')
       // Starts at index 0, ArrowUp wraps to last
       fireEvent.keyDown(document, { key: 'ArrowUp' })
-      expect(document.activeElement).toBe(options[2])
+      expect(document.activeElement).toBe(options[options.length - 1])
     })
 
     it('Home jumps to first option', () => {
@@ -210,7 +213,7 @@ describe('PayerSelect', () => {
       fireEvent.keyDown(document, { key: 'End' })
 
       const options = screen.getAllByRole('option')
-      expect(document.activeElement).toBe(options[2])
+      expect(document.activeElement).toBe(options[options.length - 1])
     })
   })
 
@@ -230,12 +233,9 @@ describe('PayerSelect', () => {
       fireEvent.click(screen.getByRole('combobox'))
 
       const options = screen.getAllByRole('option')
-      // Shared (not selected) — no check
-      // Shared (not selected) — has Home icon but not Check
-      // Bob (selected) — has Check icon
-      const bobSvgs = options[2].querySelectorAll('svg')
-      // Bob should have more svgs (color dot is a span, but Check is an svg)
-      expect(bobSvgs.length).toBeGreaterThan(0)
+      const bobOption = options.find((o) => o.textContent?.includes('Bob'))!
+      // Bob (selected) renders a Check icon in addition to the color dot
+      expect(bobOption.querySelectorAll('svg').length).toBeGreaterThan(0)
     })
   })
 })

@@ -33,6 +33,7 @@
     "signOut": "Sign out",
     "formerMember": "Former member",
     "shared": "Shared",
+    "splitPayer": "Split payment",
     "date": "Date",
     "amount": "Amount",
     "type": "Type",
@@ -174,6 +175,7 @@
     "member": "Member",
     "paidBy": "Paid by",
     "paidShared": "Paid from shared household funds",
+    "paidSplit": "Each person paid part from their own money",
     "paidPersonally": "Paid personally by {{name}}",
     "description": "Description",
     "descriptionPlaceholder": "e.g. Down payment deposit, notary fees, home inspection...",
@@ -564,6 +566,42 @@
     "deletingOwnedHouses": "Deleting owned houses",
     "cleaningMemberships": "Cleaning up memberships",
     "removingProfile": "Removing profile"
+  },
+  "costSharing": {
+    "title": "Cost sharing",
+    "description": "Set how house costs should be allocated between members. The default applies to every new expense — you can still override it per expense.",
+    "equalLabel": "Equally",
+    "equalHint_one": "Each expense counts the same for {{count}} member.",
+    "equalHint_other": "Each expense counts equally across {{count}} members.",
+    "customLabel": "Custom ratio",
+    "customHint": "Choose a fixed percentage per member that sums to 100%.",
+    "total": "Total",
+    "toAdjust": "to adjust",
+    "saved": "Saved",
+    "previewTitle": "Preview based on {{total}} logged so far",
+    "cardTitle": "Our contributions",
+    "sharedPool": "Shared (joint funds)"
+  },
+  "splitEditor": {
+    "title": "Who paid how much?",
+    "subtitle": "Distribute {{amount}} between members.",
+    "equalTab": "Equally",
+    "exactTab": "Exact amounts",
+    "equalHint": "Pick who contributed — the amount splits equally between them.",
+    "exactHint": "Enter what each person paid from their own money.",
+    "balanced": "Balanced",
+    "remaining": "{{amount}} left to allocate",
+    "overAllocated": "{{amount}} over",
+    "saveHint": "Totals must match {{amount}} to save.",
+    "presetsLabel": "Quick split presets"
+  },
+  "splitChip": {
+    "configure": "Set amounts",
+    "tapToAdjust": "tap to adjust",
+    "amountChanged": "Amount changed — reopen to set new amounts.",
+    "equal": "Split equally",
+    "equalSubset": "Split between {{count}} of {{total}} members",
+    "custom": "Custom amounts"
   },
   "invite": {
     "invalidInvite": "Invalid Invite",

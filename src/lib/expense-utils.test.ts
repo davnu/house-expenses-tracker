@@ -9,7 +9,7 @@ import {
   applyFilters,
   groupExpensesByMonth,
 } from './expense-utils'
-import { SHARED_PAYER } from './constants'
+import { SHARED_PAYER, SPLIT_PAYER } from './constants'
 import type { Expense } from '@/types/expense'
 
 // ── Test data ────────────────────────────────────────
@@ -53,6 +53,60 @@ describe('filterByPayer', () => {
     const alice = filterByPayer(expenses, 'alice')
     const bob = filterByPayer(expenses, 'bob')
     expect(alice.length + bob.length).toBe(expenses.length)
+  })
+
+  // Regression: filtering by a member uid must also include SPLIT-payment
+  // expenses where that member contributed. A strict payer === uid check
+  // silently dropped those and surprised users who filtered by their own name.
+  describe('with SPLIT_PAYER expenses', () => {
+    const splitMix: Expense[] = [
+      expense({ id: 'e1', amount: 50000, payer: 'alice' }),                       // single: alice
+      expense({ id: 'e2', amount: 30000, payer: 'bob' }),                         // single: bob
+      expense({                                                                   // split: alice + bob
+        id: 'e3',
+        amount: 10000,
+        payer: SPLIT_PAYER,
+        splits: [
+          { uid: 'alice', shareCents: 7000 },
+          { uid: 'bob', shareCents: 3000 },
+        ],
+      }),
+      expense({                                                                   // split: only bob contributed
+        id: 'e4',
+        amount: 20000,
+        payer: SPLIT_PAYER,
+        splits: [
+          { uid: 'alice', shareCents: 0 },
+          { uid: 'bob', shareCents: 20000 },
+        ],
+      }),
+      expense({ id: 'e5', amount: 40000, payer: SHARED_PAYER }),                  // shared
+    ]
+
+    it('filtering by alice includes her single-payer + the SPLIT where she contributed', () => {
+      const result = filterByPayer(splitMix, 'alice')
+      expect(result.map((e) => e.id).sort()).toEqual(['e1', 'e3'])
+    })
+
+    it('filtering by alice excludes SPLIT expenses where her share is 0', () => {
+      const result = filterByPayer(splitMix, 'alice')
+      expect(result.find((e) => e.id === 'e4')).toBeUndefined()
+    })
+
+    it('filtering by bob includes single + both SPLIT expenses he contributed to', () => {
+      const result = filterByPayer(splitMix, 'bob')
+      expect(result.map((e) => e.id).sort()).toEqual(['e2', 'e3', 'e4'])
+    })
+
+    it('filtering by SPLIT_PAYER returns all SPLIT expenses (sentinel match)', () => {
+      const result = filterByPayer(splitMix, SPLIT_PAYER)
+      expect(result.map((e) => e.id).sort()).toEqual(['e3', 'e4'])
+    })
+
+    it('filtering by SHARED_PAYER returns only shared-payer expenses', () => {
+      const result = filterByPayer(splitMix, SHARED_PAYER)
+      expect(result.map((e) => e.id)).toEqual(['e5'])
+    })
   })
 })
 
