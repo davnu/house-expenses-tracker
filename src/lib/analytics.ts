@@ -29,6 +29,32 @@ const APP_ROUTE_PREFIX = '/app'
 let initialized = false
 let websiteId: string | null = null
 let host: string | null = null
+let lastPageViewKey: string | null = null
+// Bounded — if the tracker never loads (adblocker, network error) we drop
+// extras rather than leak memory on a long SPA session.
+const QUEUE_MAX = 50
+type PendingCall = { kind: 'event'; name: string; data?: Record<string, unknown> } | { kind: 'pageview'; payload: Record<string, unknown> }
+const pending: PendingCall[] = []
+
+function enqueue(call: PendingCall): void {
+  if (pending.length >= QUEUE_MAX) return
+  pending.push(call)
+}
+
+function flushPending(): void {
+  if (!window.umami) return
+  const drained = pending.splice(0)
+  for (const call of drained) {
+    if (call.kind === 'event') window.umami.track(call.name, call.data)
+    else window.umami.track(call.payload)
+  }
+}
+
+function abortAnalytics(): void {
+  // Script blocked or failed to load — clear state so we stop queueing.
+  pending.length = 0
+  initialized = false
+}
 
 export function isAppRoute(pathname: string): boolean {
   return pathname === APP_ROUTE_PREFIX || pathname.startsWith(APP_ROUTE_PREFIX + '/')
@@ -59,6 +85,8 @@ export function initAnalytics(): void {
   script.setAttribute('data-host-url', host)
   // Don't send query strings — `?mode=signup`, verification tokens, etc.
   script.setAttribute('data-exclude-search', 'true')
+  script.addEventListener('load', flushPending)
+  script.addEventListener('error', abortAnalytics)
   document.head.appendChild(script)
 }
 
@@ -67,27 +95,36 @@ export function isAnalyticsEnabled(): boolean {
 }
 
 /**
- * Fire a custom event. No-ops if not initialized, if the tracker hasn't
- * loaded yet, OR if the current path is inside /app/*.
- * Events fired before tracker load are silently dropped — acceptable since
- * our events are all user-initiated (script is cached after first visit).
+ * Fire a custom event. No-ops if not initialized or if the current path is
+ * inside /app/*. Calls made before the tracker script finishes loading are
+ * queued and flushed on load.
  */
 export function track(event: string, params?: Record<string, unknown>): void {
   if (!initialized) return
   if (typeof window === 'undefined') return
   if (isAppRoute(window.location.pathname)) return
-  window.umami?.track(event, params)
+  if (window.umami) window.umami.track(event, params)
+  else enqueue({ kind: 'event', name: event, data: params })
 }
 
 /**
  * Fire a page_view. Accepts path explicitly so we can gate on /app/*
- * without touching window.location.
+ * without touching window.location. Queued until the tracker loads.
+ *
+ * Deduped by path+language: the useAnalytics effect re-runs when i18n
+ * resolves (en → es on hydration), which would otherwise inflate pageviews
+ * on the same URL. Callers don't need to remember this.
  */
 export function trackPageView(path: string, title: string, language: string): void {
   if (!initialized) return
   if (typeof window === 'undefined') return
   if (isAppRoute(path)) return
-  window.umami?.track({ url: path, title, language })
+  const key = `${path}|${language}`
+  if (key === lastPageViewKey) return
+  lastPageViewKey = key
+  const payload = { url: path, title, language }
+  if (window.umami) window.umami.track(payload)
+  else enqueue({ kind: 'pageview', payload })
 }
 
 /** Test-only helper to reset module state between cases. */
@@ -95,4 +132,6 @@ export function __resetForTests(): void {
   initialized = false
   websiteId = null
   host = null
+  lastPageViewKey = null
+  pending.length = 0
 }
