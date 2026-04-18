@@ -25,6 +25,8 @@
     "moving": "Moviendo...",
     "generating": "Generando...",
     "joining": "Uniéndote...",
+    "retry": "Reintentar",
+    "share": "Compartir",
     "required": "Obligatorio",
     "mustBePositive": "Debe ser positivo",
     "optional": "opcional",
@@ -198,7 +200,10 @@
     "markAsPaid": "Marcar como pagado",
     "markAsUnpaid": "Marcar como pendiente",
     "paidStatus": "Ya pagado",
-    "unpaidStatus": "Aún no pagado — un gasto previsto"
+    "unpaidStatus": "Aún no pagado — un gasto previsto",
+    "inviteToSplit": "Invita y divide",
+    "inviteToSplitExplainer": "Añade a alguien a tu hogar y podréis dividir cada gasto entre los dos.",
+    "getInviteLink": "Crear enlace"
   },
   "files": {
     "dropOrBrowse": "Arrastra archivos aquí o <1>selecciona</1>",
@@ -614,7 +619,14 @@
     "joinHouseDesc": "Te han invitado a unirte a este hogar.",
     "joinHousehold": "Unirse al hogar",
     "failedToJoin": "Error al unirse al hogar. Inténtalo de nuevo.",
-    "signInToJoin": "Inicia sesión o crea una cuenta para unirte a \"{{houseName}}\""
+    "signInToJoin": "Inicia sesión o crea una cuenta para unirte a \"{{houseName}}\"",
+    "title": "Invita a tu hogar",
+    "subtitle": "Cuando se una, podréis dividir, compartir o asignar cada gasto.",
+    "linkLabel": "Enlace de invitación",
+    "preparing": "Preparando tu enlace...",
+    "generateLink": "Crear enlace de invitación",
+    "shareText": "Únete a \"{{house}}\" en CasaTab para seguir juntos los gastos de la casa.",
+    "expiryAndUse": "El enlace funciona 7 días. Cualquiera que lo tenga podrá unirse a tu hogar."
   },
   "summary": {
     "totalExpenses": "Total gastos",

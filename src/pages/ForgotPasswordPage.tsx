@@ -11,6 +11,8 @@ import { MailCheck, ArrowLeft } from 'lucide-react'
 import { friendlyError } from '@/lib/utils'
 import { track } from '@/lib/analytics'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { FORGOT_PASSWORD_TITLE } from '@/lib/page-titles'
 
 const COOLDOWN_SECONDS = 30
 
@@ -22,6 +24,7 @@ export function ForgotPasswordPage() {
   const [cooldown, setCooldown] = useState(0)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  useDocumentTitle(FORGOT_PASSWORD_TITLE)
   useAnalytics()
 
   useEffect(() => {

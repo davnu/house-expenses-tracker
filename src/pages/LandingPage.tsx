@@ -6,6 +6,8 @@ import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 import { track } from '@/lib/analytics'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { landingTitle } from '@/lib/page-titles'
 import { PrivacyShield } from '@/components/marketing/PrivacyShield'
 import {
   LayoutDashboard, BarChart3, Landmark, Users, FolderOpen, Globe,
@@ -205,7 +207,21 @@ export function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
+  useDocumentTitle(landingTitle(i18n.language))
   useAnalytics()
+
+  // One locale_view per page load with page + browser locales. The URL path
+  // tells us which translated version was served; navigator.language tells us
+  // what the visitor actually speaks — useful for checking whether SEO is
+  // routing the right people to the right language.
+  useEffect(() => {
+    const page = i18n.language?.split('-')[0] ?? 'unknown'
+    const browser = typeof navigator !== 'undefined' ? navigator.language?.split('-')[0] ?? 'unknown' : 'unknown'
+    track('locale_view', { page_locale: page, browser_locale: browser })
+    // Deliberately run once per mount — we already emit `language_switch`
+    // for in-page changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const switchLanguage = (next: string) => {
     const from = i18n.language?.split('-')[0] ?? 'unknown'

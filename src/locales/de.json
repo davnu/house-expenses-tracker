@@ -25,6 +25,8 @@
     "moving": "Wird verschoben...",
     "generating": "Wird generiert...",
     "joining": "Beitritt läuft...",
+    "retry": "Erneut versuchen",
+    "share": "Teilen",
     "required": "Pflichtfeld",
     "mustBePositive": "Muss positiv sein",
     "optional": "optional",
@@ -198,7 +200,10 @@
     "markAsPaid": "Als bezahlt markieren",
     "markAsUnpaid": "Als ausstehend markieren",
     "paidStatus": "Bereits bezahlt",
-    "unpaidStatus": "Noch nicht bezahlt — eine geplante Ausgabe"
+    "unpaidStatus": "Noch nicht bezahlt — eine geplante Ausgabe",
+    "inviteToSplit": "Einladen und aufteilen",
+    "inviteToSplitExplainer": "Füge jemanden zu deinem Haushalt hinzu und ihr könnt jede Ausgabe untereinander aufteilen.",
+    "getInviteLink": "Link erstellen"
   },
   "files": {
     "dropOrBrowse": "Dateien hierher ziehen oder <1>durchsuchen</1>",
@@ -614,7 +619,14 @@
     "joinHouseDesc": "Du wurdest eingeladen, diesem Haushalt beizutreten.",
     "joinHousehold": "Haushalt beitreten",
     "failedToJoin": "Beitritt zum Haushalt fehlgeschlagen. Bitte versuche es erneut.",
-    "signInToJoin": "Melde dich an oder erstelle ein Konto, um \"{{houseName}}\" beizutreten"
+    "signInToJoin": "Melde dich an oder erstelle ein Konto, um \"{{houseName}}\" beizutreten",
+    "title": "Mitbewohner:in einladen",
+    "subtitle": "Sobald sie beitritt, könnt ihr jede Ausgabe teilen, aufsplitten oder zuordnen.",
+    "linkLabel": "Einladungslink",
+    "preparing": "Link wird erstellt...",
+    "generateLink": "Einladungslink erstellen",
+    "shareText": "Tritt \"{{house}}\" auf CasaTab bei, um die Hauskosten gemeinsam zu erfassen.",
+    "expiryAndUse": "Der Link ist 7 Tage gültig. Wer ihn hat, kann deinem Haushalt beitreten."
   },
   "summary": {
     "totalExpenses": "Ausgaben gesamt",

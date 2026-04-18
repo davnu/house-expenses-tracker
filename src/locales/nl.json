@@ -25,6 +25,8 @@
     "moving": "Verplaatsen...",
     "generating": "Genereren...",
     "joining": "Deelnemen...",
+    "retry": "Opnieuw proberen",
+    "share": "Delen",
     "required": "Verplicht",
     "mustBePositive": "Moet positief zijn",
     "optional": "optioneel",
@@ -198,7 +200,10 @@
     "markAsPaid": "Markeer als betaald",
     "markAsUnpaid": "Markeer als openstaand",
     "paidStatus": "Al betaald",
-    "unpaidStatus": "Nog niet betaald — een geplande uitgave"
+    "unpaidStatus": "Nog niet betaald — een geplande uitgave",
+    "inviteToSplit": "Uitnodigen om te splitsen",
+    "inviteToSplitExplainer": "Voeg iemand toe aan je huishouden en jullie kunnen elke kost samen splitsen.",
+    "getInviteLink": "Link maken"
   },
   "files": {
     "dropOrBrowse": "Sleep bestanden hierheen of <1>blader</1>",
@@ -614,7 +619,14 @@
     "joinHouseDesc": "Je bent uitgenodigd om lid te worden van dit huishouden.",
     "joinHousehold": "Lid worden",
     "failedToJoin": "Deelnemen aan huishouden mislukt. Probeer het opnieuw.",
-    "signInToJoin": "Log in of maak een account aan om lid te worden van \"{{houseName}}\""
+    "signInToJoin": "Log in of maak een account aan om lid te worden van \"{{houseName}}\"",
+    "title": "Iemand uitnodigen",
+    "subtitle": "Zodra die meedoet, kun je elke kost splitsen, delen of toewijzen.",
+    "linkLabel": "Uitnodigingslink",
+    "preparing": "Je link wordt klaargemaakt...",
+    "generateLink": "Uitnodigingslink maken",
+    "shareText": "Doe mee aan \"{{house}}\" op CasaTab om samen de huiskosten bij te houden.",
+    "expiryAndUse": "De link werkt 7 dagen. Iedereen met de link kan zich aansluiten bij je huishouden."
   },
   "summary": {
     "totalExpenses": "Totale uitgaven",

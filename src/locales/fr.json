@@ -25,6 +25,8 @@
     "moving": "Déplacement...",
     "generating": "Génération...",
     "joining": "Adhésion...",
+    "retry": "Réessayer",
+    "share": "Partager",
     "required": "Obligatoire",
     "mustBePositive": "Doit être positif",
     "optional": "facultatif",
@@ -198,7 +200,10 @@
     "markAsPaid": "Marquer comme payé",
     "markAsUnpaid": "Marquer comme à payer",
     "paidStatus": "Déjà payé",
-    "unpaidStatus": "Pas encore payé — une dépense prévue"
+    "unpaidStatus": "Pas encore payé — une dépense prévue",
+    "inviteToSplit": "Inviter pour partager",
+    "inviteToSplitExplainer": "Ajoute une personne à ton foyer et vous pourrez partager chaque dépense entre vous.",
+    "getInviteLink": "Obtenir le lien"
   },
   "files": {
     "dropOrBrowse": "Dépose des fichiers ici ou <1>parcourir</1>",
@@ -614,7 +619,14 @@
     "joinHouseDesc": "Tu as été invité(e) à rejoindre ce foyer.",
     "joinHousehold": "Rejoindre le foyer",
     "failedToJoin": "Impossible de rejoindre le foyer. Veuillez réessayer.",
-    "signInToJoin": "Connecte-toi ou crée un compte pour rejoindre « {{houseName}} »"
+    "signInToJoin": "Connecte-toi ou crée un compte pour rejoindre « {{houseName}} »",
+    "title": "Inviter quelqu'un dans le foyer",
+    "subtitle": "Une fois inscrit·e, vous pourrez partager, diviser ou attribuer chaque dépense.",
+    "linkLabel": "Lien d'invitation",
+    "preparing": "Préparation du lien...",
+    "generateLink": "Créer le lien d'invitation",
+    "shareText": "Rejoins « {{house}} » sur CasaTab pour suivre les frais ensemble.",
+    "expiryAndUse": "Le lien est valable 7 jours. Toute personne qui le possède peut rejoindre ton foyer."
   },
   "summary": {
     "totalExpenses": "Total des dépenses",

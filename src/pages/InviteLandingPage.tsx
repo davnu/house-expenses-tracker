@@ -9,6 +9,8 @@ import { AlertCircle, UserPlus } from 'lucide-react'
 import { LoadingScreen } from '@/components/ui/loading'
 import { track } from '@/lib/analytics'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { INVITE_TITLE } from '@/lib/page-titles'
 import type { Invite } from '@/types/expense'
 
 export function InviteLandingPage() {
@@ -16,6 +18,7 @@ export function InviteLandingPage() {
   const { inviteId } = useParams<{ inviteId: string }>()
   const [invite, setInvite] = useState<Invite | null>(null)
   const [loading, setLoading] = useState(true)
+  useDocumentTitle(INVITE_TITLE)
   useAnalytics()
 
   useEffect(() => {

@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Users, ChevronRight, AlertCircle } from 'lucide-react'
+import { Users, ChevronRight, AlertCircle, UserPlus, X, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +13,7 @@ import { FileDropZone } from './FileDropZone'
 import { SplitEditor } from './SplitEditor'
 import { Switch } from '@/components/ui/switch'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
+import { InviteHousemateDialog } from '@/components/household/InviteHousemateDialog'
 import { EXPENSE_CATEGORIES, SHARED_PAYER, SPLIT_PAYER, SPLIT_PAYER_COLOR } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useExpenses } from '@/context/ExpenseContext'
@@ -52,13 +53,19 @@ export function ExpenseForm({
 }: ExpenseFormProps) {
   const { t } = useTranslation()
   const [files, setFiles] = useState<File[]>([])
-  const { members, houseSplit } = useHousehold()
+  const { members, houseSplit, house } = useHousehold()
   const { storageUsed } = useExpenses()
   const { user } = useAuth()
 
   // Per-expense cash contribution breakdown. Only meaningful when payer is SPLIT_PAYER.
   const [splits, setSplits] = useState<ExpenseSplit[] | null>(defaultSplits ?? null)
   const [splitOpen, setSplitOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  // Solo-only "invite to split" disclosure. Lifted up so the explainer panel
+  // can break out of the Paid-by grid column and span the whole row width —
+  // mirrors how the split-editor chip lives below the grid, not inside it.
+  const [inviteHelperOpen, setInviteHelperOpen] = useState(false)
+  const inviteHelperPanelId = useId()
   // Transient notice: splits were auto-cleared because the amount changed
   const [invalidatedNotice, setInvalidatedNotice] = useState(false)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -183,6 +190,7 @@ export function ExpenseForm({
     setFiles([])
     setSplits(null)
     setInvalidatedNotice(false)
+    setInviteHelperOpen(false)
   }
 
   const resolvedSubmitLabel = submitLabel ?? t('expenses.addExpense')
@@ -208,7 +216,7 @@ export function ExpenseForm({
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 ${isMultiMember ? 'sm:grid-cols-2' : ''} gap-4`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="category">{t('filters.category')}</Label>
           <Select id="category" {...register('category')}>
@@ -247,9 +255,35 @@ export function ExpenseForm({
             )}
           />
         ) : (
-          <input type="hidden" {...register('payer')} />
+          <SoloPayerAffordance
+            meName={members.find((m) => m.uid === user?.uid)?.displayName ?? ''}
+            meColor={members.find((m) => m.uid === user?.uid)?.color ?? '#6b7280'}
+            registerProps={register('payer')}
+            expanded={inviteHelperOpen}
+            onToggle={() => setInviteHelperOpen((v) => !v)}
+            panelId={inviteHelperPanelId}
+          />
         )}
       </div>
+
+      {!isMultiMember && inviteHelperOpen && (
+        <div
+          id={inviteHelperPanelId}
+          className="rounded-lg border border-primary/20 bg-primary/[0.03] p-3 flex flex-col sm:flex-row sm:items-center gap-3 animate-[fade-in_0.15s_ease-out]"
+        >
+          <p className="text-sm text-muted-foreground flex-1">
+            {t('expenses.inviteToSplitExplainer')}
+          </p>
+          <button
+            type="button"
+            onClick={() => { setInviteHelperOpen(false); setInviteOpen(true) }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+          >
+            {t('expenses.getInviteLink')}
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       {/* Split editor chip — only when Split payment is chosen and there's an amount.
           This is the primary affordance for configuring per-person contributions. */}
@@ -339,7 +373,77 @@ export function ExpenseForm({
           onSave={setSplits}
         />
       )}
+
+      {!isMultiMember && (
+        <InviteHousemateDialog open={inviteOpen} onOpenChange={setInviteOpen} houseName={house?.name} />
+      )}
     </form>
+  )
+}
+
+interface SoloPayerAffordanceProps {
+  meName: string
+  meColor: string
+  registerProps: ReturnType<ReturnType<typeof useForm<ExpenseFormData>>['register']>
+  expanded: boolean
+  onToggle: () => void
+  panelId: string
+}
+
+/**
+ * Solo-household replacement for PayerSelect.
+ *
+ * Symmetry with the multi-member combobox: shows the user's display name
+ * (so when a housemate joins, the row reads "● Alice + ● Bob" with no
+ * conceptual jump from "● You").
+ *
+ * The chip is a controlled toggle — the explainer panel itself is rendered
+ * by the parent ExpenseForm one level up so it can break out of the
+ * Paid-by grid column and span the full row width.
+ */
+function SoloPayerAffordance({
+  meName,
+  meColor,
+  registerProps,
+  expanded,
+  onToggle,
+  panelId,
+}: SoloPayerAffordanceProps) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="space-y-2">
+      <Label>{t('expenses.paidBy')}</Label>
+      <div className="flex h-9 sm:h-9 flex-wrap items-center gap-2">
+        <span className="inline-flex h-9 items-center gap-2 rounded-full border bg-muted/40 px-3 text-sm">
+          <span
+            className="h-2.5 w-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: meColor }}
+            aria-hidden="true"
+          />
+          <span className="truncate max-w-[12rem]">{meName}</span>
+        </span>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors cursor-pointer ${
+            expanded
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:border-primary/60'
+          }`}
+        >
+          {expanded ? (
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          <span>{t('expenses.inviteToSplit')}</span>
+        </button>
+        <input type="hidden" {...registerProps} />
+      </div>
+    </div>
   )
 }
 

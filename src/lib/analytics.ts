@@ -19,6 +19,7 @@ declare global {
         (): Promise<string> | undefined
         (event: string, data?: Record<string, unknown>): Promise<string> | undefined
         (props: Record<string, unknown>): Promise<string> | undefined
+        (fn: (props: Record<string, unknown>) => Record<string, unknown>): Promise<string> | undefined
       }
     }
   }
@@ -29,12 +30,18 @@ const APP_ROUTE_PREFIX = '/app'
 let initialized = false
 let websiteId: string | null = null
 let host: string | null = null
-let lastPageViewKey: string | null = null
+let lastPageViewPath: string | null = null
 // Bounded — if the tracker never loads (adblocker, network error) we drop
 // extras rather than leak memory on a long SPA session.
 const QUEUE_MAX = 50
-type PendingCall = { kind: 'event'; name: string; data?: Record<string, unknown> } | { kind: 'pageview'; payload: Record<string, unknown> }
+type PendingCall =
+  | { kind: 'event'; name: string; data?: Record<string, unknown> }
+  | { kind: 'pageview'; url: string; title: string }
 const pending: PendingCall[] = []
+
+function pageViewCallback(url: string, title: string) {
+  return (props: Record<string, unknown>) => ({ ...props, url, title })
+}
 
 function enqueue(call: PendingCall): void {
   if (pending.length >= QUEUE_MAX) return
@@ -46,7 +53,7 @@ function flushPending(): void {
   const drained = pending.splice(0)
   for (const call of drained) {
     if (call.kind === 'event') window.umami.track(call.name, call.data)
-    else window.umami.track(call.payload)
+    else window.umami.track(pageViewCallback(call.url, call.title))
   }
 }
 
@@ -111,20 +118,26 @@ export function track(event: string, params?: Record<string, unknown>): void {
  * Fire a page_view. Accepts path explicitly so we can gate on /app/*
  * without touching window.location. Queued until the tracker loads.
  *
- * Deduped by path+language: the useAnalytics effect re-runs when i18n
- * resolves (en → es on hydration), which would otherwise inflate pageviews
- * on the same URL. Callers don't need to remember this.
+ * Uses the callback form `track(props => ({...props, url, title}))` — this
+ * merges with Umami's auto-collected payload (sessionId, hostname, screen,
+ * language, website). The object form `track({url, title})` sends ONLY the
+ * object, bypassing session context, which causes Overview aggregations to
+ * silently drop the pageview. See umami-software/umami#3341.
+ *
+ * Deduped by path: the useAnalytics effect can re-run on the same URL
+ * (React StrictMode double-invoke, i18n language resolving) — we don't
+ * want to inflate pageviews for identical consecutive paths. Real
+ * back/forward revisits still fire because any intervening path updates
+ * lastPageViewPath.
  */
-export function trackPageView(path: string, title: string, language: string): void {
+export function trackPageView(path: string, title: string): void {
   if (!initialized) return
   if (typeof window === 'undefined') return
   if (isAppRoute(path)) return
-  const key = `${path}|${language}`
-  if (key === lastPageViewKey) return
-  lastPageViewKey = key
-  const payload = { url: path, title, language }
-  if (window.umami) window.umami.track(payload)
-  else enqueue({ kind: 'pageview', payload })
+  if (path === lastPageViewPath) return
+  lastPageViewPath = path
+  if (window.umami) window.umami.track(pageViewCallback(path, title))
+  else enqueue({ kind: 'pageview', url: path, title })
 }
 
 /** Test-only helper to reset module state between cases. */
@@ -132,6 +145,6 @@ export function __resetForTests(): void {
   initialized = false
   websiteId = null
   host = null
-  lastPageViewKey = null
+  lastPageViewPath = null
   pending.length = 0
 }

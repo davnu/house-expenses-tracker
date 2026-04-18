@@ -25,6 +25,8 @@
     "moving": "A mover...",
     "generating": "A gerar...",
     "joining": "A aderir...",
+    "retry": "Tentar de novo",
+    "share": "Partilhar",
     "required": "Obrigatório",
     "mustBePositive": "Tem de ser positivo",
     "optional": "opcional",
@@ -198,7 +200,10 @@
     "markAsPaid": "Marcar como pago",
     "markAsUnpaid": "Marcar como pendente",
     "paidStatus": "Já pago",
-    "unpaidStatus": "Ainda não pago — uma despesa prevista"
+    "unpaidStatus": "Ainda não pago — uma despesa prevista",
+    "inviteToSplit": "Convidar para dividir",
+    "inviteToSplitExplainer": "Adiciona alguém ao teu agregado e podem dividir cada despesa entre vocês.",
+    "getInviteLink": "Obter link"
   },
   "files": {
     "dropOrBrowse": "Arrasta ficheiros para aqui ou <1>procura</1>",
@@ -614,7 +619,14 @@
     "joinHouseDesc": "Foste convidado a aderir a este agregado.",
     "joinHousehold": "Aderir ao Agregado",
     "failedToJoin": "Não foi possível aderir ao agregado. Tenta novamente.",
-    "signInToJoin": "Inicia sessão ou cria uma conta para aderires a \"{{houseName}}\""
+    "signInToJoin": "Inicia sessão ou cria uma conta para aderires a \"{{houseName}}\"",
+    "title": "Convida para o agregado",
+    "subtitle": "Assim que entrar, podem dividir, partilhar ou atribuir cada despesa.",
+    "linkLabel": "Link de convite",
+    "preparing": "A preparar o teu link...",
+    "generateLink": "Criar link de convite",
+    "shareText": "Junta-te a \"{{house}}\" no CasaTab para acompanharmos os gastos da casa juntos.",
+    "expiryAndUse": "O link é válido durante 7 dias. Quem o tiver pode entrar no teu agregado."
   },
   "summary": {
     "totalExpenses": "Total de Despesas",

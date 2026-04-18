@@ -25,6 +25,8 @@
     "moving": "Moving...",
     "generating": "Generating...",
     "joining": "Joining...",
+    "retry": "Try again",
+    "share": "Share",
     "required": "Required",
     "mustBePositive": "Must be positive",
     "optional": "optional",
@@ -198,7 +200,10 @@
     "markAsPaid": "Mark as paid",
     "markAsUnpaid": "Mark as unpaid",
     "paidStatus": "Already paid",
-    "unpaidStatus": "Not yet paid — a planned or expected cost"
+    "unpaidStatus": "Not yet paid — a planned or expected cost",
+    "inviteToSplit": "Invite to split",
+    "inviteToSplitExplainer": "Add someone to your household and you can split each cost between you.",
+    "getInviteLink": "Get invite link"
   },
   "files": {
     "dropOrBrowse": "Drop files here or <1>browse</1>",
@@ -614,7 +619,14 @@
     "joinHouseDesc": "You've been invited to join this household.",
     "joinHousehold": "Join Household",
     "failedToJoin": "Failed to join household. Please try again.",
-    "signInToJoin": "Sign in or create an account to join \"{{houseName}}\""
+    "signInToJoin": "Sign in or create an account to join \"{{houseName}}\"",
+    "title": "Invite a housemate",
+    "subtitle": "Once they join, you can split, share, or assign every cost.",
+    "linkLabel": "Invite link",
+    "preparing": "Preparing your link...",
+    "generateLink": "Create invite link",
+    "shareText": "Join \"{{house}}\" on CasaTab to track our house costs together.",
+    "expiryAndUse": "The link works for 7 days. Anyone with it can join your household."
   },
   "summary": {
     "totalExpenses": "Total Expenses",

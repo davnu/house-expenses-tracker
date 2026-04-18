@@ -106,16 +106,31 @@ describe('analytics gating', () => {
   it('trackPageView() is a no-op for /app/* paths', () => {
     initAnalytics()
     ;(window as unknown as { umami: { track: typeof umamiSpy } }).umami = { track: umamiSpy }
-    trackPageView('/app/mortgage', 'Mortgage', 'en')
+    trackPageView('/app/mortgage', 'Mortgage')
     expect(umamiSpy).not.toHaveBeenCalled()
   })
 
-  it('trackPageView() fires for public paths with expected shape', () => {
+  it('trackPageView() fires via callback form that merges with auto-payload', () => {
     initAnalytics()
     ;(window as unknown as { umami: { track: typeof umamiSpy } }).umami = { track: umamiSpy }
     setLocation('/es')
-    trackPageView('/es', 'CasaTab', 'es')
-    expect(umamiSpy).toHaveBeenCalledWith({ url: '/es', title: 'CasaTab', language: 'es' })
+    trackPageView('/es', 'CasaTab')
+    expect(umamiSpy).toHaveBeenCalledTimes(1)
+    const fn = umamiSpy.mock.calls[0][0] as (p: Record<string, unknown>) => Record<string, unknown>
+    expect(typeof fn).toBe('function')
+    // The callback must preserve auto-collected fields (sessionId, hostname,
+    // etc.) while overriding url and title — otherwise Umami drops it from
+    // Overview aggregations.
+    const autoPayload = {
+      website: 'abc',
+      hostname: 'casatab.com',
+      screen: '1920x1080',
+      language: 'es-ES',
+    }
+    expect(fn(autoPayload)).toEqual({ ...autoPayload, url: '/es', title: 'CasaTab' })
+    // Must NOT include a `name` field — presence of name makes it a custom
+    // event server-side instead of a pageview.
+    expect('name' in fn(autoPayload)).toBe(false)
   })
 
   it('track() is silent when tracker script has not loaded yet', () => {
@@ -125,16 +140,16 @@ describe('analytics gating', () => {
     expect(() => track('anything')).not.toThrow()
   })
 
-  it('dedupes consecutive trackPageView calls with the same path+language', () => {
+  it('dedupes consecutive trackPageView calls with the same path', () => {
     initAnalytics()
     ;(window as unknown as { umami: { track: typeof umamiSpy } }).umami = { track: umamiSpy }
-    trackPageView('/es', 'CasaTab', 'es')
-    trackPageView('/es', 'CasaTab', 'es')
+    trackPageView('/es', 'CasaTab')
+    trackPageView('/es', 'CasaTab')
     expect(umamiSpy).toHaveBeenCalledTimes(1)
 
     // Navigating away and back is a real revisit — should fire again.
-    trackPageView('/es/privacy', 'Privacy', 'es')
-    trackPageView('/es', 'CasaTab', 'es')
+    trackPageView('/es/privacy', 'Privacy')
+    trackPageView('/es', 'CasaTab')
     expect(umamiSpy).toHaveBeenCalledTimes(3)
   })
 
@@ -162,7 +177,7 @@ describe('analytics gating', () => {
     // After error, init is cleared — further calls no-op even with umami present.
     ;(window as unknown as { umami: { track: typeof umamiSpy } }).umami = { track: umamiSpy }
     track('cta_click')
-    trackPageView('/', 'Home', 'en')
+    trackPageView('/', 'Home')
     expect(umamiSpy).not.toHaveBeenCalled()
   })
 
@@ -170,7 +185,7 @@ describe('analytics gating', () => {
     initAnalytics()
     setLocation('/')
     // Tracker not loaded yet — these should be queued, not dropped.
-    trackPageView('/', 'Home', 'en')
+    trackPageView('/', 'Home')
     track('cta_click', { cta_location: 'hero' })
     expect(umamiSpy).not.toHaveBeenCalled()
 
@@ -182,7 +197,11 @@ describe('analytics gating', () => {
     script?.dispatchEvent(new Event('load'))
 
     expect(umamiSpy).toHaveBeenCalledTimes(2)
-    expect(umamiSpy).toHaveBeenNthCalledWith(1, { url: '/', title: 'Home', language: 'en' })
+    // First: the queued pageview, flushed as a callback.
+    const pageViewFn = umamiSpy.mock.calls[0][0] as (p: Record<string, unknown>) => Record<string, unknown>
+    expect(typeof pageViewFn).toBe('function')
+    expect(pageViewFn({ sessionId: 'abc' })).toEqual({ sessionId: 'abc', url: '/', title: 'Home' })
+    // Second: the queued custom event.
     expect(umamiSpy).toHaveBeenNthCalledWith(2, 'cta_click', { cta_location: 'hero' })
   })
 

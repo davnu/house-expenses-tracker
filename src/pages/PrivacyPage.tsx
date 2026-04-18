@@ -4,9 +4,12 @@ import { Shield, ShieldCheck, ArrowLeft, Lock, BadgeCheck, Users, Trash2 } from 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { PRIVACY_TITLE } from '@/lib/page-titles'
 
 export function PrivacyPage() {
   const { t } = useTranslation()
+  useDocumentTitle(PRIVACY_TITLE)
   useAnalytics()
 
   const securityFeatures = [

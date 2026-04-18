@@ -12,6 +12,8 @@ import { friendlyError } from '@/lib/utils'
 import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter'
 import { track } from '@/lib/analytics'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { AUTH_ACTION_TITLE, RESET_PASSWORD_TITLE } from '@/lib/page-titles'
 
 const MIN_LENGTH = 8
 
@@ -30,6 +32,7 @@ export function AuthActionPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const mode = searchParams.get('mode')
+  useDocumentTitle(mode === 'resetPassword' ? RESET_PASSWORD_TITLE : AUTH_ACTION_TITLE)
 
   if (mode === 'resetPassword') return <ResetPasswordHandler />
 

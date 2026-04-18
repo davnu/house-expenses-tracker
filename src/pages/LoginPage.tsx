@@ -11,6 +11,8 @@ import { CasaTabLogo } from '@/components/brand/CasaTabLogo'
 import { friendlyError } from '@/lib/utils'
 import { track } from '@/lib/analytics'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { LOGIN_TITLE, SIGNUP_TITLE } from '@/lib/page-titles'
 
 interface LoginPageProps {
   subtitle?: string
@@ -27,6 +29,7 @@ export function LoginPage({ subtitle }: LoginPageProps) {
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  useDocumentTitle(isSignUp ? SIGNUP_TITLE : LOGIN_TITLE)
   useAnalytics()
 
   const handleSubmit = async (e: React.FormEvent) => {
