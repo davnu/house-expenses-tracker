@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
@@ -20,6 +21,9 @@ import { DocumentsPage } from '@/pages/DocumentsPage'
 import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
+// Lazy-loaded auth pages — rarely visited, kept out of the critical bundle.
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
+const AuthActionPage = lazy(() => import('@/pages/AuthActionPage').then(m => ({ default: m.AuthActionPage })))
 
 /* ── App routes (inside /app/*, requires house) ── */
 
@@ -103,6 +107,36 @@ function LoginGate() {
   return <LoginPage />
 }
 
+/* ── Forgot-password route: redirect to /app if already logged in ── */
+
+function ForgotPasswordGate() {
+  const { user, loading } = useAuth()
+
+  if (loading) return <LoadingScreen />
+  if (user) return <Navigate to="/app" replace />
+
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <ForgotPasswordPage />
+    </Suspense>
+  )
+}
+
+function AuthActionGate() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <AuthActionPage />
+    </Suspense>
+  )
+}
+
+/* Legacy redirect: old /reset-password?oobCode=... links → /auth/action?mode=resetPassword&oobCode=... */
+function ResetPasswordAlias() {
+  const search = new URLSearchParams(window.location.search)
+  if (!search.has('mode')) search.set('mode', 'resetPassword')
+  return <Navigate to={`/auth/action?${search.toString()}`} replace />
+}
+
 /* ── Invite route: landing if not logged in, join flow if logged in ── */
 
 function InviteGate() {
@@ -138,6 +172,10 @@ function App() {
           {/* Public routes */}
           <Route index element={<LandingPage />} />
           <Route path="/login" element={<LoginGate />} />
+          <Route path="/forgot-password" element={<ForgotPasswordGate />} />
+          <Route path="/auth/action" element={<AuthActionGate />} />
+          {/* Legacy alias — old /reset-password links get upgraded to /auth/action. */}
+          <Route path="/reset-password" element={<ResetPasswordAlias />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/invite/:inviteId" element={<InviteGate />} />
 

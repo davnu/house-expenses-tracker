@@ -9,6 +9,9 @@ import {
   updateProfile,
   deleteUser,
   sendEmailVerification,
+  sendPasswordResetEmail,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
   type User,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, deleteDoc, updateDoc, arrayRemove, collection, query, where, getDocs, writeBatch } from 'firebase/firestore'
@@ -27,6 +30,9 @@ interface AuthContextValue {
   deleteAccount: (onProgress?: CascadeProgressCallback) => Promise<void>
   resendVerificationEmail: () => Promise<void>
   refreshUser: () => Promise<void>
+  sendPasswordReset: (email: string) => Promise<void>
+  verifyPasswordReset: (oobCode: string) => Promise<string>
+  confirmPasswordReset: (oobCode: string, newPassword: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -87,6 +93,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (auth.currentUser) {
       await sendEmailVerification(auth.currentUser)
     }
+  }, [])
+
+  const sendPasswordReset = useCallback(async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email)
+    } catch (err) {
+      // Don't reveal whether an account exists (enumeration). All other
+      // errors (invalid-email, too-many-requests, network) still surface.
+      const code = (err as { code?: string }).code
+      if (code === 'auth/user-not-found') return
+      throw err
+    }
+  }, [])
+
+  const verifyPasswordReset = useCallback(async (oobCode: string) => {
+    return await verifyPasswordResetCode(auth, oobCode)
+  }, [])
+
+  const doConfirmPasswordReset = useCallback(async (oobCode: string, newPassword: string) => {
+    await confirmPasswordReset(auth, oobCode, newPassword)
   }, [])
 
   const refreshUser = useCallback(async () => {
@@ -256,7 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, emailVerified, signInEmail, signUpEmail, signInGoogle, logout, deleteAccount, resendVerificationEmail, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, emailVerified, signInEmail, signUpEmail, signInGoogle, logout, deleteAccount, resendVerificationEmail, refreshUser, sendPasswordReset, verifyPasswordReset, confirmPasswordReset: doConfirmPasswordReset }}>
       {children}
     </AuthContext.Provider>
   )

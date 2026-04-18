@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter'
 import { CasaTabLogo } from '@/components/brand/CasaTabLogo'
 import { friendlyError } from '@/lib/utils'
 import { track } from '@/lib/analytics'
@@ -129,16 +130,28 @@ export function LoginPage({ subtitle }: LoginPageProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.password')}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                {!isSignUp && (
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline transition-colors"
+                  >
+                    {t('auth.forgotPassword')}
+                  </Link>
+                )}
+              </div>
               <Input
                 id="password"
                 type="password"
-                placeholder={t('auth.passwordPlaceholder')}
+                placeholder={isSignUp ? t('auth.newPasswordPlaceholder') : t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 required
-                minLength={6}
+                minLength={isSignUp ? 8 : 6}
               />
+              {isSignUp && <PasswordStrengthMeter password={password} />}
             </div>
 
             {isSignUp && (

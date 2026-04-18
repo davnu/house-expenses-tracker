@@ -75,6 +75,14 @@ describe('friendlyError', () => {
     expect(friendlyError(new Error('Firebase: Error (auth/popup-closed-by-user).'))).toBe('Sign-in popup was closed')
   })
 
+  it('maps expired-action-code to a reset-specific message', () => {
+    expect(friendlyError(new Error('Firebase: Error (auth/expired-action-code).'))).toBe('This password reset link has expired. Request a new one below.')
+  })
+
+  it('maps invalid-action-code to a reset-specific message', () => {
+    expect(friendlyError(new Error('Firebase: Error (auth/invalid-action-code).'))).toBe('This password reset link is invalid or has already been used.')
+  })
+
   // Firestore errors
   it('maps permission-denied', () => {
     expect(friendlyError(new Error('PERMISSION_DENIED'))).toBe("You don't have permission to do this.")

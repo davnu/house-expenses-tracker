@@ -101,6 +101,8 @@ export function friendlyError(err: unknown, fallback?: string): string {
   if (message.includes('too-many-requests')) return t('errors.tooManyAttempts')
   if (message.includes('popup-closed')) return t('errors.popupClosed')
   if (message.includes('requires-recent-login')) return t('errors.requiresRecentLogin')
+  if (message.includes('expired-action-code')) return t('errors.expiredResetCode')
+  if (message.includes('invalid-action-code')) return t('errors.invalidResetCode')
 
   // Firestore errors
   if (message.includes('permission-denied') || message.includes('PERMISSION_DENIED')) return t('errors.permissionDenied')
