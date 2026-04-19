@@ -219,6 +219,10 @@
     "securityNote": "Encrypted and visible only to your household",
     "securityTooltip": "Your files are sent over a secure connection and stored with enterprise-grade encryption. Only household members can access them. You can delete them at any time."
   },
+  "viewer": {
+    "loadFailed": "Couldn't load this image. It may have been deleted or the link has expired.",
+    "downloadInstead": "Download instead"
+  },
   "mortgage": {
     "title": "Mortgage",
     "addYourMortgage": "Add Your Mortgage",

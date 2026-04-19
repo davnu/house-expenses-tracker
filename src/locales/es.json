@@ -219,6 +219,10 @@
     "securityNote": "Cifrado y visible solo para los miembros de tu hogar",
     "securityTooltip": "Tus archivos se envían por conexión segura y se almacenan con cifrado de nivel empresarial. Solo los miembros de tu hogar pueden acceder a ellos. Puedes eliminarlos en cualquier momento."
   },
+  "viewer": {
+    "loadFailed": "No se pudo cargar esta imagen. Puede que se haya eliminado o que el enlace haya caducado.",
+    "downloadInstead": "Descargar en su lugar"
+  },
   "mortgage": {
     "title": "Hipoteca",
     "addYourMortgage": "Añade tu hipoteca",

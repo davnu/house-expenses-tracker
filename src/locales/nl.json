@@ -219,6 +219,10 @@
     "securityNote": "Versleuteld en alleen zichtbaar voor je huishouden",
     "securityTooltip": "Je bestanden worden via een beveiligde verbinding verzonden en opgeslagen met bedrijfsmatige versleuteling. Alleen leden van je huishouden hebben toegang. Je kunt ze op elk moment verwijderen."
   },
+  "viewer": {
+    "loadFailed": "Kan deze afbeelding niet laden. Mogelijk is hij verwijderd of is de link verlopen.",
+    "downloadInstead": "In plaats daarvan downloaden"
+  },
   "mortgage": {
     "title": "Hypotheek",
     "addYourMortgage": "Hypotheek toevoegen",

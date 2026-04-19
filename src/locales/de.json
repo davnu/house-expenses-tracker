@@ -219,6 +219,10 @@
     "securityNote": "Verschlüsselt und nur für deinen Haushalt sichtbar",
     "securityTooltip": "Deine Dateien werden über eine sichere Verbindung übertragen und mit Verschlüsselung auf Unternehmensniveau gespeichert. Nur Mitglieder deines Haushalts können darauf zugreifen. Du kannst sie jederzeit löschen."
   },
+  "viewer": {
+    "loadFailed": "Dieses Bild konnte nicht geladen werden. Möglicherweise wurde es gelöscht oder der Link ist abgelaufen.",
+    "downloadInstead": "Stattdessen herunterladen"
+  },
   "mortgage": {
     "title": "Hypothek",
     "addYourMortgage": "Hypothek hinzufügen",

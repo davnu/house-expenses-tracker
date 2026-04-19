@@ -219,6 +219,10 @@
     "securityNote": "Encriptado e visível apenas para o teu agregado",
     "securityTooltip": "Os teus ficheiros são enviados por ligação segura e guardados com encriptação de nível empresarial. Apenas os membros do teu agregado podem aceder. Podes eliminá-los a qualquer momento."
   },
+  "viewer": {
+    "loadFailed": "Não foi possível carregar esta imagem. Pode ter sido eliminada ou o link ter expirado.",
+    "downloadInstead": "Transferir em vez disso"
+  },
   "mortgage": {
     "title": "Crédito Habitação",
     "addYourMortgage": "Adiciona o Teu Crédito Habitação",

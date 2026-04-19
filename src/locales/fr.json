@@ -219,6 +219,10 @@
     "securityNote": "Chiffré et visible uniquement par les membres de ton foyer",
     "securityTooltip": "Tes fichiers sont envoyés via une connexion sécurisée et stockés avec un chiffrement professionnel. Seuls les membres de ton foyer peuvent y accéder. Tu peux les supprimer à tout moment."
   },
+  "viewer": {
+    "loadFailed": "Impossible de charger cette image. Elle a peut-être été supprimée ou le lien a expiré.",
+    "downloadInstead": "Télécharger à la place"
+  },
   "mortgage": {
     "title": "Prêt immobilier",
     "addYourMortgage": "Ajouter ton prêt immobilier",

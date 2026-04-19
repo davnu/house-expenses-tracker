@@ -595,7 +595,13 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
         </div>
       )}
 
-      <AttachmentViewer attachments={viewerAttachments} initialIndex={viewerIndex} open={viewerOpen} onOpenChange={setViewerOpen} />
+      {viewerOpen && (
+        <AttachmentViewer
+          attachments={viewerAttachments}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
       <EditExpenseDialog expense={editingExpense} onOpenChange={(open) => { if (!open) setEditingExpense(null) }} />
     </div>
   )

@@ -74,7 +74,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
   const imageAttachments = useMemo(
     () => folderDocs
       .filter((d) => d.type.startsWith('image/') && d.url)
-      .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url })),
+      .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url, thumbnailUrl: d.thumbnailUrl })),
     [folderDocs]
   )
 
@@ -267,7 +267,13 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
       {/* Dialogs */}
       <RenameFolderDialog folder={editingFolder ? folder : null} open={editingFolder} onOpenChange={setEditingFolder} />
       <MoveDocumentDialog document={movingDoc} open={!!movingDoc} onOpenChange={(open) => { if (!open) setMovingDoc(null) }} />
-      <AttachmentViewer attachments={imageAttachments} initialIndex={viewerIndex} open={viewerOpen} onOpenChange={setViewerOpen} />
+      {viewerOpen && (
+        <AttachmentViewer
+          attachments={imageAttachments}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
     </div>
   )
 }

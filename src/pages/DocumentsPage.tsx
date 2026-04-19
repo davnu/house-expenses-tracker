@@ -84,15 +84,15 @@ export function DocumentsPage() {
         .map((item): Attachment => {
           if (item.source === 'document') {
             const d = item.document
-            return { id: d.id, name: d.name, type: d.type, size: d.size, url: d.url }
+            return { id: d.id, name: d.name, type: d.type, size: d.size, url: d.url, thumbnailUrl: d.thumbnailUrl }
           }
           const a = item.attachment
-          return { id: a.id, name: a.name, type: a.type, size: a.size, url: a.url }
+          return { id: a.id, name: a.name, type: a.type, size: a.size, url: a.url, thumbnailUrl: a.thumbnailUrl }
         })
     }
     return recentDocs
       .filter((d) => d.type.startsWith('image/') && d.url)
-      .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url }))
+      .map((d): Attachment => ({ id: d.id, name: d.name, type: d.type, size: d.size, url: d.url, thumbnailUrl: d.thumbnailUrl }))
   }, [unifiedResults, recentDocs])
 
   const getFolderName = useCallback((folderId: string) => folders.find((f) => f.id === folderId)?.name ?? '—', [folders])
@@ -394,7 +394,13 @@ export function DocumentsPage() {
       <CreateFolderDialog open={createOpen} onOpenChange={setCreateOpen} />
       <QuickUploadDialog open={quickUploadOpen} onOpenChange={setQuickUploadOpen} />
       <MoveDocumentDialog document={movingDoc} open={!!movingDoc} onOpenChange={(open) => { if (!open) setMovingDoc(null) }} />
-      <AttachmentViewer attachments={viewerImages} initialIndex={viewerIndex} open={viewerOpen} onOpenChange={setViewerOpen} />
+      {viewerOpen && (
+        <AttachmentViewer
+          attachments={viewerImages}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
     </div>
   )
 }
