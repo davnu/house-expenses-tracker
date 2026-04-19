@@ -73,6 +73,19 @@ export function parseCurrencyInput(value: string): number {
   return Math.round(num * 100)
 }
 
+/**
+ * Human-readable byte size: "512 B", "1.3 KB", "10 MB".
+ *
+ * `decimals` defaults to 1 (matches per-file display in drop zones and
+ * document cards). Pass `0` for clean limit copy like "10 MB" / "50 MB" in
+ * error messages.
+ */
+export function formatFileSize(bytes: number, decimals = 1): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(decimals)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(decimals)} MB`
+}
+
 /** Deep-strip undefined values and NaN numbers before writing to Firestore */
 export function stripInvalid<T>(obj: T): T {
   if (Array.isArray(obj)) {

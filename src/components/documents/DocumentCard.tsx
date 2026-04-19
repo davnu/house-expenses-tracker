@@ -4,16 +4,10 @@ import { Download, Trash2, MoreVertical, Pencil, FolderInput, Loader2, StickyNot
 import { Button } from '@/components/ui/button'
 import { useDocuments } from '@/context/DocumentContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { cn, getDateLocale } from '@/lib/utils'
+import { cn, formatFileSize, getDateLocale } from '@/lib/utils'
 import { getFileTypeInfo, isImageType } from '@/lib/file-type-info'
 import { formatDistanceToNow, differenceInDays, format } from 'date-fns'
 import type { HouseDocument } from '@/types/document'
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 function formatSmartDate(isoDate: string): string {
   try {
@@ -151,7 +145,7 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
         </div>
         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
           <span className="text-xs text-muted-foreground">
-            {formatSize(document.size)}
+            {formatFileSize(document.size)}
             {uploaderName && <> &middot; {uploaderName}</>}
             {document.uploadedAt && (
               <> &middot; {formatSmartDate(document.uploadedAt)}</>

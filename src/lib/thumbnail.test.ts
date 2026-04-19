@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-
-// ── jsdom helpers ──
-
-function makeFile(name: string, type: string, size = 1024): File {
-  const buffer = new ArrayBuffer(size)
-  return new File([buffer], name, { type })
-}
+import { makeFile } from '@/test-utils/files'
 
 // Mock browser APIs: createImageBitmap + canvas
 beforeEach(() => {

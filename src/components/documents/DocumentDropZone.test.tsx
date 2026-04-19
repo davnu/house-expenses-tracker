@@ -3,6 +3,7 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DocumentDropZone } from './DocumentDropZone'
 import { MAX_FILE_SIZE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { makeFile } from '@/test-utils/files'
 
 // ── jsdom polyfills ──
 
@@ -18,11 +19,6 @@ beforeAll(() => {
 afterEach(cleanup)
 
 // ── Helpers ──
-
-function makeFile(name: string, type: string, size = 1024): File {
-  const buffer = new ArrayBuffer(size)
-  return new File([buffer], name, { type })
-}
 
 function renderDropZone(overrides: Partial<React.ComponentProps<typeof DocumentDropZone>> = {}) {
   const onFilesSelected = vi.fn()

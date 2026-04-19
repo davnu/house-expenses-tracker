@@ -78,6 +78,7 @@ vi.mock('./HouseholdContext', () => ({
 
 // Import after mocks are set up
 import { ExpenseProvider, useExpenses } from './ExpenseContext'
+import { sizedFile } from '@/test-utils/files'
 
 // ── Helpers ───────────────────────────────────────────
 
@@ -403,7 +404,9 @@ describe('ExpenseContext', () => {
             files,
           )
         })
-      ).rejects.toThrow('Maximum')
+        // Assert on the structured reason code rather than the debug message
+        // so the test survives future localisation / copy edits.
+      ).rejects.toMatchObject({ reason: { code: 'maxFilesPerExpense' } })
 
       // State untouched — validation fires before optimistic update
       expect(result.current.expenses).toHaveLength(2)
@@ -533,6 +536,87 @@ describe('ExpenseContext', () => {
       expect(result.current.pendingAttachmentIds.size).toBe(0)
     })
 
+    // ── Orphan-blob cleanup on partial batch failure ──
+
+    it('deletes already-uploaded blobs when one of multiple files fails', async () => {
+      // Batch of 3: first succeeds, second fails, third succeeds. The first
+      // blob must be deleted (orphan cleanup) so household storage accounting
+      // doesn't drift from real Storage bytes. The third may or may not have
+      // been attempted by the time the rejection wins — either way, any
+      // fulfilled result must be cleaned up.
+      const { result } = await setupHook()
+
+      mockUploadAttachment
+        .mockResolvedValueOnce('https://x/1.png')
+        .mockRejectedValueOnce(new Error('boom on #2'))
+        .mockResolvedValueOnce('https://x/3.png')
+
+      const files = [
+        new File(['a'], 'a.png', { type: 'image/png' }),
+        new File(['b'], 'b.png', { type: 'image/png' }),
+        new File(['c'], 'c.png', { type: 'image/png' }),
+      ]
+
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', files) })
+      ).rejects.toThrow('boom on #2')
+
+      // deleteAttachments is the batch-level cleanup used by uploadBatchWithRollback.
+      expect(mockDeleteAttachments).toHaveBeenCalled()
+      const cleanedUp = mockDeleteAttachments.mock.calls[0][1] as Array<{ name: string }>
+      const cleanedNames = cleanedUp.map((a) => a.name).sort()
+      // At least the first file's blob must be scheduled for deletion. The
+      // third may be too if it won the race; we don't pin ordering.
+      expect(cleanedNames).toContain('a.png')
+    })
+
+    it('cleans up the main blob when thumbnail upload fails (within-item partial)', async () => {
+      // This is the subtler orphan: main uploaded OK, thumbnail upload threw.
+      // uploadAttachmentAtomic catches and calls deleteAttachment so the main
+      // blob doesn't linger. Without this, image attachments with broken
+      // thumbnail generation would silently eat quota.
+      const { result } = await setupHook()
+      // Image MIME triggers the thumbnail path (generateThumbnail is mocked
+      // to return a truthy blob here, forcing uploadAttachmentThumbnail to run).
+      mockGenerateThumbnail.mockResolvedValueOnce(new Blob(['thumb']))
+      mockUploadAttachment.mockResolvedValueOnce('https://x/main.png')
+      mockUploadAttachmentThumbnail.mockRejectedValueOnce(new Error('thumb failed'))
+
+      const file = new File(['p'], 'photo.png', { type: 'image/png' })
+
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', [file]) })
+      ).rejects.toThrow('thumb failed')
+
+      // uploadAttachmentAtomic's per-item catch calls deleteAttachment.
+      expect(mockDeleteAttachment).toHaveBeenCalledWith(
+        'house-1',
+        expect.any(String),
+        'photo.png',
+      )
+      // Rolled back in state, too.
+      const exp2 = result.current.expenses.find((e) => e.id === 'exp-2')!
+      expect(exp2.attachments).toBeUndefined()
+    })
+
+    it('calls cleanup even when the single file in a batch fails', async () => {
+      // Single-file batch: fulfilled list is empty, but uploadBatchWithRollback
+      // still invokes cleanup([]) for consistency. Worth locking in so a future
+      // refactor can't silently skip cleanup when batch size is 1.
+      mockUploadAttachment.mockRejectedValueOnce(new Error('lone fail'))
+      const { result } = await setupHook()
+
+      await expect(
+        act(async () => {
+          await result.current.addAttachmentsToExpense('exp-2', [
+            new File(['x'], 'x.png', { type: 'image/png' }),
+          ])
+        })
+      ).rejects.toThrow('lone fail')
+
+      expect(mockDeleteAttachments).toHaveBeenCalledWith('house-1', [])
+    })
+
     it('throws on MAX_FILES_PER_EXPENSE without corrupting state', async () => {
       const { result } = await setupHook()
       // exp-1 already has 1 attachment, try to add 10 more (total 11 > MAX_FILES_PER_EXPENSE=10)
@@ -540,7 +624,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addAttachmentsToExpense('exp-1', files) })
-      ).rejects.toThrow('Maximum')
+      ).rejects.toMatchObject({ reason: { code: 'maxFilesPerExpense' } })
 
       // State untouched
       expect(result.current.expenses.find((e) => e.id === 'exp-1')!.attachments).toHaveLength(1)
@@ -558,7 +642,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addAttachmentsToExpense('exp-2', [bigFile]) })
-      ).rejects.toThrow(/exceeds/i)
+      ).rejects.toMatchObject({ reason: { code: 'exceedsLimit' } })
 
       // Upload never attempted, no placeholder left behind
       expect(mockUploadAttachment).not.toHaveBeenCalled()
@@ -572,7 +656,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addAttachmentsToExpense('exp-2', [badFile]) })
-      ).rejects.toThrow(/supported|Unsupported/i)
+      ).rejects.toMatchObject({ reason: { code: 'unsupportedType' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
       expect(result.current.expenses.find((e) => e.id === 'exp-2')!.attachments).toBeUndefined()
@@ -617,13 +701,6 @@ describe('ExpenseContext', () => {
   // ── Storage quota lifecycle (reclamation, pending-state accounting) ──
 
   describe('storage quota lifecycle', () => {
-    // Build a file with a reported `size` without actually allocating memory.
-    function sizedFile(name: string, type: string, size: number): File {
-      const f = new File([''], name, { type })
-      Object.defineProperty(f, 'size', { value: size })
-      return f
-    }
-
     it('storageUsed decreases when an expense with attachments is deleted', async () => {
       const { result } = await setupHook()
       expect(result.current.storageUsed).toBe(5000)
@@ -718,7 +795,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addAttachmentsToExpense('exp-2', files) })
-      ).rejects.toThrow(/storage limit/i)
+      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
       expect(result.current.storageUsed).toBe(5000)
@@ -737,7 +814,7 @@ describe('ExpenseContext', () => {
       const eight = sizedFile('eight.pdf', 'application/pdf', 8 * 1024 * 1024)
       await expect(
         act(async () => { await result.current.addAttachmentsToExpense('exp-1', [eight]) })
-      ).rejects.toThrow(/storage limit/i)
+      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
 
       // Delete the big expense → quota frees up
       await act(async () => { await result.current.deleteExpense('exp-2') })
@@ -766,12 +843,6 @@ describe('ExpenseContext', () => {
   // ── addExpenseWithFiles defense-in-depth ─────────────
 
   describe('addExpenseWithFiles defensive validation', () => {
-    function sizedFile(name: string, type: string, size: number): File {
-      const f = new File([''], name, { type })
-      Object.defineProperty(f, 'size', { value: size })
-      return f
-    }
-
     const newExpense = {
       amount: 1000,
       category: 'other',
@@ -786,7 +857,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addExpenseWithFiles(newExpense, [big]) })
-      ).rejects.toThrow(/exceeds/i)
+      ).rejects.toMatchObject({ reason: { code: 'exceedsLimit' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
       expect(mockRepo.addExpense).not.toHaveBeenCalled()
@@ -798,7 +869,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addExpenseWithFiles(newExpense, [bad]) })
-      ).rejects.toThrow(/Unsupported|supported/i)
+      ).rejects.toMatchObject({ reason: { code: 'unsupportedType' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
     })
@@ -812,7 +883,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addExpenseWithFiles(newExpense, files) })
-      ).rejects.toThrow(/storage limit/i)
+      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
     })
@@ -825,7 +896,7 @@ describe('ExpenseContext', () => {
 
       await expect(
         act(async () => { await result.current.addExpenseWithFiles(newExpense, files) })
-      ).rejects.toThrow(/Maximum/i)
+      ).rejects.toMatchObject({ reason: { code: 'maxFilesPerExpense' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
     })

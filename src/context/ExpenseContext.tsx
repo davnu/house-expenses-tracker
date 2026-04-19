@@ -3,10 +3,11 @@ import type { Expense, Attachment } from '@/types/expense'
 import type { ExpenseRepository, ExpenseUpdate } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
 import { uploadAttachment, uploadAttachmentThumbnail, deleteAttachment, deleteAttachments } from '@/data/firebase-attachment-store'
+import { uploadBatchWithRollback } from '@/data/upload-batch'
 import { generateThumbnail } from '@/lib/thumbnail'
 import { db } from '@/data/firebase'
 import { useHousehold } from './HouseholdContext'
-import { validateAttachmentFiles, AttachmentValidationError } from '@/lib/attachment-validation'
+import { validateExpenseAttachments, AttachmentValidationError } from '@/lib/attachment-validation'
 
 interface ExpenseContextValue {
   expenses: Expense[]
@@ -24,6 +25,33 @@ interface ExpenseContextValue {
 }
 
 const ExpenseContext = createContext<ExpenseContextValue | null>(null)
+
+/**
+ * Upload one attachment atomically: main file + thumbnail go up in parallel,
+ * and if either fails after the other succeeded, the partial blob is cleaned
+ * up before the error propagates. Callers (both addExpenseWithFiles and
+ * addAttachmentsToExpense) treat the returned Attachment as all-or-nothing.
+ */
+async function uploadAttachmentAtomic(
+  houseId: string,
+  id: string,
+  file: File,
+): Promise<Attachment> {
+  try {
+    // Generate thumbnail first (~50ms, image-only), then upload both in parallel.
+    const thumbnailBlob = await generateThumbnail(file)
+    const [url, thumbnailUrl] = await Promise.all([
+      uploadAttachment(houseId, id, file),
+      thumbnailBlob ? uploadAttachmentThumbnail(houseId, id, thumbnailBlob) : Promise.resolve(undefined),
+    ])
+    return { id, name: file.name, type: file.type, size: file.size, url, thumbnailUrl }
+  } catch (err) {
+    // Main succeeded + thumb failed (or vice versa) leaves a partial blob.
+    // deleteAttachment removes both paths and no-ops on missing blobs.
+    await deleteAttachment(houseId, id, file.name).catch(() => {})
+    throw err
+  }
+}
 
 export function ExpenseProvider({ children }: { children: ReactNode }) {
   const { house } = useHousehold()
@@ -102,7 +130,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     // Defense-in-depth: the UI validates first, but re-check here so the
     // contract holds regardless of caller. Throws AttachmentValidationError
     // which UI layers translate via rejectionMessage().
-    const { rejection } = validateAttachmentFiles(files, {
+    const { rejection } = validateExpenseAttachments(files, {
       householdStorageUsed: currentStorageUsed,
     })
     if (rejection) throw new AttachmentValidationError(rejection)
@@ -130,21 +158,13 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     setExpenses((prev) => [...prev, tempExpense])
 
     try {
-      // Upload files, reusing placeholder IDs
-      const uploaded: Attachment[] = await Promise.all(
-        files.map(async (file, i) => {
-          const id = placeholderAtts[i].id
-          // Generate thumbnail first (~50ms), then upload both in true parallel
-          const thumbnailBlob = await generateThumbnail(file)
-          const uploads: [Promise<string>, Promise<string | undefined>] = [
-            uploadAttachment(houseId, id, file),
-            thumbnailBlob
-              ? uploadAttachmentThumbnail(houseId, id, thumbnailBlob)
-              : Promise.resolve(undefined),
-          ]
-          const [url, thumbnailUrl] = await Promise.all(uploads)
-          return { id, name: file.name, type: file.type, size: file.size, url, thumbnailUrl }
-        })
+      // Upload files atomically per-item (each uploadOne handles its own
+      // main/thumbnail partial failure), and roll back orphan blobs if any
+      // file in the batch fails. Prevents quota drift from ghost uploads.
+      const uploaded = await uploadBatchWithRollback(
+        files.map((file, i) => ({ id: placeholderAtts[i].id, file })),
+        ({ id, file }) => uploadAttachmentAtomic(houseId, id, file),
+        (done) => deleteAttachments(houseId, done.map((a) => ({ id: a.id, name: a.name }))),
       )
       const real = await repo.addExpense({ ...input, attachments: uploaded.length > 0 ? uploaded : undefined })
       setExpenses((prev) => prev.map((e) => e.id === tempId ? real : e))
@@ -218,7 +238,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
     // Defense-in-depth: ExpenseList pre-validates, but we re-check here so
     // the contract holds even if a future caller skips the UI layer.
-    const { rejection } = validateAttachmentFiles(files, {
+    const { rejection } = validateExpenseAttachments(files, {
       existingCount: expense.attachments?.length ?? 0,
       householdStorageUsed: currentStorageUsed,
     })
@@ -242,20 +262,11 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     setPendingAttachmentIds((prev) => new Set([...prev, ...placeholderIdSet]))
 
     try {
-      // Upload files, reusing placeholder IDs so the pills stay in place
-      const uploaded: Attachment[] = await Promise.all(
-        files.map(async (file, i) => {
-          const id = placeholders[i].id
-          const thumbnailBlob = await generateThumbnail(file)
-          const uploads: [Promise<string>, Promise<string | undefined>] = [
-            uploadAttachment(houseId, id, file),
-            thumbnailBlob
-              ? uploadAttachmentThumbnail(houseId, id, thumbnailBlob)
-              : Promise.resolve(undefined),
-          ]
-          const [url, thumbnailUrl] = await Promise.all(uploads)
-          return { id, name: file.name, type: file.type, size: file.size, url, thumbnailUrl }
-        })
+      // Atomic per-item upload + batch-level rollback. See uploadAttachmentAtomic.
+      const uploaded = await uploadBatchWithRollback(
+        files.map((file, i) => ({ id: placeholders[i].id, file })),
+        ({ id, file }) => uploadAttachmentAtomic(houseId, id, file),
+        (done) => deleteAttachments(houseId, done.map((a) => ({ id: a.id, name: a.name }))),
       )
 
       // Replace placeholders with real attachments (now with URLs)

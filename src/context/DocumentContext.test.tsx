@@ -2,11 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { HouseDocument, DocFolder } from '@/types/document'
 import type { ReactNode } from 'react'
-import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 
 // ── Mocks (hoisted) ──
 
-const { mockRepo, mockUploadDocument, mockUploadDocumentThumbnail, mockDeleteDocumentFile, mockGenerateThumbnail } = vi.hoisted(() => {
+const { mockRepo, mockUploadDocument, mockUploadDocumentThumbnail, mockDeleteDocumentFile, mockDeleteDocumentFiles, mockGenerateThumbnail } = vi.hoisted(() => {
   const mockRepo = {
     getExpenses: vi.fn(),
     addExpense: vi.fn(),
@@ -29,6 +28,7 @@ const { mockRepo, mockUploadDocument, mockUploadDocumentThumbnail, mockDeleteDoc
     mockUploadDocument: vi.fn(),
     mockUploadDocumentThumbnail: vi.fn(),
     mockDeleteDocumentFile: vi.fn(),
+    mockDeleteDocumentFiles: vi.fn(),
     mockGenerateThumbnail: vi.fn(),
   }
 })
@@ -65,6 +65,7 @@ vi.mock('@/data/firebase-document-store', () => ({
   uploadDocument: mockUploadDocument,
   uploadDocumentThumbnail: mockUploadDocumentThumbnail,
   deleteDocumentFile: mockDeleteDocumentFile,
+  deleteDocumentFiles: mockDeleteDocumentFiles,
 }))
 
 vi.mock('@/lib/thumbnail', () => ({
@@ -86,6 +87,7 @@ vi.mock('./ExpenseContext', () => ({
 }))
 
 import { DocumentProvider, useDocuments } from './DocumentContext'
+import { sizedFile } from '@/test-utils/files'
 
 // ── Helpers ──
 
@@ -156,6 +158,7 @@ describe('DocumentContext', () => {
     mockGenerateThumbnail.mockResolvedValue(null)
     mockUploadDocument.mockResolvedValue('https://example.com/uploaded.pdf')
     mockDeleteDocumentFile.mockResolvedValue(undefined)
+    mockDeleteDocumentFiles.mockResolvedValue(undefined)
     mockRepo.addFolder.mockImplementation(async (input: Partial<DocFolder>) => ({
       id: 'real-folder-id',
       ...input,
@@ -180,15 +183,6 @@ describe('DocumentContext', () => {
   // ── Storage quota ──
 
   describe('uploadDocuments — defensive validation', () => {
-    // Build a file that reports `size` without actually allocating bytes.
-    // ArrayBuffer(largeN) will OOM or fail — Object.defineProperty is the
-    // standard way to simulate large files in unit tests.
-    function sizedFile(name: string, type: string, size: number): File {
-      const f = new File([''], name, { type })
-      Object.defineProperty(f, 'size', { value: size })
-      return f
-    }
-
     it('rejects files exceeding MAX_FILE_SIZE with a specific validation error', async () => {
       // The old test passed a 50 MB+1 file; the validator now (correctly)
       // rejects it on per-file-size first, not household quota. That's the
@@ -199,7 +193,7 @@ describe('DocumentContext', () => {
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [big]) })
-      ).rejects.toThrow(/exceeds/i)
+      ).rejects.toMatchObject({ reason: { code: 'exceedsLimit' } })
 
       expect(mockUploadDocument).not.toHaveBeenCalled()
     })
@@ -210,7 +204,7 @@ describe('DocumentContext', () => {
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [bad]) })
-      ).rejects.toThrow(/Unsupported|supported/i)
+      ).rejects.toMatchObject({ reason: { code: 'unsupportedType' } })
 
       expect(mockUploadDocument).not.toHaveBeenCalled()
     })
@@ -221,7 +215,7 @@ describe('DocumentContext', () => {
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [exact]) })
-      ).rejects.toThrow(/exceeds/i)
+      ).rejects.toMatchObject({ reason: { code: 'exceedsLimit' } })
 
       expect(mockUploadDocument).not.toHaveBeenCalled()
     })
@@ -236,7 +230,7 @@ describe('DocumentContext', () => {
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [a, b]) })
-      ).rejects.toThrow(/storage limit/i)
+      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
 
       expect(mockUploadDocument).not.toHaveBeenCalled()
     })
@@ -252,6 +246,62 @@ describe('DocumentContext', () => {
       const good = new File(['hello'], 'ok.pdf', { type: 'application/pdf' })
       await act(async () => { await result.current.uploadDocuments('folder-1', [good]) })
       expect(mockUploadDocument).toHaveBeenCalledTimes(1)
+    })
+
+    it('deletes already-uploaded blobs when a later file in the batch fails', async () => {
+      // Same orphan-blob concern as expenses: the household 50 MB accounting
+      // drifts if failed-batch successes linger in Storage.
+      const { result } = await setupHook([makeFolder()])
+
+      mockUploadDocument
+        .mockResolvedValueOnce('https://x/a.pdf')
+        .mockRejectedValueOnce(new Error('doc #2 boom'))
+
+      const files = [
+        new File(['a'], 'a.pdf', { type: 'application/pdf' }),
+        new File(['b'], 'b.pdf', { type: 'application/pdf' }),
+      ]
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', files) })
+      ).rejects.toThrow('doc #2 boom')
+
+      // Batch-level cleanup removes the first (fulfilled) blob.
+      expect(mockDeleteDocumentFiles).toHaveBeenCalled()
+      const cleaned = mockDeleteDocumentFiles.mock.calls[0][1] as Array<{ name: string }>
+      expect(cleaned.map((d) => d.name)).toContain('a.pdf')
+    })
+
+    it('deletes the main blob when the thumbnail upload fails for a single document', async () => {
+      const { result } = await setupHook([makeFolder()])
+      mockGenerateThumbnail.mockResolvedValueOnce(new Blob(['t']))
+      mockUploadDocument.mockResolvedValueOnce('https://x/main.png')
+      mockUploadDocumentThumbnail.mockRejectedValueOnce(new Error('thumb failed'))
+
+      const file = new File(['p'], 'photo.png', { type: 'image/png' })
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', [file]) })
+      ).rejects.toThrow('thumb failed')
+
+      // Per-item catch inside uploadDocuments deletes the partial blob.
+      expect(mockDeleteDocumentFile).toHaveBeenCalledWith(
+        'house-1',
+        expect.any(String),
+        'photo.png',
+      )
+    })
+
+    it('does NOT call cleanup when all files upload successfully (happy path)', async () => {
+      const { result } = await setupHook([makeFolder()])
+      const files = [
+        new File(['a'], 'a.pdf', { type: 'application/pdf' }),
+        new File(['b'], 'b.pdf', { type: 'application/pdf' }),
+      ]
+      await act(async () => { await result.current.uploadDocuments('folder-1', files) })
+
+      expect(mockDeleteDocumentFiles).not.toHaveBeenCalled()
+      expect(mockDeleteDocumentFile).not.toHaveBeenCalled()
     })
   })
 

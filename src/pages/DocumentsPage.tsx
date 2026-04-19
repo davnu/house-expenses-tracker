@@ -19,17 +19,11 @@ import { useExpenses } from '@/context/ExpenseContext'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { searchUnified, getRecentDocuments, attachmentToHouseDocument, type UnifiedSearchItem } from '@/lib/document-utils'
 import { getCategoryLabel } from '@/lib/constants'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, formatFileSize } from '@/lib/utils'
 import { getFolderIconBg } from '@/lib/file-type-info'
 import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { Attachment } from '@/types/expense'
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 export function DocumentsPage() {
   const { t } = useTranslation()
@@ -289,7 +283,7 @@ export function DocumentsPage() {
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{t('documents.storageUsed')}</span>
-              <span>{formatSize(totalStorageUsed)} / {formatSize(MAX_HOUSEHOLD_STORAGE)}</span>
+              <span>{formatFileSize(totalStorageUsed)} / {formatFileSize(MAX_HOUSEHOLD_STORAGE)}</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div

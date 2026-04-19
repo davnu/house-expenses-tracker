@@ -1,14 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   validateAttachmentFiles,
+  validateExpenseAttachments,
+  validateDocumentFiles,
   AttachmentValidationError,
   rejectionMessage,
 } from './attachment-validation'
 import { MAX_FILE_SIZE, MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from './constants'
-
-function makeFile(name: string, type: string, size = 1024): File {
-  return new File([new ArrayBuffer(size)], name, { type })
-}
+import { makeFile } from '@/test-utils/files'
 
 describe('validateAttachmentFiles', () => {
   it('accepts a supported file under the size limit', () => {
@@ -78,7 +77,9 @@ describe('validateAttachmentFiles', () => {
 
   it('stops adding once MAX_FILES_PER_EXPENSE is reached (counts existingCount)', () => {
     const input = Array.from({ length: 3 }, (_, i) => makeFile(`f${i}.png`, 'image/png'))
-    const { accepted, rejection } = validateAttachmentFiles(input, {
+    // Uses validateExpenseAttachments so the cap comes from the wrapper,
+    // not a literal maxFiles option — matches how real call sites invoke it.
+    const { accepted, rejection } = validateExpenseAttachments(input, {
       householdStorageUsed: 0,
       existingCount: MAX_FILES_PER_EXPENSE - 1, // 9 → 1 slot left
     })
@@ -172,7 +173,7 @@ describe('validateAttachmentFiles', () => {
   // ── Count limit boundaries ────────────────────
 
   it('rejects all new files when existingCount already equals MAX_FILES_PER_EXPENSE', () => {
-    const { accepted, rejection } = validateAttachmentFiles(
+    const { accepted, rejection } = validateExpenseAttachments(
       [makeFile('a.png', 'image/png'), makeFile('b.png', 'image/png')],
       { householdStorageUsed: 0, existingCount: MAX_FILES_PER_EXPENSE },
     )
@@ -182,7 +183,7 @@ describe('validateAttachmentFiles', () => {
 
   it('accepts up to (MAX_FILES_PER_EXPENSE - existingCount) files then rejects the rest', () => {
     const input = Array.from({ length: 5 }, (_, i) => makeFile(`f${i}.png`, 'image/png'))
-    const { accepted, rejection } = validateAttachmentFiles(input, {
+    const { accepted, rejection } = validateExpenseAttachments(input, {
       householdStorageUsed: 0,
       existingCount: 7, // 10 - 7 = 3 slots left
     })
@@ -190,11 +191,11 @@ describe('validateAttachmentFiles', () => {
     expect(rejection?.code).toBe('maxFilesPerExpense')
   })
 
-  it('maxFiles=Infinity disables the count check entirely (documents flow)', () => {
+  it('omitting maxFiles disables the count check entirely (documents flow)', () => {
     const input = Array.from({ length: 50 }, (_, i) => makeFile(`f${i}.pdf`, 'application/pdf'))
     const { accepted, rejection } = validateAttachmentFiles(input, {
       householdStorageUsed: 0,
-      maxFiles: Number.POSITIVE_INFINITY,
+      // maxFiles intentionally omitted — documents have no per-folder cap.
     })
     expect(accepted).toHaveLength(50)
     expect(rejection).toBeNull()
@@ -266,7 +267,7 @@ describe('validateAttachmentFiles', () => {
     // Mix: unsupported (skip+continue), oversized (skip+continue), then count limit (break).
     // Last rejection wins, which is fine UX — user sees "at least one of these
     // issues stopped the batch" and can resolve iteratively.
-    const { accepted, rejection } = validateAttachmentFiles(
+    const { accepted, rejection } = validateExpenseAttachments(
       [
         makeFile('exe.bin', 'application/x-msdownload', 100),
         makeFile('big.png', 'image/png', MAX_FILE_SIZE + 1),
@@ -296,12 +297,58 @@ describe('validateAttachmentFiles', () => {
   it('stagedFiles contribute to count AND quota, not just dedupe', () => {
     // 9 staged + existingCount=1 → already at MAX_FILES_PER_EXPENSE (=10).
     const staged = Array.from({ length: 9 }, (_, i) => makeFile(`s${i}.png`, 'image/png', 100))
-    const { accepted, rejection } = validateAttachmentFiles(
+    const { accepted, rejection } = validateExpenseAttachments(
       [makeFile('new.png', 'image/png', 100)],
       { householdStorageUsed: 0, existingCount: 1, stagedFiles: staged },
     )
     expect(accepted).toHaveLength(0)
     expect(rejection?.code).toBe('maxFilesPerExpense')
+  })
+})
+
+// ── Wrappers: verify the intent-revealing variants behave correctly ──
+
+describe('validateExpenseAttachments wrapper', () => {
+  it('applies MAX_FILES_PER_EXPENSE cap without needing an explicit maxFiles arg', () => {
+    const input = Array.from({ length: MAX_FILES_PER_EXPENSE + 3 }, (_, i) =>
+      makeFile(`f${i}.png`, 'image/png'),
+    )
+    const { accepted, rejection } = validateExpenseAttachments(input, { householdStorageUsed: 0 })
+    expect(accepted).toHaveLength(MAX_FILES_PER_EXPENSE)
+    expect(rejection?.code).toBe('maxFilesPerExpense')
+  })
+
+  it('dedupes by default (matches FileDropZone behavior)', () => {
+    const staged = [makeFile('r.pdf', 'application/pdf', 1000)]
+    const { accepted } = validateExpenseAttachments(
+      [makeFile('r.pdf', 'application/pdf', 1000)],
+      { householdStorageUsed: 0, stagedFiles: staged },
+    )
+    expect(accepted).toHaveLength(0)
+  })
+})
+
+describe('validateDocumentFiles wrapper', () => {
+  it('does NOT enforce a file count cap', () => {
+    const input = Array.from({ length: 100 }, (_, i) => makeFile(`d${i}.pdf`, 'application/pdf'))
+    const { accepted, rejection } = validateDocumentFiles(input, { householdStorageUsed: 0 })
+    expect(accepted).toHaveLength(100)
+    expect(rejection).toBeNull()
+  })
+
+  it('does NOT dedupe by name+size (revisions are allowed)', () => {
+    const staged = [makeFile('r.pdf', 'application/pdf', 1000)]
+    const { accepted } = validateDocumentFiles(
+      [makeFile('r.pdf', 'application/pdf', 1000)],
+      { householdStorageUsed: 0, stagedFiles: staged },
+    )
+    expect(accepted).toHaveLength(1)
+  })
+
+  it('still enforces per-file size and household quota (shared invariants)', () => {
+    const oversized = makeFile('big.pdf', 'application/pdf', MAX_FILE_SIZE)
+    const { rejection } = validateDocumentFiles([oversized], { householdStorageUsed: 0 })
+    expect(rejection?.code).toBe('exceedsLimit')
   })
 })
 

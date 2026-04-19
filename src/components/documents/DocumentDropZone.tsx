@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Upload, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ACCEPTED_FILE_TYPES, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
-import { validateAttachmentFiles, rejectionMessage } from '@/lib/attachment-validation'
+import { validateDocumentFiles, rejectionMessage } from '@/lib/attachment-validation'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
 
@@ -25,12 +25,8 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
   const processFiles = useCallback(
     (fileList: FileList | File[]) => {
       setError('')
-      const { accepted, rejection } = validateAttachmentFiles(Array.from(fileList), {
+      const { accepted, rejection } = validateDocumentFiles(Array.from(fileList), {
         householdStorageUsed: totalStorageUsed,
-        // Document flow has no per-folder item-count limit surfaced here;
-        // Number.POSITIVE_INFINITY disables the per-expense count check.
-        maxFiles: Number.POSITIVE_INFINITY,
-        dedupe: false,
       })
       if (rejection) setError(rejectionMessage(t, rejection))
       if (accepted.length > 0) onFilesSelected(accepted)

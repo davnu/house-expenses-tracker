@@ -2,6 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Favicon chain, ordered for maximum crawler + browser compatibility.
+      - favicon.ico: Google's SERP crawler requests this by convention, even
+        if a <link rel="icon"> is declared. Missing .ico is the #1 reason
+        favicons don't appear in Google search results.
+      - favicon-48.png: Google's documented preferred size (multiple of 48).
+      - icon-192.png: larger PNG for crawlers / systems that want hi-dpi.
+      - favicon.svg: modern browsers use this for crisp tab icons at any zoom.
+      - apple-touch-icon.png: iOS home-screen icon.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />

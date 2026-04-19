@@ -2,22 +2,16 @@ import { useState, useRef, useCallback, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, X, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn, formatFileSize } from '@/lib/utils'
 import { getFileTypeInfo } from '@/lib/file-type-info'
 import {
   ACCEPTED_FILE_TYPES,
   MAX_FILES_PER_EXPENSE,
   MAX_HOUSEHOLD_STORAGE,
 } from '@/lib/constants'
-import { validateAttachmentFiles, rejectionMessage } from '@/lib/attachment-validation'
+import { validateExpenseAttachments, rejectionMessage } from '@/lib/attachment-validation'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 interface FileDropZoneProps {
   files: File[]
@@ -41,7 +35,7 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
   const addFiles = useCallback(
     (newFiles: FileList | File[]) => {
       setError('')
-      const { accepted, rejection } = validateAttachmentFiles(Array.from(newFiles), {
+      const { accepted, rejection } = validateExpenseAttachments(Array.from(newFiles), {
         stagedFiles: files,
         existingCount,
         householdStorageUsed,
@@ -105,7 +99,7 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
           {t('files.fileInfo', { count: totalCount, max: MAX_FILES_PER_EXPENSE })}
         </p>
         <p className="text-xs text-muted-foreground">
-          {t('files.storageUsed', { used: formatSize(storageAfterNew), total: formatSize(MAX_HOUSEHOLD_STORAGE) })}
+          {t('files.storageUsed', { used: formatFileSize(storageAfterNew), total: formatFileSize(MAX_HOUSEHOLD_STORAGE) })}
         </p>
         <p className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground/70 mt-1.5">
           <ShieldCheck className="h-3 w-3" />
@@ -148,7 +142,7 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
                   {typeInfo.label}
                 </span>
                 <span className="text-xs text-muted-foreground shrink-0">
-                  {formatSize(file.size)}
+                  {formatFileSize(file.size)}
                 </span>
                 <Button
                   type="button"

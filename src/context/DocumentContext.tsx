@@ -5,14 +5,14 @@ import type { DocFolder, HouseDocument } from '@/types/document'
 import { getDefaultFolders } from '@/types/document'
 import type { ExpenseRepository } from '@/data/repository'
 import { FirestoreRepository } from '@/data/firestore-repository'
-import { uploadDocument, uploadDocumentThumbnail, deleteDocumentFile } from '@/data/firebase-document-store'
+import { uploadDocument, uploadDocumentThumbnail, deleteDocumentFile, deleteDocumentFiles } from '@/data/firebase-document-store'
+import { uploadBatchWithRollback } from '@/data/upload-batch'
 import { generateThumbnail } from '@/lib/thumbnail'
 import { db } from '@/data/firebase'
 import { useAuth } from './AuthContext'
 import { useHousehold } from './HouseholdContext'
 import { useExpenses } from './ExpenseContext'
-import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
-import { validateAttachmentFiles, AttachmentValidationError } from '@/lib/attachment-validation'
+import { validateDocumentFiles, AttachmentValidationError } from '@/lib/attachment-validation'
 
 interface DocumentContextValue {
   folders: DocFolder[]
@@ -252,14 +252,11 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     if (files.length === 0) return
 
     const currentTotal = expenseStorageUsed + documentsRef.current.reduce((t, d) => t + d.size, 0)
-    // Defense-in-depth: DocumentDropZone validates first, but re-check here so
-    // the contract holds for any future caller (bulk import, mobile wrapper,
-    // etc.). Documents have no per-folder cap and don't dedupe — same options
-    // as DocumentDropZone passes.
-    const { rejection } = validateAttachmentFiles(files, {
+    // Defense-in-depth: DocumentDropZone validates first, but re-check here
+    // so the contract holds for any future caller (bulk import, mobile
+    // wrapper, etc.).
+    const { rejection } = validateDocumentFiles(files, {
       householdStorageUsed: currentTotal,
-      maxFiles: Number.POSITIVE_INFINITY,
-      dedupe: false,
     })
     if (rejection) throw new AttachmentValidationError(rejection)
 
@@ -281,29 +278,37 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     setPendingDocumentIds((prev) => new Set([...prev, ...placeholderIds]))
 
     try {
-      await Promise.all(
-        files.map(async (file) => {
-          const docId = crypto.randomUUID()
-          // Generate thumbnail first (~50ms), then upload both in true parallel
-          const thumbnailBlob = await generateThumbnail(file)
-          const uploads: [Promise<string>, Promise<string | undefined>] = [
-            uploadDocument(houseId, docId, file),
-            thumbnailBlob
-              ? uploadDocumentThumbnail(houseId, docId, thumbnailBlob)
-              : Promise.resolve(undefined),
-          ]
-          const [url, thumbnailUrl] = await Promise.all(uploads)
-          await repo.addDocument(docId, {
-            folderId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            url,
-            thumbnailUrl,
-            uploadedBy: user?.uid ?? '',
-          })
-          // onSnapshot will pick up the real document
-        })
+      // Atomic per-item upload + batch-level rollback of successful blobs.
+      // If any item fails, already-uploaded Storage blobs are deleted so the
+      // household quota doesn't drift from actual bytes in Storage.
+      await uploadBatchWithRollback(
+        files.map((file) => ({ docId: crypto.randomUUID(), file })),
+        async ({ docId, file }) => {
+          try {
+            const thumbnailBlob = await generateThumbnail(file)
+            const [url, thumbnailUrl] = await Promise.all([
+              uploadDocument(houseId, docId, file),
+              thumbnailBlob ? uploadDocumentThumbnail(houseId, docId, thumbnailBlob) : Promise.resolve(undefined),
+            ])
+            await repo.addDocument(docId, {
+              folderId,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              url,
+              thumbnailUrl,
+              uploadedBy: user?.uid ?? '',
+            })
+            return { id: docId, name: file.name }
+          } catch (err) {
+            // Clean up whatever partially succeeded within this item
+            // (main or thumb blob). The Firestore write is transactional —
+            // if addDocument threw, no doc was created, so nothing to undo.
+            await deleteDocumentFile(houseId, docId, file.name).catch(() => {})
+            throw err
+          }
+        },
+        (done) => deleteDocumentFiles(houseId, done),
       )
 
       // Remove placeholders — onSnapshot already added the real docs

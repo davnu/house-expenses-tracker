@@ -9,11 +9,13 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DIST = join(__dirname, '..', 'dist')
+const PUBLIC_DIR = join(__dirname, '..', 'public')
 
 const LANGUAGES = ['en', 'es', 'fr', 'de', 'nl', 'pt']
 const DOMAIN = 'https://casatab.com'
@@ -123,6 +125,114 @@ for (const lang of LANGUAGES) {
   assert(titleCount === 1, `Has exactly 1 <title> (got ${titleCount})`)
   const descCount = (html.match(/<meta name="description"/g) || []).length
   assert(descCount === 1, `Has exactly 1 meta description (got ${descCount})`)
+
+  // Favicon chain — missing favicon.ico was why Google wasn't showing the
+  // icon in search results. Lock every link in so a future index.html edit
+  // can't silently drop one.
+  assert(
+    /<link rel="icon" href="\/favicon\.ico" sizes="any"/.test(html),
+    `Has <link rel="icon" href="/favicon.ico" sizes="any"> — sizes="any" honestly describes the multi-res ICO so crawlers pick the biggest entry`,
+  )
+  assert(
+    /<link rel="icon" type="image\/png" sizes="48x48" href="\/favicon-48\.png"/.test(html),
+    `Has 48×48 PNG favicon (Google's preferred size)`,
+  )
+  assert(
+    /<link rel="icon" type="image\/png" sizes="192x192" href="\/icon-192\.png"/.test(html),
+    `Has 192×192 PNG favicon for hi-dpi`,
+  )
+  assert(
+    /<link rel="icon" type="image\/svg\+xml" href="\/favicon\.svg"/.test(html),
+    `Has SVG favicon for modern browsers`,
+  )
+  assert(
+    /<link rel="apple-touch-icon" sizes="180x180" href="\/apple-touch-icon\.png"/.test(html),
+    `Has apple-touch-icon for iOS home-screen`,
+  )
+}
+
+/* ═══════════════════ Validate favicon assets ═══════════════════ */
+
+console.log('Checking favicon assets...')
+// These must ship in /dist or Google's crawler hits 404 on /favicon.ico and
+// silently refuses to show the icon in search results. Vite copies
+// public/** → dist/** automatically, so the assertion is simple — but the
+// check still matters: if generate-favicon.mjs was never run, dist has no
+// .ico, Google has no favicon.
+const FAVICON_FILES = [
+  { path: 'favicon.ico', minBytes: 500 },
+  { path: 'favicon-48.png', minBytes: 100 },
+  { path: 'favicon.svg', minBytes: 100 },
+  { path: 'icon-192.png', minBytes: 500 },
+  { path: 'icon-maskable-512.png', minBytes: 500 },
+  { path: 'apple-touch-icon.png', minBytes: 500 },
+]
+for (const { path, minBytes } of FAVICON_FILES) {
+  const buf = readDist(path)
+  assert(buf !== null, `dist/${path} exists`)
+  if (buf !== null) {
+    assert(
+      buf.length >= minBytes,
+      `dist/${path} is non-empty (got ${buf.length} bytes, expected ≥${minBytes})`,
+    )
+  }
+}
+
+// Staleness check: if icon-512.png is edited but generate-favicon.mjs is not
+// re-run, the derived files (ico, 48px, maskable) drift. A pinned SHA-256
+// snapshot of the source catches this at CI time instead of in production.
+const sourcePath = join(PUBLIC_DIR, 'icon-512.png')
+const hashPath = join(PUBLIC_DIR, '.favicon-source-hash')
+if (!existsSync(hashPath)) {
+  assert(false, `public/.favicon-source-hash missing — run \`node scripts/generate-favicon.mjs\``)
+} else if (existsSync(sourcePath)) {
+  const currentHash = createHash('sha256').update(readFileSync(sourcePath)).digest('hex')
+  const pinnedHash = readFileSync(hashPath, 'utf-8').trim()
+  assert(
+    currentHash === pinnedHash,
+    `public/icon-512.png changed but derived favicons are stale. ` +
+      `Re-run \`node scripts/generate-favicon.mjs\` and commit the updated assets. ` +
+      `(pinned ${pinnedHash.slice(0, 12)}… vs source ${currentHash.slice(0, 12)}…)`,
+  )
+}
+
+/* ═══════════════════ Validate favicon.svg dark-mode ═══════════════════ */
+
+// Hard-coded fill colours make the SVG invisible in dark browser tabs.
+// The canonical fix is currentColor + prefers-color-scheme; verify both
+// primitives are still in place so a future SVG edit can't accidentally
+// regress to a hard-coded fill.
+const faviconSvg = readDist('favicon.svg')
+if (faviconSvg) {
+  assert(
+    /currentColor/.test(faviconSvg),
+    `favicon.svg uses currentColor (dark-mode compatibility)`,
+  )
+  assert(
+    /prefers-color-scheme\s*:\s*dark/.test(faviconSvg),
+    `favicon.svg has @media (prefers-color-scheme: dark) rule`,
+  )
+}
+
+/* ═══════════════════ Validate manifest.json ═══════════════════ */
+
+console.log('Checking /manifest.json...')
+const manifestRaw = readDist('manifest.json')
+assert(manifestRaw !== null, 'manifest.json exists in dist')
+if (manifestRaw) {
+  try {
+    const manifest = JSON.parse(manifestRaw)
+    assert(Array.isArray(manifest.icons), 'manifest.icons is an array')
+    // Android adaptive-icon compatibility: needs at least one maskable icon,
+    // otherwise launchers letterbox the icon on a white background when the
+    // PWA is installed.
+    const maskable = manifest.icons?.some((i) => String(i.purpose ?? '').split(/\s+/).includes('maskable'))
+    assert(maskable === true, 'manifest.icons has at least one purpose:"maskable" entry (Android adaptive-icon compatibility)')
+    const anyPurpose = manifest.icons?.some((i) => String(i.purpose ?? 'any').split(/\s+/).includes('any'))
+    assert(anyPurpose === true, 'manifest.icons has at least one purpose:"any" entry (default launcher icon)')
+  } catch (e) {
+    assert(false, `manifest.json is valid JSON (${e.message})`)
+  }
 }
 
 /* ═══════════════════ Validate sitemap ═══════════════════ */

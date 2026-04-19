@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from './constants'
+import { formatFileSize } from './utils'
 
 export type AttachmentRejection =
   | { code: 'unsupportedType'; name: string }
@@ -14,7 +15,11 @@ export interface AttachmentValidationOptions {
   existingCount?: number
   /** Bytes currently used across the household (all expenses). */
   householdStorageUsed: number
-  /** Per-expense max file count. Override for document flows. */
+  /**
+   * Per-expense max file count. `undefined` (the default when using
+   * {@link validateDocumentFiles}) disables the count check entirely — use for
+   * document flows that don't cap per-folder.
+   */
   maxFiles?: number
   /** Household-wide storage quota in bytes. Override for tests. */
   maxHouseholdBytes?: number
@@ -45,7 +50,7 @@ export function validateAttachmentFiles(
     stagedFiles = [],
     existingCount = 0,
     householdStorageUsed,
-    maxFiles = MAX_FILES_PER_EXPENSE,
+    maxFiles,
     maxHouseholdBytes = MAX_HOUSEHOLD_STORAGE,
     maxFileBytes = MAX_FILE_SIZE,
     dedupe = true,
@@ -75,7 +80,7 @@ export function validateAttachmentFiles(
     if (dedupe && stagedFiles.some((f) => f.name === file.name && f.size === file.size)) {
       continue
     }
-    if (stagedTotal + accepted.length >= maxFiles) {
+    if (maxFiles !== undefined && stagedTotal + accepted.length >= maxFiles) {
       rejection = { code: 'maxFilesPerExpense', max: maxFiles }
       break
     }
@@ -90,23 +95,57 @@ export function validateAttachmentFiles(
   return { accepted, rejection }
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(0)} MB`
+/**
+ * Expense-flow wrapper: caps at {@link MAX_FILES_PER_EXPENSE} and dedupes by
+ * default. Prefer this over calling {@link validateAttachmentFiles} directly
+ * in expense code paths so the cap is applied consistently without a
+ * magic-number literal at every call site.
+ */
+export function validateExpenseAttachments(
+  incoming: Iterable<File>,
+  opts: Omit<AttachmentValidationOptions, 'maxFiles'>,
+): AttachmentValidationResult {
+  return validateAttachmentFiles(incoming, { ...opts, maxFiles: MAX_FILES_PER_EXPENSE })
 }
+
+/**
+ * Document-flow wrapper: no per-folder file cap, no dedupe (uploads of a
+ * file with the same name + size are intentionally allowed — the user may
+ * be re-uploading a revision).
+ */
+export function validateDocumentFiles(
+  incoming: Iterable<File>,
+  opts: Omit<AttachmentValidationOptions, 'maxFiles' | 'dedupe'>,
+): AttachmentValidationResult {
+  return validateAttachmentFiles(incoming, { ...opts, dedupe: false })
+}
+
+/**
+ * One source of truth for rejection → i18n key. Exported so a test can
+ * assert every locale file contains every key (so renaming an entry in
+ * en.json without updating the other locales breaks CI rather than
+ * silently falling back to the key string at runtime).
+ */
+export const REJECTION_MESSAGE_KEYS = {
+  unsupportedType: 'files.unsupportedType',
+  exceedsLimit: 'files.exceedsLimit',
+  maxFilesPerExpense: 'files.maxFilesPerExpense',
+  householdStorageLimit: 'files.householdStorageLimit',
+} as const satisfies Record<AttachmentRejection['code'], string>
 
 /** Translate a rejection reason into the user-facing string via i18next. */
 export function rejectionMessage(t: TFunction, reason: AttachmentRejection): string {
   switch (reason.code) {
     case 'unsupportedType':
-      return t('files.unsupportedType', { name: reason.name })
+      return t(REJECTION_MESSAGE_KEYS.unsupportedType, { name: reason.name })
     case 'exceedsLimit':
-      return t('files.exceedsLimit', { name: reason.name })
+      return t(REJECTION_MESSAGE_KEYS.exceedsLimit, { name: reason.name })
     case 'maxFilesPerExpense':
-      return t('files.maxFilesPerExpense', { max: reason.max })
+      return t(REJECTION_MESSAGE_KEYS.maxFilesPerExpense, { max: reason.max })
     case 'householdStorageLimit':
-      return t('files.householdStorageLimit', { size: formatSize(reason.maxBytes) })
+      return t(REJECTION_MESSAGE_KEYS.householdStorageLimit, {
+        size: formatFileSize(reason.maxBytes, 0),
+      })
   }
 }
 
@@ -115,9 +154,14 @@ export function rejectionMessage(t: TFunction, reason: AttachmentRejection): str
  * Firebase/network failures and translated with the same reason catalog.
  */
 export class AttachmentValidationError extends Error {
-  constructor(public readonly reason: AttachmentRejection) {
+  readonly reason: AttachmentRejection
+  constructor(reason: AttachmentRejection) {
     super(debugMessage(reason))
+    // Explicit assignment rather than a `public readonly` parameter property:
+    // tsconfig enables `erasableSyntaxOnly`, which forbids parameter
+    // properties because they require emitted runtime code.
     this.name = 'AttachmentValidationError'
+    this.reason = reason
   }
 }
 
@@ -126,10 +170,10 @@ function debugMessage(reason: AttachmentRejection): string {
     case 'unsupportedType':
       return `Unsupported file type: ${reason.name}`
     case 'exceedsLimit':
-      return `"${reason.name}" exceeds ${formatSize(reason.maxBytes)} limit`
+      return `"${reason.name}" exceeds ${formatFileSize(reason.maxBytes, 0)} limit`
     case 'maxFilesPerExpense':
       return `Maximum ${reason.max} files per expense`
     case 'householdStorageLimit':
-      return `Household storage limit reached (${formatSize(reason.maxBytes)})`
+      return `Household storage limit reached (${formatFileSize(reason.maxBytes, 0)})`
   }
 }

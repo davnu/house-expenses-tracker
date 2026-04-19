@@ -12,7 +12,7 @@ import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { cn, formatCurrency, friendlyError, getDateLocale } from '@/lib/utils'
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SPLIT_PAYER, UNPAID_BADGE_CLASSES, getSharedPayerLabel, getSplitPayerLabel, getCategoryLabel } from '@/lib/constants'
-import { validateAttachmentFiles, rejectionMessage } from '@/lib/attachment-validation'
+import { validateExpenseAttachments, rejectionMessage } from '@/lib/attachment-validation'
 import { filterByPayer, groupExpensesByMonth, isExpensePaid } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
@@ -186,7 +186,7 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
     setAttachTargetId(null)
 
     const target = expenses.find((x) => x.id === targetId)
-    const { accepted, rejection } = validateAttachmentFiles(files, {
+    const { accepted, rejection } = validateExpenseAttachments(files, {
       existingCount: target?.attachments?.length ?? 0,
       householdStorageUsed: storageUsed,
     })

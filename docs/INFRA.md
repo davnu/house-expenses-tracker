@@ -282,6 +282,17 @@ This should be impossible. If it happens:
 ### CasaTab build fails
 - Pre-existing `DashboardPage.tsx` WIP error from an incomplete feature — known issue, unrelated to deploy. Use the workaround in the Deploy section above.
 
+### Favicon not showing in Google search results
+
+If `casatab.com` appears in Google results without its icon:
+
+1. **Check `/favicon.ico` is reachable.** Open `https://casatab.com/favicon.ico` in a fresh incognito tab. It must return a binary ICO, not a 404. If it 404s, `dist/` is missing the file — run `node scripts/generate-favicon.mjs` and redeploy. The post-build validator now asserts this; CI builds fail if the file is missing.
+2. **Check the HTML link chain.** View-source on `casatab.com`. Must contain `<link rel="icon" href="/favicon.ico" ...>`. Google's crawler respects the declaration *and* also hits `/favicon.ico` by convention — both need to work.
+3. **Force a re-crawl.** In Google Search Console → URL Inspection → enter `https://casatab.com/`. Click *Request Indexing*. Google re-pulls the favicon within days (not always immediate — the favicon pipeline is separate from the main index).
+4. **If the source logo changes.** Re-run `node scripts/generate-favicon.mjs` (macOS, uses `sips`). Commit the regenerated `public/favicon.ico` + `public/favicon-48.png`. Rebuild + redeploy.
+
+**Why this broke silently in the first place:** the generation script existed but its outputs weren't committed, and `index.html` declared only the SVG. Google supports SVG favicons but their SERP pipeline is conservative about them — a missing `/favicon.ico` means they refuse to render anything. The fix added `.ico` + a 48×48 PNG (their preferred size), plus locked both into the SEO validator so the regression can't silently return.
+
 ### Firebase email verifications going to spam
 This is handled in `docs/email-deliverability.md` (if created separately) or:
 - The template and sender are set up. Gmail filters are learning over time. Ask early users to mark "Not spam".
