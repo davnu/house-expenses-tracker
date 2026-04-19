@@ -179,24 +179,79 @@ describe('DocumentContext', () => {
 
   // ── Storage quota ──
 
-  describe('uploadDocuments — storage quota', () => {
-    it('throws when upload would exceed household storage limit', async () => {
-      const { result } = await setupHook([makeFolder()])
+  describe('uploadDocuments — defensive validation', () => {
+    // Build a file that reports `size` without actually allocating bytes.
+    // ArrayBuffer(largeN) will OOM or fail — Object.defineProperty is the
+    // standard way to simulate large files in unit tests.
+    function sizedFile(name: string, type: string, size: number): File {
+      const f = new File([''], name, { type })
+      Object.defineProperty(f, 'size', { value: size })
+      return f
+    }
 
-      // Mock useExpenses to report near-full storage
-      // Since we can't easily change the mock mid-test, create a large file
-      const hugeSize = MAX_HOUSEHOLD_STORAGE + 1
+    it('rejects files exceeding MAX_FILE_SIZE with a specific validation error', async () => {
+      // The old test passed a 50 MB+1 file; the validator now (correctly)
+      // rejects it on per-file-size first, not household quota. That's the
+      // same class of bug the user reported — catching it at the context
+      // layer means no upload is attempted.
+      const { result } = await setupHook([makeFolder()])
+      const big = sizedFile('big.pdf', 'application/pdf', 10 * 1024 * 1024 + 1)
 
       await expect(
-        act(async () => {
-          const file = new File([new ArrayBuffer(hugeSize)], 'huge.pdf', { type: 'application/pdf' })
-          // Override file size since ArrayBuffer constructor may fail for huge sizes
-          Object.defineProperty(file, 'size', { value: hugeSize })
-          await result.current.uploadDocuments('folder-1', [file])
-        })
-      ).rejects.toThrow('storage limit')
+        act(async () => { await result.current.uploadDocuments('folder-1', [big]) })
+      ).rejects.toThrow(/exceeds/i)
 
       expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('rejects files with unsupported MIME type at the context layer', async () => {
+      const { result } = await setupHook([makeFolder()])
+      const bad = new File(['x'], 'archive.zip', { type: 'application/zip' })
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', [bad]) })
+      ).rejects.toThrow(/Unsupported|supported/i)
+
+      expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('rejects file at exactly MAX_FILE_SIZE (matches server-side strict `<`)', async () => {
+      const { result } = await setupHook([makeFolder()])
+      const exact = sizedFile('exact.pdf', 'application/pdf', 10 * 1024 * 1024)
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', [exact]) })
+      ).rejects.toThrow(/exceeds/i)
+
+      expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('rejects batch that would push household over 50 MB (multi-file quota)', async () => {
+      // Seed documents close to quota: 48 MB already used. Batch of two 2 MB
+      // files would push to 52 MB. First file fits, second triggers rejection.
+      const near = makeDoc({ id: 'seed', name: 'big.pdf', size: 48 * 1024 * 1024 })
+      const { result } = await setupHook([makeFolder()], [near])
+      const a = sizedFile('a.pdf', 'application/pdf', 2 * 1024 * 1024)
+      const b = sizedFile('b.pdf', 'application/pdf', 2 * 1024 * 1024)
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', [a, b]) })
+      ).rejects.toThrow(/storage limit/i)
+
+      expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('silently returns for empty file list', async () => {
+      const { result } = await setupHook([makeFolder()])
+      await act(async () => { await result.current.uploadDocuments('folder-1', []) })
+      expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('accepts a well-formed file and uploads', async () => {
+      const { result } = await setupHook([makeFolder()])
+      const good = new File(['hello'], 'ok.pdf', { type: 'application/pdf' })
+      await act(async () => { await result.current.uploadDocuments('folder-1', [good]) })
+      expect(mockUploadDocument).toHaveBeenCalledTimes(1)
     })
   })
 

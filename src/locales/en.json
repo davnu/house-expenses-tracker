@@ -705,7 +705,7 @@
     "permissionDenied": "You don't have permission to do this.",
     "notFound": "The requested data was not found.",
     "serviceUnavailable": "Service temporarily unavailable. Please try again.",
-    "storageUnauthorized": "You don't have permission to upload files.",
+    "storageUnauthorized": "Upload rejected. Make sure each file is under 10 MB and a supported type (image, PDF, Word, Excel).",
     "storageQuotaExceeded": "Storage quota exceeded.",
     "inviteInvalid": "This invite link is invalid.",
     "inviteUsed": "This invite has already been used.",

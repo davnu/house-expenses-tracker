@@ -2,15 +2,10 @@ import { useState, useRef, useCallback, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { ACCEPTED_FILE_TYPES, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { validateAttachmentFiles, rejectionMessage } from '@/lib/attachment-validation'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 interface DocumentDropZoneProps {
   onFilesSelected: (files: File[]) => void
@@ -30,29 +25,15 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
   const processFiles = useCallback(
     (fileList: FileList | File[]) => {
       setError('')
-      const valid: File[] = []
-      let pendingSize = 0
-
-      for (const file of Array.from(fileList)) {
-        if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
-          setError(t('files.unsupportedType', { name: file.name }))
-          continue
-        }
-        if (file.size > MAX_FILE_SIZE) {
-          setError(t('files.exceedsLimit', { name: file.name }))
-          continue
-        }
-        if (totalStorageUsed + pendingSize + file.size > MAX_HOUSEHOLD_STORAGE) {
-          setError(t('files.householdStorageLimit', { size: formatSize(MAX_HOUSEHOLD_STORAGE) }))
-          break
-        }
-        valid.push(file)
-        pendingSize += file.size
-      }
-
-      if (valid.length > 0) {
-        onFilesSelected(valid)
-      }
+      const { accepted, rejection } = validateAttachmentFiles(Array.from(fileList), {
+        householdStorageUsed: totalStorageUsed,
+        // Document flow has no per-folder item-count limit surfaced here;
+        // Number.POSITIVE_INFINITY disables the per-expense count check.
+        maxFiles: Number.POSITIVE_INFINITY,
+        dedupe: false,
+      })
+      if (rejection) setError(rejectionMessage(t, rejection))
+      if (accepted.length > 0) onFilesSelected(accepted)
     },
     [onFilesSelected, totalStorageUsed, t]
   )

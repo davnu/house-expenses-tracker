@@ -6,10 +6,10 @@ import { cn } from '@/lib/utils'
 import { getFileTypeInfo } from '@/lib/file-type-info'
 import {
   ACCEPTED_FILE_TYPES,
-  MAX_FILE_SIZE,
   MAX_FILES_PER_EXPENSE,
   MAX_HOUSEHOLD_STORAGE,
 } from '@/lib/constants'
+import { validateAttachmentFiles, rejectionMessage } from '@/lib/attachment-validation'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
 
@@ -41,36 +41,15 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
   const addFiles = useCallback(
     (newFiles: FileList | File[]) => {
       setError('')
-      const valid: File[] = []
-      for (const file of Array.from(newFiles)) {
-        // File type check
-        if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
-          setError(t('files.unsupportedType', { name: file.name }))
-          continue
-        }
-        // Per-file size check
-        if (file.size > MAX_FILE_SIZE) {
-          setError(t('files.exceedsLimit', { name: file.name }))
-          continue
-        }
-        // Duplicate check
-        if (files.some((f) => f.name === file.name && f.size === file.size)) continue
-        // Per-expense file count
-        if (totalCount + valid.length >= MAX_FILES_PER_EXPENSE) {
-          setError(t('files.maxFilesPerExpense', { max: MAX_FILES_PER_EXPENSE }))
-          break
-        }
-        // Household storage quota
-        const pendingSize = valid.reduce((s, f) => s + f.size, 0)
-        if (storageAfterNew + pendingSize + file.size > MAX_HOUSEHOLD_STORAGE) {
-          setError(t('files.householdStorageLimit', { size: formatSize(MAX_HOUSEHOLD_STORAGE) }))
-          break
-        }
-        valid.push(file)
-      }
-      if (valid.length > 0) onChange([...files, ...valid])
+      const { accepted, rejection } = validateAttachmentFiles(Array.from(newFiles), {
+        stagedFiles: files,
+        existingCount,
+        householdStorageUsed,
+      })
+      if (rejection) setError(rejectionMessage(t, rejection))
+      if (accepted.length > 0) onChange([...files, ...accepted])
     },
-    [files, onChange, totalCount, storageAfterNew, t]
+    [files, onChange, existingCount, householdStorageUsed, t]
   )
 
   const handleDragOver = (e: DragEvent) => {

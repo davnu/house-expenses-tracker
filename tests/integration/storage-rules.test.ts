@@ -121,6 +121,55 @@ describe('Storage: upload (create)', () => {
     )
   })
 
+  // Boundary regression: the rule is `request.resource.size < 10 * 1024 * 1024`,
+  // strict less-than. A file of EXACTLY 10 MB must be rejected server-side.
+  // The client validator is now aligned with this (see attachment-validation.ts),
+  // but this test documents the server behavior so a future rule change
+  // (e.g. flipping to `<=`) can't silently diverge.
+  it('member cannot upload file of EXACTLY 10MB (strict less-than boundary)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const ref = alice.storage().ref('houses/house1/attachments/att-boundary/exact.png')
+    const exactFile = makeTestFile(10 * 1024 * 1024)
+    await assertFails(
+      ref.put(exactFile, { contentType: 'image/png' })
+    )
+  })
+
+  it('member can upload file of 10MB - 1 byte (just under boundary)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const ref = alice.storage().ref('houses/house1/attachments/att-under/near-limit.png')
+    const justUnder = makeTestFile(10 * 1024 * 1024 - 1)
+    await assertSucceeds(
+      ref.put(justUnder, { contentType: 'image/png' })
+    )
+  })
+
+  it('member can upload a zero-byte file (allowed by rule)', async () => {
+    // Unusual but legitimate: a placeholder or empty document. The rule's
+    // only size constraint is `< 10 MB`, and 0 < 10 MB, so it passes.
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const ref = alice.storage().ref('houses/house1/attachments/att-zero/empty.pdf')
+    await assertSucceeds(
+      ref.put(makeTestFile(0), { contentType: 'application/pdf' })
+    )
+  })
+
+  it('member cannot upload with missing contentType (regex requires a match)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    const ref = alice.storage().ref('houses/house1/attachments/att-notype/no-type.bin')
+    // When browsers can't identify a file they often send
+    // application/octet-stream or no type — neither matches the rules regex,
+    // which is what triggers the "you don't have permission" 403 that
+    // confused our user. Regression test: must fail server-side.
+    await assertFails(
+      ref.put(makeTestFile(100), { contentType: 'application/octet-stream' })
+    )
+  })
+
   it('non-member cannot upload to house storage', async () => {
     await seedHouseWithMember('house1', 'alice')
     const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })

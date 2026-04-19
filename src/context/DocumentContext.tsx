@@ -12,6 +12,7 @@ import { useAuth } from './AuthContext'
 import { useHousehold } from './HouseholdContext'
 import { useExpenses } from './ExpenseContext'
 import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { validateAttachmentFiles, AttachmentValidationError } from '@/lib/attachment-validation'
 
 interface DocumentContextValue {
   folders: DocFolder[]
@@ -248,12 +249,19 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const uploadDocuments = useCallback(async (folderId: string, files: File[]) => {
     if (!repo || !houseId) return
+    if (files.length === 0) return
 
-    const newSize = files.reduce((s, f) => s + f.size, 0)
     const currentTotal = expenseStorageUsed + documentsRef.current.reduce((t, d) => t + d.size, 0)
-    if (currentTotal + newSize > MAX_HOUSEHOLD_STORAGE) {
-      throw new Error('Household storage limit reached')
-    }
+    // Defense-in-depth: DocumentDropZone validates first, but re-check here so
+    // the contract holds for any future caller (bulk import, mobile wrapper,
+    // etc.). Documents have no per-folder cap and don't dedupe — same options
+    // as DocumentDropZone passes.
+    const { rejection } = validateAttachmentFiles(files, {
+      householdStorageUsed: currentTotal,
+      maxFiles: Number.POSITIVE_INFINITY,
+      dedupe: false,
+    })
+    if (rejection) throw new AttachmentValidationError(rejection)
 
     // Create placeholders with temp IDs for immediate UI feedback
     const placeholders: HouseDocument[] = files.map((f) => ({

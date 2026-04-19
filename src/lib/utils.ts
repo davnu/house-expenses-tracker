@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge'
 import i18next from 'i18next'
 import { es, nl, de, fr, pt } from 'date-fns/locale'
 import type { Locale } from 'date-fns'
+import { AttachmentValidationError, rejectionMessage } from './attachment-validation'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -90,6 +91,9 @@ export function stripInvalid<T>(obj: T): T {
 /** Map Firebase/Firestore error codes to user-friendly messages */
 export function friendlyError(err: unknown, fallback?: string): string {
   const t = i18next.t.bind(i18next)
+  // Attachment validation errors carry a structured reason — translate via
+  // the shared catalog so messages match what the drop-zones show.
+  if (err instanceof AttachmentValidationError) return rejectionMessage(t, err.reason)
   const message = err instanceof Error ? err.message : ''
 
   // Auth errors

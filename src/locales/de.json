@@ -705,7 +705,7 @@
     "permissionDenied": "Du hast keine Berechtigung für diese Aktion.",
     "notFound": "Die angeforderten Daten wurden nicht gefunden.",
     "serviceUnavailable": "Dienst vorübergehend nicht verfügbar. Bitte versuche es erneut.",
-    "storageUnauthorized": "Du hast keine Berechtigung, Dateien hochzuladen.",
+    "storageUnauthorized": "Upload abgelehnt. Jede Datei muss kleiner als 10 MB und ein unterstützter Typ sein (Bild, PDF, Word, Excel).",
     "storageQuotaExceeded": "Speicherkontingent überschritten.",
     "inviteInvalid": "Dieser Einladungslink ist ungültig.",
     "inviteUsed": "Diese Einladung wurde bereits verwendet.",

@@ -705,7 +705,7 @@
     "permissionDenied": "Não tens permissão para fazer isto.",
     "notFound": "Os dados solicitados não foram encontrados.",
     "serviceUnavailable": "Serviço temporariamente indisponível. Tenta novamente.",
-    "storageUnauthorized": "Não tens permissão para carregar ficheiros.",
+    "storageUnauthorized": "Carregamento recusado. Confirma que cada ficheiro tem menos de 10 MB e é de um tipo suportado (imagem, PDF, Word, Excel).",
     "storageQuotaExceeded": "Quota de armazenamento excedida.",
     "inviteInvalid": "Este link de convite é inválido.",
     "inviteUsed": "Este convite já foi utilizado.",

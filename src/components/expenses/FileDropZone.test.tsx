@@ -98,7 +98,10 @@ describe('FileDropZone', () => {
       expect(screen.getByText(/exceeds 10 MB limit/)).toBeDefined()
     })
 
-    it('accepts file at exactly MAX_FILE_SIZE', async () => {
+    it('rejects file at exactly MAX_FILE_SIZE to match server-side strict `<` rule', async () => {
+      // storage.rules uses `request.resource.size < 10 * 1024 * 1024`, so a
+      // file of exactly 10 MB would pass client but fail server with a 403.
+      // The client now matches the server to surface a specific message.
       const onChange = vi.fn()
       const { container } = render(
         <FileDropZone files={[]} onChange={onChange} />
@@ -107,6 +110,20 @@ describe('FileDropZone', () => {
       const input = container.querySelector('input[type="file"]') as HTMLInputElement
       const exactFile = makeFile('exact.png', 'image/png', MAX_FILE_SIZE)
       await userEvent.upload(input, exactFile)
+
+      expect(onChange).not.toHaveBeenCalled()
+      expect(screen.getByText(/exceeds 10 MB limit/)).toBeDefined()
+    })
+
+    it('accepts file at MAX_FILE_SIZE - 1 byte', async () => {
+      const onChange = vi.fn()
+      const { container } = render(
+        <FileDropZone files={[]} onChange={onChange} />
+      )
+
+      const input = container.querySelector('input[type="file"]') as HTMLInputElement
+      const justUnder = makeFile('almost.png', 'image/png', MAX_FILE_SIZE - 1)
+      await userEvent.upload(input, justUnder)
 
       expect(onChange).toHaveBeenCalledOnce()
     })

@@ -97,8 +97,13 @@ describe('friendlyError', () => {
   })
 
   // Storage errors
-  it('maps storage/unauthorized', () => {
-    expect(friendlyError(new Error('Firebase Storage: User does not have permission (storage/unauthorized).'))).toBe("You don't have permission to upload files.")
+  it('maps storage/unauthorized to a specific hint about size and type', () => {
+    // The old copy ("You don't have permission to upload files") was misleading:
+    // the 403 usually means size > 10 MB or an unsupported type, not auth.
+    const msg = friendlyError(new Error('Firebase Storage: User does not have permission (storage/unauthorized).'))
+    expect(msg).toMatch(/10 MB/)
+    expect(msg).toMatch(/image|PDF|type/i)
+    expect(msg.toLowerCase()).not.toContain("don't have permission")
   })
 
   // Custom app errors

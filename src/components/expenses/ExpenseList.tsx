@@ -12,6 +12,7 @@ import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { cn, formatCurrency, friendlyError, getDateLocale } from '@/lib/utils'
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SPLIT_PAYER, UNPAID_BADGE_CLASSES, getSharedPayerLabel, getSplitPayerLabel, getCategoryLabel } from '@/lib/constants'
+import { validateAttachmentFiles, rejectionMessage } from '@/lib/attachment-validation'
 import { filterByPayer, groupExpensesByMonth, isExpensePaid } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
@@ -30,7 +31,7 @@ interface ExpenseListProps {
 
 export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseListProps) {
   const { t } = useTranslation()
-  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds } = useExpenses()
+  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds, storageUsed } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
   const isMultiMember = members.length > 1
   const [filterCategory, setFilterCategory] = useState('')
@@ -180,10 +181,27 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
     const targetId = attachTargetId
     const files = Array.from(e.target.files)
     e.target.value = ''
-    await withErrorHandling(async () => {
-      await addAttachmentsToExpense(targetId, files)
-      setAttachTargetId(null)
+    // Reset the target regardless of outcome so a second attempt on a different
+    // expense can't misroute if the first failed validation.
+    setAttachTargetId(null)
+
+    const target = expenses.find((x) => x.id === targetId)
+    const { accepted, rejection } = validateAttachmentFiles(files, {
+      existingCount: target?.attachments?.length ?? 0,
+      householdStorageUsed: storageUsed,
     })
+    // Set the validation error directly — we deliberately do NOT use
+    // withErrorHandling() here because it would clear this message before
+    // the upload runs, and the user would never see why their oversize file
+    // was skipped in a mixed batch. The upload's own try/catch still
+    // surfaces real Firebase/network failures.
+    setActionError(rejection ? rejectionMessage(t, rejection) : '')
+    if (accepted.length === 0) return
+    try {
+      await addAttachmentsToExpense(targetId, accepted)
+    } catch (err) {
+      setActionError(friendlyError(err))
+    }
   }
 
   const clearFilters = () => {

@@ -705,7 +705,7 @@
     "permissionDenied": "Je hebt geen toestemming om dit te doen.",
     "notFound": "De gevraagde gegevens zijn niet gevonden.",
     "serviceUnavailable": "Dienst tijdelijk niet beschikbaar. Probeer het opnieuw.",
-    "storageUnauthorized": "Je hebt geen toestemming om bestanden te uploaden.",
+    "storageUnauthorized": "Upload geweigerd. Controleer of elk bestand kleiner is dan 10 MB en een ondersteund type (afbeelding, PDF, Word, Excel).",
     "storageQuotaExceeded": "Opslaglimiet overschreden.",
     "inviteInvalid": "Deze uitnodigingslink is ongeldig.",
     "inviteUsed": "Deze uitnodiging is al gebruikt.",

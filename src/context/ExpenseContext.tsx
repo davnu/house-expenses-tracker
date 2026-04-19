@@ -6,7 +6,7 @@ import { uploadAttachment, uploadAttachmentThumbnail, deleteAttachment, deleteAt
 import { generateThumbnail } from '@/lib/thumbnail'
 import { db } from '@/data/firebase'
 import { useHousehold } from './HouseholdContext'
-import { MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { validateAttachmentFiles, AttachmentValidationError } from '@/lib/attachment-validation'
 
 interface ExpenseContextValue {
   expenses: Expense[]
@@ -97,15 +97,15 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
 
   const addExpenseWithFiles = useCallback(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => {
     if (!repo || !houseId) return
-    if (files.length > MAX_FILES_PER_EXPENSE) {
-      throw new Error(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
-    }
     const currentStorageUsed = expensesRef.current.reduce((total, exp) =>
       total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
-    const newSize = files.reduce((s, f) => s + f.size, 0)
-    if (currentStorageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
-      throw new Error('Household storage limit reached')
-    }
+    // Defense-in-depth: the UI validates first, but re-check here so the
+    // contract holds regardless of caller. Throws AttachmentValidationError
+    // which UI layers translate via rejectionMessage().
+    const { rejection } = validateAttachmentFiles(files, {
+      householdStorageUsed: currentStorageUsed,
+    })
+    if (rejection) throw new AttachmentValidationError(rejection)
 
     const tempId = `temp-${crypto.randomUUID()}`
     const now = new Date().toISOString()
@@ -211,18 +211,18 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
 
   const addAttachmentsToExpense = useCallback(async (expenseId: string, files: File[]) => {
     if (!repo || !houseId) return
+    if (files.length === 0) return
     const expense = expensesRef.current.find((e) => e.id === expenseId)
     if (!expense) return
-    const existingCount = expense.attachments?.length ?? 0
-    if (existingCount + files.length > MAX_FILES_PER_EXPENSE) {
-      throw new Error(`Maximum ${MAX_FILES_PER_EXPENSE} files per expense`)
-    }
     const currentStorageUsed = expensesRef.current.reduce((total, exp) =>
       total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
-    const newSize = files.reduce((s, f) => s + f.size, 0)
-    if (currentStorageUsed + newSize > MAX_HOUSEHOLD_STORAGE) {
-      throw new Error('Household storage limit reached')
-    }
+    // Defense-in-depth: ExpenseList pre-validates, but we re-check here so
+    // the contract holds even if a future caller skips the UI layer.
+    const { rejection } = validateAttachmentFiles(files, {
+      existingCount: expense.attachments?.length ?? 0,
+      householdStorageUsed: currentStorageUsed,
+    })
+    if (rejection) throw new AttachmentValidationError(rejection)
 
     // Create placeholder attachments shown immediately with a spinner
     const placeholders: Attachment[] = files.map((f) => ({

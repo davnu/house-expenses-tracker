@@ -705,7 +705,7 @@
     "permissionDenied": "Tu n'as pas la permission d'effectuer cette action.",
     "notFound": "Les données demandées sont introuvables.",
     "serviceUnavailable": "Service temporairement indisponible. Veuillez réessayer.",
-    "storageUnauthorized": "Tu n'as pas la permission d'envoyer des fichiers.",
+    "storageUnauthorized": "Envoi refusé. Vérifie que chaque fichier fait moins de 10 Mo et est d'un type accepté (image, PDF, Word, Excel).",
     "storageQuotaExceeded": "Quota de stockage dépassé.",
     "inviteInvalid": "Ce lien d'invitation est invalide.",
     "inviteUsed": "Cette invitation a déjà été utilisée.",

@@ -546,6 +546,37 @@ describe('ExpenseContext', () => {
       expect(result.current.expenses.find((e) => e.id === 'exp-1')!.attachments).toHaveLength(1)
       expect(result.current.pendingAttachmentIds.size).toBe(0)
     })
+
+    // Regression for the 46 MB / 403 "no permission" bug: the context-level
+    // defensive check must reject oversize files BEFORE hitting Firebase,
+    // even if a caller bypasses the UI validator.
+    it('rejects files larger than MAX_FILE_SIZE before attempting upload', async () => {
+      const { result } = await setupHook()
+      // Synthesize a 46 MB PNG without allocating 46 MB of memory by overriding .size
+      const bigFile = new File([''], 'huge.png', { type: 'image/png' })
+      Object.defineProperty(bigFile, 'size', { value: 46 * 1024 * 1024 })
+
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', [bigFile]) })
+      ).rejects.toThrow(/exceeds/i)
+
+      // Upload never attempted, no placeholder left behind
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+      expect(result.current.expenses.find((e) => e.id === 'exp-2')!.attachments).toBeUndefined()
+      expect(result.current.pendingAttachmentIds.size).toBe(0)
+    })
+
+    it('rejects files with unsupported MIME types before attempting upload', async () => {
+      const { result } = await setupHook()
+      const badFile = new File(['x'], 'script.exe', { type: 'application/x-msdownload' })
+
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', [badFile]) })
+      ).rejects.toThrow(/supported|Unsupported/i)
+
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+      expect(result.current.expenses.find((e) => e.id === 'exp-2')!.attachments).toBeUndefined()
+    })
   })
 
   // ── removeAttachment ──────────────────────────────
@@ -580,6 +611,223 @@ describe('ExpenseContext', () => {
 
       // Rolled back
       expect(result.current.expenses.find((e) => e.id === 'exp-1')!.attachments).toHaveLength(1)
+    })
+  })
+
+  // ── Storage quota lifecycle (reclamation, pending-state accounting) ──
+
+  describe('storage quota lifecycle', () => {
+    // Build a file with a reported `size` without actually allocating memory.
+    function sizedFile(name: string, type: string, size: number): File {
+      const f = new File([''], name, { type })
+      Object.defineProperty(f, 'size', { value: size })
+      return f
+    }
+
+    it('storageUsed decreases when an expense with attachments is deleted', async () => {
+      const { result } = await setupHook()
+      expect(result.current.storageUsed).toBe(5000)
+
+      await act(async () => { await result.current.deleteExpense('exp-1') })
+
+      // exp-1 had the only attachment (5000 bytes). Now zero.
+      expect(result.current.storageUsed).toBe(0)
+    })
+
+    it('storageUsed decreases when an individual attachment is removed', async () => {
+      const { result } = await setupHook()
+      expect(result.current.storageUsed).toBe(5000)
+
+      await act(async () => { await result.current.removeAttachment('exp-1', 'att-1') })
+
+      expect(result.current.storageUsed).toBe(0)
+    })
+
+    it('rolls back storageUsed when removeAttachment fails', async () => {
+      mockDeleteAttachment.mockRejectedValueOnce(new Error('Storage error'))
+      const { result } = await setupHook()
+
+      await expect(
+        act(async () => { await result.current.removeAttachment('exp-1', 'att-1') })
+      ).rejects.toThrow()
+
+      // storageUsed must match the restored attachments, not stay at the
+      // optimistic zero — otherwise later uploads would miscalculate quota.
+      expect(result.current.storageUsed).toBe(5000)
+    })
+
+    it('includes placeholder sizes in storageUsed during pending upload (prevents double-spend)', async () => {
+      // While an upload is in flight, the placeholder counts toward quota so
+      // a second concurrent upload can't race past the 50 MB limit.
+      const { result } = await setupHook()
+      const file = sizedFile('pending.pdf', 'application/pdf', 2_000_000)
+
+      let promise: Promise<void>
+      act(() => {
+        promise = result.current.addAttachmentsToExpense('exp-2', [file])
+      })
+      // Placeholder visible — storageUsed includes it
+      expect(result.current.storageUsed).toBe(5000 + 2_000_000)
+
+      await act(async () => { await promise! })
+
+      // After resolution the real size is the same, so no double-count
+      expect(result.current.storageUsed).toBe(5000 + 2_000_000)
+    })
+
+    it('restores prior storageUsed after a failed pending upload (rollback)', async () => {
+      mockUploadAttachment.mockRejectedValueOnce(new Error('network error'))
+      const { result } = await setupHook()
+      const file = sizedFile('fail.pdf', 'application/pdf', 1_000_000)
+
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', [file]) })
+      ).rejects.toThrow()
+
+      expect(result.current.storageUsed).toBe(5000)
+    })
+
+    it('accepts a batch that fills household to EXACTLY MAX_HOUSEHOLD_STORAGE', async () => {
+      // Use multiple under-10MB files since per-file max is 10 MB. 6 × 8 MB
+      // = 48 MB + 5000 existing ≈ fits within 50 MB with a small pad file.
+      const { result } = await setupHook()
+      const pad = 50 * 1024 * 1024 - 5000 - 6 * 8 * 1024 * 1024
+      const files = [
+        ...Array.from({ length: 6 }, (_, i) =>
+          sizedFile(`big${i}.pdf`, 'application/pdf', 8 * 1024 * 1024),
+        ),
+        sizedFile('pad.pdf', 'application/pdf', pad),
+      ]
+      await act(async () => { await result.current.addAttachmentsToExpense('exp-2', files) })
+
+      expect(result.current.storageUsed).toBe(50 * 1024 * 1024)
+      expect(mockUploadAttachment).toHaveBeenCalledTimes(7)
+    })
+
+    it('rejects a batch that would push household one byte past MAX_HOUSEHOLD_STORAGE', async () => {
+      const { result } = await setupHook()
+      // 6 × 8 MB + pad = exactly MAX. One extra byte on the pad file overflows.
+      const overBy = 1
+      const pad = 50 * 1024 * 1024 - 5000 - 6 * 8 * 1024 * 1024 + overBy
+      const files = [
+        ...Array.from({ length: 6 }, (_, i) =>
+          sizedFile(`big${i}.pdf`, 'application/pdf', 8 * 1024 * 1024),
+        ),
+        sizedFile('overflow.pdf', 'application/pdf', pad),
+      ]
+
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', files) })
+      ).rejects.toThrow(/storage limit/i)
+
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+      expect(result.current.storageUsed).toBe(5000)
+    })
+
+    it('allows re-upload after deleting an expense frees quota', async () => {
+      const { result } = await setupHook()
+      // Fill storage to ~45 MB via multiple sub-10MB files attached to exp-2
+      const fill = Array.from({ length: 5 }, (_, i) =>
+        sizedFile(`fill${i}.pdf`, 'application/pdf', 9 * 1024 * 1024 - 1000),
+      )
+      await act(async () => { await result.current.addAttachmentsToExpense('exp-2', fill) })
+      // 5 × (~9 MB - 1000) + 5000 ≈ just under 45 MB
+
+      // An 8 MB upload would NOT fit (current + 8 > 50)
+      const eight = sizedFile('eight.pdf', 'application/pdf', 8 * 1024 * 1024)
+      await expect(
+        act(async () => { await result.current.addAttachmentsToExpense('exp-1', [eight]) })
+      ).rejects.toThrow(/storage limit/i)
+
+      // Delete the big expense → quota frees up
+      await act(async () => { await result.current.deleteExpense('exp-2') })
+
+      // Now the 8 MB upload fits
+      await act(async () => { await result.current.addAttachmentsToExpense('exp-1', [eight]) })
+      expect(mockUploadAttachment).toHaveBeenCalledTimes(fill.length + 1)
+    })
+
+    it('addAttachmentsToExpense returns silently for empty file list (no-op)', async () => {
+      const { result } = await setupHook()
+      await act(async () => { await result.current.addAttachmentsToExpense('exp-2', []) })
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+      // No placeholder, no pending state left behind
+      expect(result.current.pendingAttachmentIds.size).toBe(0)
+    })
+
+    it('addAttachmentsToExpense for a non-existent expense silently no-ops', async () => {
+      const { result } = await setupHook()
+      const file = sizedFile('x.pdf', 'application/pdf', 100)
+      await act(async () => { await result.current.addAttachmentsToExpense('does-not-exist', [file]) })
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+    })
+  })
+
+  // ── addExpenseWithFiles defense-in-depth ─────────────
+
+  describe('addExpenseWithFiles defensive validation', () => {
+    function sizedFile(name: string, type: string, size: number): File {
+      const f = new File([''], name, { type })
+      Object.defineProperty(f, 'size', { value: size })
+      return f
+    }
+
+    const newExpense = {
+      amount: 1000,
+      category: 'other',
+      payer: 'alice',
+      description: 'test',
+      date: '2026-04-19',
+    } as const
+
+    it('rejects oversized file before attempting upload', async () => {
+      const { result } = await setupHook()
+      const big = sizedFile('big.png', 'image/png', 10 * 1024 * 1024 + 1)
+
+      await expect(
+        act(async () => { await result.current.addExpenseWithFiles(newExpense, [big]) })
+      ).rejects.toThrow(/exceeds/i)
+
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+      expect(mockRepo.addExpense).not.toHaveBeenCalled()
+    })
+
+    it('rejects unsupported MIME type before attempting upload', async () => {
+      const { result } = await setupHook()
+      const bad = new File(['x'], 'hack.exe', { type: 'application/x-msdownload' })
+
+      await expect(
+        act(async () => { await result.current.addExpenseWithFiles(newExpense, [bad]) })
+      ).rejects.toThrow(/Unsupported|supported/i)
+
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+    })
+
+    it('rejects batch that would exceed household quota', async () => {
+      const { result } = await setupHook()
+      // 5000 existing + 9 MB + 9 MB + 9 MB + 9 MB + 9 MB = 45 MB, next 9 would overflow
+      const files = Array.from({ length: 6 }, (_, i) =>
+        sizedFile(`f${i}.pdf`, 'application/pdf', 9 * 1024 * 1024),
+      )
+
+      await expect(
+        act(async () => { await result.current.addExpenseWithFiles(newExpense, files) })
+      ).rejects.toThrow(/storage limit/i)
+
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
+    })
+
+    it('rejects more than MAX_FILES_PER_EXPENSE files', async () => {
+      const { result } = await setupHook()
+      const files = Array.from({ length: 11 }, (_, i) =>
+        sizedFile(`f${i}.pdf`, 'application/pdf', 100),
+      )
+
+      await expect(
+        act(async () => { await result.current.addExpenseWithFiles(newExpense, files) })
+      ).rejects.toThrow(/Maximum/i)
+
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
     })
   })
 })

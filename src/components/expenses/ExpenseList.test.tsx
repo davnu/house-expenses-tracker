@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, act } from '@testing-library/react'
+import { render, screen, cleanup, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MAX_FILE_SIZE, MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 
 // ── Mocks (hoisted) ──
 
@@ -416,5 +417,138 @@ describe('ExpenseList attachments display', () => {
     render(<ExpenseList />)
 
     expect(screen.getByText('Attach')).toBeDefined()
+  })
+})
+
+// ── Attachment upload validation (regression tests for the "46 MB = 403" bug) ──
+
+describe('ExpenseList attachment upload validation', () => {
+  beforeEach(() => {
+    mockExpenseCtx.expenses = [makeExpense('e1')]
+    mockExpenseCtx.pendingExpenseIds = new Set()
+    mockExpenseCtx.pendingAttachmentIds = new Set()
+    mockExpenseCtx.storageUsed = 0
+    mockExpenseCtx.addAttachmentsToExpense = vi.fn()
+  })
+
+  afterEach(cleanup)
+
+  async function selectFileForExpense(container: HTMLElement, file: File) {
+    // The "Attach" button sets attachTargetId via setState. We need React to
+    // commit that update before firing the change event on the hidden input,
+    // otherwise handleFileSelected still reads attachTargetId === null.
+    await act(async () => { fireEvent.click(screen.getByText('Attach')) })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }) })
+  }
+
+  it('blocks oversize files client-side, never calls addAttachmentsToExpense', async () => {
+    const { container } = render(<ExpenseList />)
+
+    const bigFile = new File([''], 'huge.png', { type: 'image/png' })
+    Object.defineProperty(bigFile, 'size', { value: MAX_FILE_SIZE + 1 })
+
+    await selectFileForExpense(container, bigFile)
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
+    // Surfaced message must be specific (10 MB limit), NOT the old
+    // misleading "You don't have permission to upload files" text.
+    expect(screen.getByText(/exceeds 10 MB limit/i)).toBeDefined()
+    expect(screen.queryByText(/don't have permission/i)).toBeNull()
+  })
+
+  it('blocks files with unsupported MIME type client-side', async () => {
+    const { container } = render(<ExpenseList />)
+
+    const badFile = new File(['x'], 'script.exe', { type: 'application/x-msdownload' })
+    await selectFileForExpense(container, badFile)
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
+    expect(screen.getByText(/not a supported file type/i)).toBeDefined()
+  })
+
+  it('passes validated files through to addAttachmentsToExpense', async () => {
+    const { container } = render(<ExpenseList />)
+
+    const goodFile = new File(['x'], 'photo.png', { type: 'image/png' })
+    await selectFileForExpense(container, goodFile)
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).toHaveBeenCalledTimes(1)
+    const [expenseId, files] = mockExpenseCtx.addAttachmentsToExpense.mock.calls[0]
+    expect(expenseId).toBe('e1')
+    expect(files).toHaveLength(1)
+    expect(files[0].name).toBe('photo.png')
+  })
+
+  // Multi-file flow: user shift-selects a handful, one is bad — UX goal is
+  // "accept what's valid, explain what's not" rather than all-or-nothing.
+  it('uploads valid files and shows rejection for the bad one when mixed', async () => {
+    const { container } = render(<ExpenseList />)
+
+    const good1 = new File(['x'], 'a.png', { type: 'image/png' })
+    const bad = new File([''], 'oversize.png', { type: 'image/png' })
+    Object.defineProperty(bad, 'size', { value: MAX_FILE_SIZE + 1 })
+    const good2 = new File(['y'], 'b.pdf', { type: 'application/pdf' })
+
+    await act(async () => { fireEvent.click(screen.getByText('Attach')) })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [good1, bad, good2] } })
+    })
+
+    // Good files forwarded to context; bad one surfaced as error
+    expect(mockExpenseCtx.addAttachmentsToExpense).toHaveBeenCalledTimes(1)
+    const forwarded = mockExpenseCtx.addAttachmentsToExpense.mock.calls[0][1]
+    expect(forwarded.map((f: File) => f.name)).toEqual(['a.png', 'b.pdf'])
+    expect(screen.getByText(/exceeds 10 MB limit/i)).toBeDefined()
+  })
+
+  it('does NOT call addAttachmentsToExpense when every file is rejected', async () => {
+    const { container } = render(<ExpenseList />)
+
+    const bad1 = new File(['x'], 'a.exe', { type: 'application/x-msdownload' })
+    const bad2 = new File(['y'], 'b.zip', { type: 'application/zip' })
+    await act(async () => { fireEvent.click(screen.getByText('Attach')) })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [bad1, bad2] } })
+    })
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
+    expect(screen.getByText(/not a supported file type/i)).toBeDefined()
+  })
+
+  it('rejects a file that would push household past 50 MB quota (via context storageUsed)', async () => {
+    mockExpenseCtx.storageUsed = MAX_HOUSEHOLD_STORAGE - 1000 // 1 KB remaining
+    const { container } = render(<ExpenseList />)
+
+    const file = new File([''], 'too-big-for-quota.pdf', { type: 'application/pdf' })
+    Object.defineProperty(file, 'size', { value: 2000 }) // 2 KB — overflows
+
+    await selectFileForExpense(container, file)
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
+    expect(screen.getByText(/storage limit/i)).toBeDefined()
+  })
+
+  it('rejects attach when target expense is already at MAX_FILES_PER_EXPENSE', async () => {
+    const full = makeExpense('e1', '2026-01-15', {
+      attachments: Array.from({ length: MAX_FILES_PER_EXPENSE }, (_, i) => ({
+        id: `a${i}`, name: `f${i}.png`, type: 'image/png', size: 100, url: 'https://x/y',
+      })),
+    })
+    mockExpenseCtx.expenses = [full]
+    const { container } = render(<ExpenseList />)
+
+    // When an expense already has attachments, the "Attach" text-label is
+    // replaced by a "+" pill whose title is t('common.attach') = "Attach".
+    await act(async () => { fireEvent.click(screen.getByTitle('Attach')) })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    const file = new File(['x'], 'extra.png', { type: 'image/png' })
+    await act(async () => { fireEvent.change(input, { target: { files: [file] } }) })
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
+    // UI must explain the reason so the user can remove an existing pill.
+    expect(screen.getByText(/Maximum/i)).toBeDefined()
   })
 })
