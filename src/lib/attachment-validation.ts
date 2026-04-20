@@ -70,9 +70,9 @@ export function validateAttachmentFiles(
       continue
     }
     // `>=` not `>`: storage.rules uses strict `<` (request.resource.size <
-    // 10 * 1024 * 1024), so a file of EXACTLY MAX_FILE_SIZE passes the
+    // 25 * 1024 * 1024), so a file of EXACTLY MAX_FILE_SIZE passes the
     // client but is rejected by the server with a misleading 403. Align here
-    // so the user sees the specific "exceeds 10 MB" message instead.
+    // so the user sees the specific "exceeds 25 MB" message instead.
     if (file.size >= maxFileBytes) {
       rejection = { code: 'exceedsLimit', name: file.name, maxBytes: maxFileBytes }
       continue

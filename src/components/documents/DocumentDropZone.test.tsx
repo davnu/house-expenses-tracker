@@ -72,7 +72,7 @@ describe('DocumentDropZone', () => {
       await userEvent.upload(input, makeFile('huge.png', 'image/png', MAX_FILE_SIZE + 1))
 
       expect(onFilesSelected).not.toHaveBeenCalled()
-      expect(screen.getByText(/exceeds 10 MB limit/)).toBeDefined()
+      expect(screen.getByText(/exceeds 25 MB limit/)).toBeDefined()
     })
   })
 

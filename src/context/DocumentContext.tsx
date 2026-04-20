@@ -21,6 +21,8 @@ interface DocumentContextValue {
   documentStorageUsed: number
   totalStorageUsed: number
   pendingDocumentIds: Set<string>
+  /** Upload progress per pending placeholder id; 0–1 fraction. See ExpenseContext.attachmentProgress. */
+  documentProgress: Record<string, number>
   addFolder: (name: string, icon: string, description?: string) => Promise<DocFolder>
   updateFolder: (id: string, updates: Partial<DocFolder>) => Promise<void>
   deleteFolder: (id: string) => Promise<void>
@@ -43,6 +45,27 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<HouseDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [pendingDocumentIds, setPendingDocumentIds] = useState<Set<string>>(new Set())
+  const [documentProgress, setDocumentProgress] = useState<Record<string, number>>({})
+
+  // See ExpenseContext.setProgressThrottled: sub-4% movements are imperceptible,
+  // and Firebase fires state_changed on every chunk — without throttling we
+  // pay a re-render of every DocumentContext consumer per tick.
+  const setProgressThrottled = useCallback((id: string, fraction: number) => {
+    setDocumentProgress((prev) => {
+      const prior = prev[id] ?? 0
+      const next = Math.max(0, Math.min(1, fraction))
+      if (next - prior < 0.04 && next < 1) return prev
+      return { ...prev, [id]: next }
+    })
+  }, [])
+
+  const clearProgress = useCallback((ids: Iterable<string>) => {
+    setDocumentProgress((prev) => {
+      const next = { ...prev }
+      for (const id of ids) delete next[id]
+      return next
+    })
+  }, [])
 
   const houseId = house?.id
 
@@ -281,13 +304,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       // Atomic per-item upload + batch-level rollback of successful blobs.
       // If any item fails, already-uploaded Storage blobs are deleted so the
       // household quota doesn't drift from actual bytes in Storage.
+      // Pair the placeholder id with the real doc id so onProgress can update
+      // the placeholder the UI is rendering, not the post-upload doc id.
       await uploadBatchWithRollback(
-        files.map((file) => ({ docId: crypto.randomUUID(), file })),
-        async ({ docId, file }) => {
+        files.map((file, i) => ({ docId: crypto.randomUUID(), placeholderId: placeholders[i].id, file })),
+        async ({ docId, placeholderId, file }) => {
           try {
             const thumbnailBlob = await generateThumbnail(file)
             const [url, thumbnailUrl] = await Promise.all([
-              uploadDocument(houseId, docId, file),
+              uploadDocument(houseId, docId, file, (f) => setProgressThrottled(placeholderId, f)),
               thumbnailBlob ? uploadDocumentThumbnail(houseId, docId, thumbnailBlob) : Promise.resolve(undefined),
             ])
             await repo.addDocument(docId, {
@@ -322,8 +347,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         placeholderIds.forEach((id) => next.delete(id))
         return next
       })
+      clearProgress(placeholderIds)
     }
-  }, [repo, houseId, user?.uid, expenseStorageUsed])
+  }, [repo, houseId, user?.uid, expenseStorageUsed, setProgressThrottled, clearProgress])
 
   const renameDocument = useCallback(async (id: string, name: string) => {
     if (!repo) return
@@ -396,6 +422,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         documentStorageUsed,
         totalStorageUsed,
         pendingDocumentIds,
+        documentProgress,
         addFolder,
         updateFolder,
         deleteFolder,

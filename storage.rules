@@ -17,7 +17,7 @@ service firebase.storage {
     function isValidUpload(houseId) {
       return isVerifiedEmail()
         && isHouseMember(houseId)
-        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.size < 25 * 1024 * 1024
         && request.resource.contentType.matches(
           'image/(png|jpeg|webp|gif|heic|heif)|application/pdf|application/msword|application/vnd\\.openxmlformats-officedocument\\.(wordprocessingml\\.document|spreadsheetml\\.sheet)|application/vnd\\.ms-excel'
         );

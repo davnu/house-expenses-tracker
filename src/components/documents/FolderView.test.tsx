@@ -42,6 +42,7 @@ vi.mock('@/context/DocumentContext', () => ({
     loading: false,
     totalStorageUsed: 0,
     pendingDocumentIds: new Set(),
+    documentProgress: {} as Record<string, number>,
     uploadDocuments: vi.fn(),
     renameDocument: vi.fn(),
     updateDocumentNotes: vi.fn(),

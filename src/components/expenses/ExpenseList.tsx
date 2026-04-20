@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { ProgressRing } from '@/components/ui/progress-ring'
 import { AttachmentViewer } from './AttachmentViewer'
 import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
@@ -31,7 +32,7 @@ interface ExpenseListProps {
 
 export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseListProps) {
   const { t } = useTranslation()
-  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds, storageUsed } = useExpenses()
+  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds, attachmentProgress, storageUsed } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
   const isMultiMember = members.length > 1
   const [filterCategory, setFilterCategory] = useState('')
@@ -332,7 +333,19 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
                     title={att.name}
                   >
                     {isPendingAtt ? (
-                      <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
+                      attachmentProgress[att.id] !== undefined ? (
+                        // Known progress → ring. Indeterminate (pre-upload) → spinner.
+                        // Size matches the 12px Loader2 so the layout doesn't shift
+                        // when the first state_changed tick flips the UI from
+                        // spinner to ring.
+                        <ProgressRing
+                          percent={attachmentProgress[att.id] * 100}
+                          size={12}
+                          strokeWidth={2}
+                        />
+                      ) : (
+                        <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
+                      )
                     ) : att.thumbnailUrl ? (
                       <img src={att.thumbnailUrl} alt="" className="h-7 w-7 object-cover rounded-md shrink-0" />
                     ) : (

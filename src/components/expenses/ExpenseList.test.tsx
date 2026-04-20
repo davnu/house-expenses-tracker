@@ -16,6 +16,7 @@ const { mockExpenseCtx, mockHouseholdCtx } = vi.hoisted(() => ({
     removeAttachment: vi.fn(),
     pendingExpenseIds: new Set<string>(),
     pendingAttachmentIds: new Set<string>(),
+    attachmentProgress: {} as Record<string, number>,
     storageUsed: 0,
   },
   mockHouseholdCtx: {
@@ -451,9 +452,9 @@ describe('ExpenseList attachment upload validation', () => {
     await selectFileForExpense(container, bigFile)
 
     expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
-    // Surfaced message must be specific (10 MB limit), NOT the old
+    // Surfaced message must be specific (25 MB limit), NOT the old
     // misleading "You don't have permission to upload files" text.
-    expect(screen.getByText(/exceeds 10 MB limit/i)).toBeDefined()
+    expect(screen.getByText(/exceeds 25 MB limit/i)).toBeDefined()
     expect(screen.queryByText(/don't have permission/i)).toBeNull()
   })
 
@@ -500,7 +501,7 @@ describe('ExpenseList attachment upload validation', () => {
     expect(mockExpenseCtx.addAttachmentsToExpense).toHaveBeenCalledTimes(1)
     const forwarded = mockExpenseCtx.addAttachmentsToExpense.mock.calls[0][1]
     expect(forwarded.map((f: File) => f.name)).toEqual(['a.png', 'b.pdf'])
-    expect(screen.getByText(/exceeds 10 MB limit/i)).toBeDefined()
+    expect(screen.getByText(/exceeds 25 MB limit/i)).toBeDefined()
   })
 
   it('does NOT call addAttachmentsToExpense when every file is rejected', async () => {

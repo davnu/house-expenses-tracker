@@ -79,6 +79,22 @@ describe('generateThumbnail', () => {
     expect(closeFn).toHaveBeenCalledOnce()
   })
 
+  // Regression: without resize options, the decoder materializes the full
+  // bitmap in RGBA (~190 MB for a 48 MP file). The resize options tell the
+  // decoder to downsample during decode, which is the only way to bound
+  // peak memory on mobile for 25 MB-class camera photos.
+  it('requests decoder-side resize at target size (mobile memory guard)', async () => {
+    await generateThumbnail(makeFile('huge.jpg', 'image/jpeg'), 160)
+    expect(createImageBitmap).toHaveBeenCalledWith(
+      expect.any(File),
+      expect.objectContaining({
+        resizeWidth: 160,
+        resizeHeight: 160,
+        resizeQuality: 'high',
+      }),
+    )
+  })
+
   it('returns null and closes bitmap when dimensions are zero', async () => {
     const closeFn = vi.fn()
     vi.mocked(createImageBitmap).mockResolvedValueOnce({

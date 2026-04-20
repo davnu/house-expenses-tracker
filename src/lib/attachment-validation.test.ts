@@ -45,9 +45,9 @@ describe('validateAttachmentFiles', () => {
   })
 
   it('rejects a file exactly at MAX_FILE_SIZE — matches server-side strict `<` rule', () => {
-    // storage.rules uses `request.resource.size < 10 * 1024 * 1024`, so a
-    // file of exactly 10 MB would pass client but fail server with 403.
-    // The client must match to surface a specific "exceeds 10 MB" message
+    // storage.rules uses `request.resource.size < 25 * 1024 * 1024`, so a
+    // file of exactly 25 MB would pass client but fail server with 403.
+    // The client must match to surface a specific "exceeds 25 MB" message
     // instead of the misleading generic "you don't have permission" error.
     const { accepted, rejection } = validateAttachmentFiles(
       [makeFile('edge.png', 'image/png', MAX_FILE_SIZE)],
@@ -361,7 +361,7 @@ describe('AttachmentValidationError', () => {
     })
     expect(err.reason.code).toBe('exceedsLimit')
     expect(err.message).toContain('big.png')
-    expect(err.message).toContain('10 MB')
+    expect(err.message).toContain('25 MB')
     expect(err).toBeInstanceOf(Error)
   })
 })

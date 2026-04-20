@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { Expense } from '@/types/expense'
 import type { ReactNode } from 'react'
+import { MAX_FILE_SIZE } from '@/lib/constants'
 
 // ── Mocks (hoisted so they're available in vi.mock factories) ──
 
@@ -765,8 +766,8 @@ describe('ExpenseContext', () => {
     })
 
     it('accepts a batch that fills household to EXACTLY MAX_HOUSEHOLD_STORAGE', async () => {
-      // Use multiple under-10MB files since per-file max is 10 MB. 6 × 8 MB
-      // = 48 MB + 5000 existing ≈ fits within 50 MB with a small pad file.
+      // 6 × 8 MB = 48 MB + 5000 existing ≈ fits within 50 MB with a small pad
+      // file. Each file comfortably under MAX_FILE_SIZE (25 MB per file).
       const { result } = await setupHook()
       const pad = 50 * 1024 * 1024 - 5000 - 6 * 8 * 1024 * 1024
       const files = [
@@ -803,7 +804,7 @@ describe('ExpenseContext', () => {
 
     it('allows re-upload after deleting an expense frees quota', async () => {
       const { result } = await setupHook()
-      // Fill storage to ~45 MB via multiple sub-10MB files attached to exp-2
+      // Fill storage to ~45 MB via multiple files (each well under per-file cap) attached to exp-2
       const fill = Array.from({ length: 5 }, (_, i) =>
         sizedFile(`fill${i}.pdf`, 'application/pdf', 9 * 1024 * 1024 - 1000),
       )
@@ -853,7 +854,7 @@ describe('ExpenseContext', () => {
 
     it('rejects oversized file before attempting upload', async () => {
       const { result } = await setupHook()
-      const big = sizedFile('big.png', 'image/png', 10 * 1024 * 1024 + 1)
+      const big = sizedFile('big.png', 'image/png', MAX_FILE_SIZE + 1)
 
       await expect(
         act(async () => { await result.current.addExpenseWithFiles(newExpense, [big]) })

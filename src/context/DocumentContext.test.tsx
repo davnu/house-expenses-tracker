@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { HouseDocument, DocFolder } from '@/types/document'
 import type { ReactNode } from 'react'
+import { MAX_FILE_SIZE } from '@/lib/constants'
 
 // ── Mocks (hoisted) ──
 
@@ -189,7 +190,7 @@ describe('DocumentContext', () => {
       // same class of bug the user reported — catching it at the context
       // layer means no upload is attempted.
       const { result } = await setupHook([makeFolder()])
-      const big = sizedFile('big.pdf', 'application/pdf', 10 * 1024 * 1024 + 1)
+      const big = sizedFile('big.pdf', 'application/pdf', MAX_FILE_SIZE + 1)
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [big]) })
@@ -211,7 +212,7 @@ describe('DocumentContext', () => {
 
     it('rejects file at exactly MAX_FILE_SIZE (matches server-side strict `<`)', async () => {
       const { result } = await setupHook([makeFolder()])
-      const exact = sizedFile('exact.pdf', 'application/pdf', 10 * 1024 * 1024)
+      const exact = sizedFile('exact.pdf', 'application/pdf', MAX_FILE_SIZE)
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [exact]) })
@@ -221,10 +222,16 @@ describe('DocumentContext', () => {
     })
 
     it('rejects batch that would push household over 50 MB (multi-file quota)', async () => {
-      // Seed documents close to quota: 48 MB already used. Batch of two 2 MB
-      // files would push to 52 MB. First file fits, second triggers rejection.
-      const near = makeDoc({ id: 'seed', name: 'big.pdf', size: 48 * 1024 * 1024 })
-      const { result } = await setupHook([makeFolder()], [near])
+      // Seed documents close to quota: 48 MB already used across three realistic
+      // docs (each under MAX_FILE_SIZE, unlike a single 48 MB fixture which
+      // could never have been uploaded through the validator). Batch of two
+      // 2 MB files would push to 52 MB → second file triggers rejection.
+      const seeds = [
+        makeDoc({ id: 'seed-1', name: 'big1.pdf', size: 16 * 1024 * 1024 }),
+        makeDoc({ id: 'seed-2', name: 'big2.pdf', size: 16 * 1024 * 1024 }),
+        makeDoc({ id: 'seed-3', name: 'big3.pdf', size: 16 * 1024 * 1024 }),
+      ]
+      const { result } = await setupHook([makeFolder()], seeds)
       const a = sizedFile('a.pdf', 'application/pdf', 2 * 1024 * 1024)
       const b = sizedFile('b.pdf', 'application/pdf', 2 * 1024 * 1024)
 

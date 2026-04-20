@@ -2,6 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download, Trash2, MoreVertical, Pencil, FolderInput, Loader2, StickyNote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ProgressRing } from '@/components/ui/progress-ring'
 import { useDocuments } from '@/context/DocumentContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { cn, formatFileSize, getDateLocale } from '@/lib/utils'
@@ -26,6 +27,8 @@ function formatSmartDate(isoDate: string): string {
 interface DocumentCardProps {
   document: HouseDocument
   isPending: boolean
+  /** Optional upload progress fraction (0–1) for pending docs. Undefined = indeterminate (spinner). */
+  progress?: number
   readOnly?: boolean
   onRename?: () => void
   onMove?: () => void
@@ -34,7 +37,7 @@ interface DocumentCardProps {
   folderBadge?: ReactNode
 }
 
-export function DocumentCard({ document, isPending, readOnly, onRename, onMove, onPreview, onNotesChange, folderBadge }: DocumentCardProps) {
+export function DocumentCard({ document, isPending, progress, readOnly, onRename, onMove, onPreview, onNotesChange, folderBadge }: DocumentCardProps) {
   const { t } = useTranslation()
   const { deleteDocument } = useDocuments()
   const { getMemberName } = useHousehold()
@@ -121,7 +124,14 @@ export function DocumentCard({ document, isPending, readOnly, onRename, onMove, 
         isPending ? 'bg-muted' : typeInfo.bgColor
       )}>
         {isPending ? (
-          <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+          progress !== undefined ? (
+            // 36px ring fits inside the 44px thumbnail slot with 4px padding —
+            // large enough to read progress at a glance on mobile, small enough
+            // that it feels like a status decoration, not a foreground widget.
+            <ProgressRing percent={progress * 100} size={36} strokeWidth={3} />
+          ) : (
+            <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+          )
         ) : document.thumbnailUrl ? (
           <img src={document.thumbnailUrl} alt="" className="h-11 w-11 object-cover rounded-xl" />
         ) : (

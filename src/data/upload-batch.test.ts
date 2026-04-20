@@ -48,7 +48,7 @@ describe('uploadBatchWithRollback', () => {
   })
 
   it('does NOT mask the original upload error when cleanup itself fails', async () => {
-    // The whole point is surfacing the useful message ("exceeds 10 MB") to
+    // The whole point is surfacing the useful message ("exceeds 25 MB") to
     // the user. A secondary "couldn't clean up orphan" would drown it out.
     const cleanup = vi.fn().mockRejectedValue(new Error('storage unreachable'))
     const upload = vi.fn(async (n: number) => {

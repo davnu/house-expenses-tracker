@@ -15,6 +15,14 @@ interface ExpenseContextValue {
   storageUsed: number
   pendingExpenseIds: Set<string>
   pendingAttachmentIds: Set<string>
+  /**
+   * Upload progress per pending attachment, keyed by attachment id. Value is
+   * a 0–1 fraction. Only populated while an attachment is uploading; entries
+   * are removed when the upload settles (success or failure). UI consumers
+   * can render a progress ring when a key is present and fall back to a
+   * spinner when it's not (e.g. during the pre-upload thumbnail step).
+   */
+  attachmentProgress: Record<string, number>
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   addExpenseWithFiles: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => Promise<void>
   updateExpense: (id: string, updates: ExpenseUpdate) => Promise<void>
@@ -36,12 +44,13 @@ async function uploadAttachmentAtomic(
   houseId: string,
   id: string,
   file: File,
+  onProgress?: (fraction: number) => void,
 ): Promise<Attachment> {
   try {
     // Generate thumbnail first (~50ms, image-only), then upload both in parallel.
     const thumbnailBlob = await generateThumbnail(file)
     const [url, thumbnailUrl] = await Promise.all([
-      uploadAttachment(houseId, id, file),
+      uploadAttachment(houseId, id, file, onProgress),
       thumbnailBlob ? uploadAttachmentThumbnail(houseId, id, thumbnailBlob) : Promise.resolve(undefined),
     ])
     return { id, name: file.name, type: file.type, size: file.size, url, thumbnailUrl }
@@ -60,6 +69,30 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [pendingExpenseIds, setPendingExpenseIds] = useState<Set<string>>(new Set())
   const [pendingAttachmentIds, setPendingAttachmentIds] = useState<Set<string>>(new Set())
+  const [attachmentProgress, setAttachmentProgress] = useState<Record<string, number>>({})
+
+  // Progress tick updater: clamps to [0, 1] and only commits when the fraction
+  // crosses a perceptible threshold (every ~4%). Firebase's state_changed fires
+  // ~20-50× per upload; without throttling, each tick re-renders every
+  // ExpenseContext consumer (Dashboard, Expenses, Summary pages). Users can't
+  // see sub-percent changes anyway, so this is a pure render-cost win.
+  const setProgressThrottled = useCallback((id: string, fraction: number) => {
+    setAttachmentProgress((prev) => {
+      const prior = prev[id] ?? 0
+      const next = Math.max(0, Math.min(1, fraction))
+      // Commit on meaningful movement OR completion
+      if (next - prior < 0.04 && next < 1) return prev
+      return { ...prev, [id]: next }
+    })
+  }, [])
+
+  const clearProgress = useCallback((ids: Iterable<string>) => {
+    setAttachmentProgress((prev) => {
+      const next = { ...prev }
+      for (const id of ids) delete next[id]
+      return next
+    })
+  }, [])
 
   const houseId = house?.id
 
@@ -163,7 +196,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       // file in the batch fails. Prevents quota drift from ghost uploads.
       const uploaded = await uploadBatchWithRollback(
         files.map((file, i) => ({ id: placeholderAtts[i].id, file })),
-        ({ id, file }) => uploadAttachmentAtomic(houseId, id, file),
+        ({ id, file }) => uploadAttachmentAtomic(houseId, id, file, (f) => setProgressThrottled(id, f)),
         (done) => deleteAttachments(houseId, done.map((a) => ({ id: a.id, name: a.name }))),
       )
       const real = await repo.addExpense({ ...input, attachments: uploaded.length > 0 ? uploaded : undefined })
@@ -183,9 +216,10 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
           placeholderAttIds.forEach((id) => next.delete(id))
           return next
         })
+        clearProgress(placeholderAttIds)
       }
     }
-  }, [repo, houseId])
+  }, [repo, houseId, setProgressThrottled, clearProgress])
 
   const updateExpense = useCallback(async (id: string, updates: ExpenseUpdate) => {
     if (!repo) return
@@ -265,7 +299,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       // Atomic per-item upload + batch-level rollback. See uploadAttachmentAtomic.
       const uploaded = await uploadBatchWithRollback(
         files.map((file, i) => ({ id: placeholders[i].id, file })),
-        ({ id, file }) => uploadAttachmentAtomic(houseId, id, file),
+        ({ id, file }) => uploadAttachmentAtomic(houseId, id, file, (f) => setProgressThrottled(id, f)),
         (done) => deleteAttachments(houseId, done.map((a) => ({ id: a.id, name: a.name }))),
       )
 
@@ -289,8 +323,9 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         placeholderIdSet.forEach((id) => next.delete(id))
         return next
       })
+      clearProgress(placeholderIdSet)
     }
-  }, [repo, houseId])
+  }, [repo, houseId, setProgressThrottled, clearProgress])
 
   const removeAttachment = useCallback(async (expenseId: string, attachmentId: string) => {
     if (!repo || !houseId) return
@@ -326,6 +361,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         storageUsed,
         pendingExpenseIds,
         pendingAttachmentIds,
+        attachmentProgress,
         addExpense,
         addExpenseWithFiles,
         updateExpense,

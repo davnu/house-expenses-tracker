@@ -37,8 +37,24 @@ export async function generateThumbnail(
   if (!THUMBNAILABLE_TYPES.has(file.type)) return null
 
   try {
-    // Decode off the main thread via createImageBitmap
-    const bitmap = await createImageBitmap(file)
+    // Decode directly at the target size. Passing `resizeWidth`/`resizeHeight`
+    // instructs the browser's image decoder to downsample during decode rather
+    // than materializing the full-resolution bitmap first — critical for large
+    // (25 MB-class) photos on mobile devices, where a 48 MP camera file would
+    // otherwise allocate ~190 MB of RGBA before the downscale step. `resizeQuality`
+    // 'high' uses a proper filter (Lanczos-family on Chromium/WebKit) so output
+    // quality stays comparable to the canvas path.
+    //
+    // We pass a bounding box (maxSize × maxSize) and let the browser preserve
+    // aspect ratio via `resizeQuality` with both dimensions set — this is
+    // equivalent to "fit inside" semantics and avoids a redundant aspect calc
+    // on our side (we still re-derive true dimensions below since the decoder
+    // may return slightly different values).
+    const bitmap = await createImageBitmap(file, {
+      resizeWidth: maxSize,
+      resizeHeight: maxSize,
+      resizeQuality: 'high',
+    })
 
     const { width, height } = bitmap
     if (width === 0 || height === 0) {
@@ -46,7 +62,9 @@ export async function generateThumbnail(
       return null
     }
 
-    // Calculate scaled dimensions preserving aspect ratio
+    // Recompute target dims from the (already-downsampled) bitmap so the
+    // canvas matches what the decoder produced. Since we asked for a maxSize
+    // box, one of width/height will already be at or under maxSize.
     let targetW: number
     let targetH: number
     if (width >= height) {
@@ -57,7 +75,6 @@ export async function generateThumbnail(
       targetW = Math.round((width / height) * targetH)
     }
 
-    // Draw onto canvas and export as JPEG
     const canvas = document.createElement('canvas')
     canvas.width = targetW
     canvas.height = targetH

@@ -111,36 +111,36 @@ describe('Storage: upload (create)', () => {
     )
   })
 
-  it('member cannot upload file exceeding 10MB', async () => {
+  it('member cannot upload file exceeding 25MB', async () => {
     await seedHouseWithMember('house1', 'alice')
     const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-6/big.png')
-    const bigFile = makeTestFile(10 * 1024 * 1024 + 1) // 10MB + 1 byte
+    const bigFile = makeTestFile(25 * 1024 * 1024 + 1) // 25MB + 1 byte
     await assertFails(
       ref.put(bigFile, { contentType: 'image/png' })
     )
   })
 
-  // Boundary regression: the rule is `request.resource.size < 10 * 1024 * 1024`,
-  // strict less-than. A file of EXACTLY 10 MB must be rejected server-side.
+  // Boundary regression: the rule is `request.resource.size < 25 * 1024 * 1024`,
+  // strict less-than. A file of EXACTLY 25 MB must be rejected server-side.
   // The client validator is now aligned with this (see attachment-validation.ts),
   // but this test documents the server behavior so a future rule change
   // (e.g. flipping to `<=`) can't silently diverge.
-  it('member cannot upload file of EXACTLY 10MB (strict less-than boundary)', async () => {
+  it('member cannot upload file of EXACTLY 25MB (strict less-than boundary)', async () => {
     await seedHouseWithMember('house1', 'alice')
     const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-boundary/exact.png')
-    const exactFile = makeTestFile(10 * 1024 * 1024)
+    const exactFile = makeTestFile(25 * 1024 * 1024)
     await assertFails(
       ref.put(exactFile, { contentType: 'image/png' })
     )
   })
 
-  it('member can upload file of 10MB - 1 byte (just under boundary)', async () => {
+  it('member can upload file of 25MB - 1 byte (just under boundary)', async () => {
     await seedHouseWithMember('house1', 'alice')
     const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-under/near-limit.png')
-    const justUnder = makeTestFile(10 * 1024 * 1024 - 1)
+    const justUnder = makeTestFile(25 * 1024 * 1024 - 1)
     await assertSucceeds(
       ref.put(justUnder, { contentType: 'image/png' })
     )
@@ -148,7 +148,7 @@ describe('Storage: upload (create)', () => {
 
   it('member can upload a zero-byte file (allowed by rule)', async () => {
     // Unusual but legitimate: a placeholder or empty document. The rule's
-    // only size constraint is `< 10 MB`, and 0 < 10 MB, so it passes.
+    // only size constraint is `< 25 MB`, and 0 < 25 MB, so it passes.
     await seedHouseWithMember('house1', 'alice')
     const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/attachments/att-zero/empty.pdf')
@@ -287,11 +287,11 @@ describe('Document Storage: upload (create)', () => {
     )
   })
 
-  it('member cannot upload document exceeding 10MB', async () => {
+  it('member cannot upload document exceeding 25MB', async () => {
     await seedHouseWithMember('house1', 'alice')
     const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     const ref = alice.storage().ref('houses/house1/documents/doc-4/big.pdf')
-    const bigFile = makeTestFile(10 * 1024 * 1024 + 1)
+    const bigFile = makeTestFile(25 * 1024 * 1024 + 1)
     await assertFails(
       ref.put(bigFile, { contentType: 'application/pdf' })
     )

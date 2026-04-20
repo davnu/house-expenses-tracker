@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from './firebase'
 
 function documentRef(houseId: string, documentId: string, fileName: string) {
@@ -12,10 +12,21 @@ function thumbnailRef(houseId: string, documentId: string) {
 export async function uploadDocument(
   houseId: string,
   documentId: string,
-  file: File
+  file: File,
+  onProgress?: (fraction: number) => void,
 ): Promise<string> {
   const storageRef = documentRef(houseId, documentId, file.name)
-  await uploadBytes(storageRef, file, { cacheControl: 'private, max-age=86400' })
+  // See firebase-attachment-store.uploadAttachment for rationale: resumable
+  // uploads give us bytesTransferred/totalBytes for real progress UI, which
+  // matters once per-file sizes approach 25 MB on mobile connections.
+  const task = uploadBytesResumable(storageRef, file, { cacheControl: 'private, max-age=86400' })
+  if (onProgress) {
+    task.on('state_changed', (snap) => {
+      const fraction = snap.totalBytes > 0 ? snap.bytesTransferred / snap.totalBytes : 0
+      onProgress(fraction)
+    })
+  }
+  await task
   return getDownloadURL(storageRef)
 }
 

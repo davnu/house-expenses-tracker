@@ -23,7 +23,7 @@ interface FolderViewProps {
 
 export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
   const { t } = useTranslation()
-  const { folders, documents, pendingDocumentIds, totalStorageUsed, uploadDocuments, renameDocument, updateDocumentNotes, deleteFolder, moveDocument } = useDocuments()
+  const { folders, documents, pendingDocumentIds, documentProgress, totalStorageUsed, uploadDocuments, renameDocument, updateDocumentNotes, deleteFolder, moveDocument } = useDocuments()
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [showDropZone, setShowDropZone] = useState(false)
@@ -255,6 +255,7 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
               key={doc.id}
               document={doc}
               isPending={pendingDocumentIds.has(doc.id)}
+              progress={documentProgress[doc.id]}
               onRename={() => { setRenamingDoc(doc); setRenameValue(doc.name) }}
               onMove={() => setMovingDoc(doc)}
               onPreview={() => handlePreview(doc)}
