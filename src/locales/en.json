@@ -535,7 +535,6 @@
     "inviteLinkExpiry": "The link expires in 7 days. Share it with anyone you want to join your household.",
     "failedToGenerateInvite": "Failed to generate invite link. Please try again.",
     "createNewHouse": "Create New House",
-    "createNewHouseDesc": "Track expenses for another property separately.",
     "dataPrivacy": "Data & Privacy",
     "dataPrivacyDesc": "Your data belongs to you",
     "exportAllData": "Export All My Data",
@@ -918,7 +917,7 @@
       "cta": "See what's in Pro"
     },
     "section": {
-      "title": "Your plan",
+      "title": "Your plan & houses",
       "proSubtitle": "Pro is active for this house. Everything is unlocked.",
       "freeSubtitle": "You're on the free plan. Great for tracking on your own.",
       "freeBadge": "Free",
@@ -934,7 +933,12 @@
       "noSubscriptionNote": "This is a one-time purchase — nothing to cancel, nothing to manage.",
       "revokedTitle": "Pro was revoked for this house",
       "revokedOn": "Revoked on {{date}}.",
-      "revokedHelp": "If this looks wrong, reach out and we'll sort it."
+      "revokedHelp": "If this looks wrong, reach out and we'll sort it.",
+      "housesOnYourPlan_one": "{{count}} house on your plan",
+      "housesOnYourPlan_other": "{{count}} houses on your plan",
+      "addAnotherHouseCta": "Add another house",
+      "addAnotherHouseAriaLabel": "Add another house — {{price}} one-time payment",
+      "continueToCheckoutCta": "Continue to checkout — {{price}}"
     },
     "reconcile": {
       "link": "I paid but don't see Pro",

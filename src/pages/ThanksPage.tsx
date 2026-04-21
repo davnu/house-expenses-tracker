@@ -84,15 +84,23 @@ export function ThanksPage() {
     let activeHouseId: string | null = null
     let confirmed = false
 
-    const pendingTimer = window.setTimeout(() => {
-      if (!confirmed && !cancelled) setStatus('pending')
-    }, PENDING_TIMEOUT_MS)
+    // Pro product relies on an entitlement snapshot arriving via Firestore;
+    // we use a short timeout to surface a graceful "finalising" state if the
+    // webhook silently failed. additional_house has its own internal retry
+    // loop (up to ~5.5s cumulative) and flips to pending when exhausted —
+    // starting an external 3s timer there would cause a premature "pending"
+    // flash while the retries are still in flight.
+    const pendingTimer = isAdditionalHouse
+      ? null
+      : window.setTimeout(() => {
+          if (!confirmed && !cancelled) setStatus('pending')
+        }, PENDING_TIMEOUT_MS)
 
     const onConfirmed = () => {
       if (cancelled) return
       confirmed = true
       setStatus('confirmed')
-      window.clearTimeout(pendingTimer)
+      if (pendingTimer !== null) window.clearTimeout(pendingTimer)
     }
 
     // ── additional_house: resolve the new house via reconcileOrder ────
@@ -178,7 +186,7 @@ export function ThanksPage() {
 
     return () => {
       cancelled = true
-      window.clearTimeout(pendingTimer)
+      if (pendingTimer !== null) window.clearTimeout(pendingTimer)
       unsubAuth()
       unsubProfile?.()
       unsubEntitlement?.()

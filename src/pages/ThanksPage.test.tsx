@@ -302,6 +302,40 @@ describe('ThanksPage', () => {
     }
   })
 
+  it('for product=additional_house, does NOT flash the pending body while retries are still in flight (regression: external 3s timer would fire mid-retry)', async () => {
+    // Regression guard. The retry loop uses [0, 500, 1500, 3500] ms backoff
+    // (up to ~5.5s cumulative). A separate 3s "pending" timer used to race
+    // it and flipped the UI to pending at 3s even when a later retry was
+    // about to succeed. Here only the 4th call succeeds (~5.5s in); at
+    // 3100ms the page must still be in the waiting state, not pending.
+    reconcileOrderMock
+      .mockResolvedValueOnce({ status: 'no-order' })
+      .mockResolvedValueOnce({ status: 'no-order' })
+      .mockResolvedValueOnce({ status: 'no-order' })
+      .mockResolvedValueOnce({ status: 'reconciled', houseId: 'house-late' })
+    vi.useFakeTimers()
+    try {
+      render(<MemoryRouter initialEntries={['/thanks?product=additional_house']}><ThanksPage /></MemoryRouter>)
+      await act(async () => {
+        authCallbackRef.current?.({ uid: 'user-1' })
+        await Promise.resolve()
+      })
+      // Cross the old 3000ms timer boundary while retries are mid-flight.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3100)
+      })
+      expect(screen.queryByText(/Almost there/i)).toBeNull()
+      expect(screen.getByText(/Confirming your purchase/i)).toBeTruthy()
+      // Finish the retry loop — the 4th attempt resolves successfully.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000)
+      })
+      expect(screen.getByText(/Welcome to Pro/i)).toBeTruthy()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('for product=additional_house, flips to pending when all reconcile retries are exhausted (user can contact us)', async () => {
     reconcileOrderMock.mockResolvedValue({ status: 'no-order' })
     vi.useFakeTimers()

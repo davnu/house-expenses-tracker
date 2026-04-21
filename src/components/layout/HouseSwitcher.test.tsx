@@ -8,7 +8,8 @@ const {
   mockCreateHouse,
   mockSwitchHouse,
   mockHouseholdState,
-  canCreateHouseRef,
+  createHouseRef,
+  openCreateDialogMock,
   openUpgradeMock,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
@@ -20,9 +21,14 @@ const {
       { id: 'house-2', name: 'Beach House', ownerId: 'alice', memberIds: ['alice'], createdAt: '' },
     ],
   },
-  canCreateHouseRef: {
-    current: { canCreate: true, reason: 'hasProHouse' as 'first' | 'hasProHouse' | 'needsUpgrade' | 'loading', ownedCount: 1 },
+  createHouseRef: {
+    current: {
+      reason: 'hasProHouse' as 'first' | 'hasProHouse' | 'needsUpgrade' | 'loading',
+      ownedCount: 1,
+      upgradeTargetHouseId: null as string | null,
+    },
   },
+  openCreateDialogMock: vi.fn(),
   openUpgradeMock: vi.fn(),
 }))
 
@@ -39,12 +45,16 @@ vi.mock('@/context/HouseholdContext', () => ({
   }),
 }))
 
-// Billing mocks — these components now read the entitlement-aware capability
-// hook + upgrade modal context. The ref-based pattern lets individual tests
-// flip the create-house reason (first/hasProHouse/needsUpgrade/loading)
-// without re-mocking per test.
-vi.mock('@/hooks/use-can-create-house', () => ({
-  useCanCreateHouse: () => canCreateHouseRef.current,
+// CreateHouseContext replaces the old useCanCreateHouse hook + provides a
+// shared openCreateDialog function. Mock both — tests flip the current
+// reason per case without re-mocking.
+vi.mock('@/context/CreateHouseContext', () => ({
+  useCreateHouse: () => ({
+    reason: createHouseRef.current.reason,
+    ownedCount: createHouseRef.current.ownedCount,
+    upgradeTargetHouseId: createHouseRef.current.upgradeTargetHouseId,
+    openCreateDialog: openCreateDialogMock,
+  }),
 }))
 vi.mock('@/context/UpgradeDialogContext', () => ({
   useUpgradeDialog: () => ({
@@ -86,10 +96,10 @@ describe('HouseSwitcher', () => {
     mockSwitchHouse.mockResolvedValue(undefined)
     mockHouseholdState.houses = twoHouses
     // Default permissive state for the existing dropdown/switch tests.
-    canCreateHouseRef.current = {
-      canCreate: true,
+    createHouseRef.current = {
       reason: 'hasProHouse',
       ownedCount: 1,
+      upgradeTargetHouseId: null,
     }
   })
 
@@ -159,21 +169,22 @@ describe('HouseSwitcher', () => {
   // Pro users unlimited free additional houses instead of collecting the
   // €29. These tests pin each branch so that can't recur.
 
-  it('routes reason="first" to the free CreateHouseDialog (onboarding — no paywall)', async () => {
-    canCreateHouseRef.current = { canCreate: true, reason: 'first', ownedCount: 0 }
+  it('routes reason="first" to the shared openCreateDialog (provider owns the free dialog instance)', async () => {
+    createHouseRef.current = { reason: 'first', ownedCount: 0, upgradeTargetHouseId: null }
     mockHouseholdState.houses = twoHouses
     render(<HouseSwitcher />)
     fireEvent.click(screen.getByRole('combobox'))
     await act(async () => {
       fireEvent.click(screen.getByRole('option', { name: /Create New House/i }))
     })
-    // Free dialog opened — no paywall.
-    expect(screen.getByTestId('dialog')).toBeTruthy()
+    // The provider's openCreateDialog is the single entry point — no local
+    // dialog instance in this component any more.
+    expect(openCreateDialogMock).toHaveBeenCalledTimes(1)
     expect(openUpgradeMock).not.toHaveBeenCalled()
   })
 
   it('routes reason="hasProHouse" to the €29 additional_house paywall (NOT the free dialog)', async () => {
-    canCreateHouseRef.current = { canCreate: true, reason: 'hasProHouse', ownedCount: 1 }
+    createHouseRef.current = { reason: 'hasProHouse', ownedCount: 1, upgradeTargetHouseId: null }
     render(<HouseSwitcher />)
     fireEvent.click(screen.getByRole('combobox'))
     await act(async () => {
@@ -182,57 +193,105 @@ describe('HouseSwitcher', () => {
     expect(openUpgradeMock).toHaveBeenCalledWith('create_house', {
       product: 'additional_house',
     })
-    // Free dialog is NOT opened.
-    expect(screen.queryByTestId('dialog')).toBeNull()
+    expect(openCreateDialogMock).not.toHaveBeenCalled()
   })
 
   it('routes reason="needsUpgrade" to the €49 Pro paywall (upgrade the first house first)', async () => {
-    canCreateHouseRef.current = { canCreate: false, reason: 'needsUpgrade', ownedCount: 1 }
+    createHouseRef.current = { reason: 'needsUpgrade', ownedCount: 1, upgradeTargetHouseId: null }
     render(<HouseSwitcher />)
     fireEvent.click(screen.getByRole('combobox'))
     await act(async () => {
       fireEvent.click(screen.getByRole('option', { name: /Create New House/i }))
     })
     expect(openUpgradeMock).toHaveBeenCalledWith('create_house', { product: 'pro' })
-    expect(screen.queryByTestId('dialog')).toBeNull()
+    expect(openCreateDialogMock).not.toHaveBeenCalled()
+  })
+
+  it('routes reason="needsUpgrade" + non-owner of current house by switching to the user\'s own non-Pro house FIRST, then opening the €49 modal', async () => {
+    // Scenario: Alice owns her own free house (house-2) but is currently
+    // viewing Bob's house (house-1) as a member. The upgrade modal targets
+    // useHousehold().house.id, so opening it directly would try to upgrade
+    // Bob's house — the server rejects (Alice isn't the owner). Switching
+    // to Alice's own non-Pro house first means the €49 checkout lands on
+    // an ownership-gated house the server will accept.
+    createHouseRef.current = {
+      reason: 'needsUpgrade',
+      ownedCount: 1,
+      upgradeTargetHouseId: 'house-2',
+    }
+    render(<HouseSwitcher />)
+    fireEvent.click(screen.getByRole('combobox'))
+    await act(async () => {
+      fireEvent.click(screen.getByRole('option', { name: /Create New House/i }))
+    })
+    // Switch happens BEFORE the modal opens.
+    expect(mockSwitchHouse).toHaveBeenCalledWith('house-2')
+    expect(openUpgradeMock).toHaveBeenCalledWith('create_house', { product: 'pro' })
+    // Order matters — the modal would see stale state if it opened first.
+    const switchCallOrder = mockSwitchHouse.mock.invocationCallOrder[0]
+    const openCallOrder = openUpgradeMock.mock.invocationCallOrder[0]
+    expect(switchCallOrder).toBeLessThan(openCallOrder)
+  })
+
+  it('routes reason="needsUpgrade" + owner of current house WITHOUT an extra switch (already on the right target)', async () => {
+    // When the currently-viewed house is already the user's own non-Pro house
+    // (the common case — user is on their own house and wants to add another),
+    // skip the switch so we don't trigger a needless rerender/navigation.
+    createHouseRef.current = {
+      reason: 'needsUpgrade',
+      ownedCount: 1,
+      upgradeTargetHouseId: 'house-1', // same as active house
+    }
+    render(<HouseSwitcher />)
+    fireEvent.click(screen.getByRole('combobox'))
+    await act(async () => {
+      fireEvent.click(screen.getByRole('option', { name: /Create New House/i }))
+    })
+    expect(mockSwitchHouse).not.toHaveBeenCalled()
+    expect(openUpgradeMock).toHaveBeenCalledWith('create_house', { product: 'pro' })
   })
 
   it('disables the Create New House button while entitlements are still loading (no premature routing)', async () => {
-    canCreateHouseRef.current = { canCreate: false, reason: 'loading', ownedCount: 1 }
+    createHouseRef.current = { reason: 'loading', ownedCount: 1, upgradeTargetHouseId: null }
     render(<HouseSwitcher />)
     fireEvent.click(screen.getByRole('combobox'))
     const createButton = screen.getByRole('option', { name: /Create New House/i }) as HTMLButtonElement
-    // The button is rendered (so users see the affordance) but disabled —
-    // clicking it does nothing until the entitlement subscription resolves.
     expect(createButton.disabled).toBe(true)
     await act(async () => {
       fireEvent.click(createButton)
     })
     expect(openUpgradeMock).not.toHaveBeenCalled()
-    expect(screen.queryByTestId('dialog')).toBeNull()
+    expect(openCreateDialogMock).not.toHaveBeenCalled()
   })
 
   it('shows the lock icon when paywalled (needsUpgrade)', () => {
-    canCreateHouseRef.current = { canCreate: false, reason: 'needsUpgrade', ownedCount: 1 }
+    createHouseRef.current = { reason: 'needsUpgrade', ownedCount: 1, upgradeTargetHouseId: null }
     render(<HouseSwitcher />)
     fireEvent.click(screen.getByRole('combobox'))
     const buttons = screen.getAllByRole('option')
     const createBtn = buttons.find((b) => b.textContent?.includes('Create New House'))
-    // Lock affordance signals "this will cost something". Asserts on the
-    // lucide SVG class so a refactor to a different icon library (or
-    // accidentally flipping the condition) trips the test.
     expect(createBtn?.querySelector('.lucide-lock')).toBeTruthy()
     expect(createBtn?.querySelector('.lucide-plus')).toBeNull()
   })
 
   it('shows the plus icon when the user can create (hasProHouse — paywall is inside the modal, not the switcher)', () => {
-    canCreateHouseRef.current = { canCreate: true, reason: 'hasProHouse', ownedCount: 1 }
+    createHouseRef.current = { reason: 'hasProHouse', ownedCount: 1, upgradeTargetHouseId: null }
     render(<HouseSwitcher />)
     fireEvent.click(screen.getByRole('combobox'))
     const buttons = screen.getAllByRole('option')
     const createBtn = buttons.find((b) => b.textContent?.includes('Create New House'))
     expect(createBtn?.querySelector('.lucide-plus')).toBeTruthy()
     expect(createBtn?.querySelector('.lucide-lock')).toBeNull()
+  })
+
+  it('does NOT mount a local CreateHouseDialog instance (the provider owns the single dialog)', () => {
+    createHouseRef.current = { reason: 'hasProHouse', ownedCount: 1, upgradeTargetHouseId: null }
+    render(<HouseSwitcher />)
+    // The dialog mock renders data-testid="dialog" when open=true. We never
+    // open anything and the component no longer mounts its own instance,
+    // so the testid must be absent even when open=false (because no Dialog
+    // node of any kind is rendered locally).
+    expect(screen.queryByTestId('dialog')).toBeNull()
   })
 })
 

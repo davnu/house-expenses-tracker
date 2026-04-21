@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
-import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield, Trash2, DoorOpen, Paperclip, Receipt, Home, Plus, Globe, Lock } from 'lucide-react'
+import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield, Trash2, DoorOpen, Paperclip, Receipt, Home, Globe, Lock } from 'lucide-react'
 import { friendlyError, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,11 +15,9 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
-import { CreateHouseDialog } from '@/components/layout/CreateHouseDialog'
 import { CostSharingCard } from '@/components/settings/CostSharingCard'
 import { BillingSection } from '@/components/settings/BillingSection'
 import { useEntitlement } from '@/hooks/use-entitlement'
-import { useCanCreateHouse } from '@/hooks/use-can-create-house'
 import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { PaywallRequired } from '@/lib/entitlement-limits'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
@@ -32,7 +30,6 @@ export function SettingsPage() {
   const { mortgage } = useMortgage()
   const { budget } = useBudget()
   const { limits } = useEntitlement()
-  const { reason: createHouseReason } = useCanCreateHouse()
   const { open: openUpgrade } = useUpgradeDialog()
 
   const HOUSE_DELETE_STEPS: CascadeStep[] = [
@@ -51,8 +48,6 @@ export function SettingsPage() {
 
   const houseProgress = useCascadeProgress(HOUSE_DELETE_STEPS)
   const accountProgress = useCascadeProgress(ACCOUNT_DELETE_STEPS)
-
-  const [createHouseOpen, setCreateHouseOpen] = useState(false)
 
   const [inviteLink, setInviteLink] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
@@ -403,47 +398,13 @@ export function SettingsPage() {
             </p>
           </div>
 
-          {/* Create New House */}
-          <div className="pt-2 border-t">
-            <Button
-              variant="ghost"
-              disabled={createHouseReason === 'loading'}
-              onClick={() => {
-                // Four reasons from `useCanCreateHouse`:
-                //   - 'first'        → free: open the create dialog directly
-                //   - 'hasProHouse'  → €29 per additional house: paywall
-                //                      collects the new house's name and the
-                //                      webhook provisions it on payment
-                //   - 'needsUpgrade' → €49 to make the current house Pro first
-                //   - 'loading'      → button is disabled above
-                if (createHouseReason === 'first') {
-                  setCreateHouseOpen(true)
-                  return
-                }
-                if (createHouseReason === 'hasProHouse') {
-                  openUpgrade('create_house', { product: 'additional_house' })
-                  return
-                }
-                // needsUpgrade
-                openUpgrade('create_house', { product: 'pro' })
-              }}
-            >
-              {createHouseReason === 'first' || createHouseReason === 'hasProHouse' ? (
-                <Plus className="h-4 w-4 mr-2" />
-              ) : (
-                <Lock className="h-4 w-4 mr-2" />
-              )}
-              {t('settings.createNewHouse')}
-            </Button>
-            <p className="text-xs text-muted-foreground mt-1.5">
-              {t('settings.createNewHouseDesc')}
-            </p>
-            <CreateHouseDialog open={createHouseOpen} onOpenChange={setCreateHouseOpen} />
-          </div>
         </CardContent>
       </Card>
 
-      {/* Billing / subscription status */}
+      {/* Billing / subscription status — also owns the "Create new house" action
+          across all four useCanCreateHouse reasons. Placing it there keeps the
+          Household card focused on the current house (members, invites, leave)
+          and the Billing section focused on plan + cross-house actions. */}
       <BillingSection />
 
       {/* Cost sharing — only relevant once there are multiple members */}

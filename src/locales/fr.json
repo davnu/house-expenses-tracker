@@ -535,7 +535,6 @@
     "inviteLinkExpiry": "Le lien expire dans 7 jours. Partage-le avec la personne que tu souhaites inviter.",
     "failedToGenerateInvite": "Impossible de générer le lien d'invitation. Veuillez réessayer.",
     "createNewHouse": "Créer un nouveau logement",
-    "createNewHouseDesc": "Suis les dépenses d'un autre bien séparément.",
     "dataPrivacy": "Données et confidentialité",
     "dataPrivacyDesc": "Tes données t'appartiennent",
     "exportAllData": "Exporter toutes mes données",
@@ -918,7 +917,7 @@
       "cta": "Voir ce qu'inclut Pro"
     },
     "section": {
-      "title": "Votre formule",
+      "title": "Votre formule et vos maisons",
       "proSubtitle": "Pro est actif pour cette maison. Tout est débloqué.",
       "freeSubtitle": "Vous êtes sur l'offre gratuite. Parfait pour suivre seul.",
       "freeBadge": "Gratuit",
@@ -934,7 +933,12 @@
       "noSubscriptionNote": "C'est un paiement unique — rien à annuler, rien à gérer.",
       "revokedTitle": "Pro a été révoqué pour cette maison",
       "revokedOn": "Révoqué le {{date}}.",
-      "revokedHelp": "Si cela vous semble erroné, contactez-nous et nous arrangerons cela."
+      "revokedHelp": "Si cela vous semble erroné, contactez-nous et nous arrangerons cela.",
+      "housesOnYourPlan_one": "{{count}} maison dans votre formule",
+      "housesOnYourPlan_other": "{{count}} maisons dans votre formule",
+      "addAnotherHouseCta": "Ajouter une autre maison",
+      "addAnotherHouseAriaLabel": "Ajouter une autre maison — paiement unique de {{price}}",
+      "continueToCheckoutCta": "Continuer vers le paiement — {{price}}"
     },
     "reconcile": {
       "link": "J'ai payé mais Pro n'apparaît pas",

@@ -24,6 +24,7 @@ import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 import { ThanksPage } from '@/pages/ThanksPage'
 import { PricingPage } from '@/pages/PricingPage'
 import { UpgradeDialogProvider, useUpgradeDialog } from '@/context/UpgradeDialogContext'
+import { CreateHouseProvider } from '@/context/CreateHouseContext'
 import { EntitlementProvider } from '@/context/EntitlementContext'
 // Lazy-loaded auth pages — rarely visited, kept out of the critical bundle.
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
@@ -59,8 +60,10 @@ function AppRoutes() {
   return (
     <EntitlementProvider>
       <UpgradeDialogProvider>
-        <AppRoutesBody house={house} houses={houses} userProfile={userProfile} loading={loading} />
-        <LazyUpgradeModalMount />
+        <CreateHouseProvider>
+          <AppRoutesBody house={house} houses={houses} userProfile={userProfile} loading={loading} />
+          <LazyUpgradeModalMount />
+        </CreateHouseProvider>
       </UpgradeDialogProvider>
     </EntitlementProvider>
   )

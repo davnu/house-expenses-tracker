@@ -535,7 +535,6 @@
     "inviteLinkExpiry": "De link verloopt na 7 dagen. Deel hem met iedereen die je wilt toevoegen aan je huishouden.",
     "failedToGenerateInvite": "Uitnodigingslink genereren mislukt. Probeer het opnieuw.",
     "createNewHouse": "Nieuwe woning aanmaken",
-    "createNewHouseDesc": "Houd uitgaven voor een ander pand apart bij.",
     "dataPrivacy": "Gegevens en privacy",
     "dataPrivacyDesc": "Jouw gegevens zijn van jou",
     "exportAllData": "Al mijn gegevens exporteren",
@@ -918,7 +917,7 @@
       "cta": "Bekijk wat Pro biedt"
     },
     "section": {
-      "title": "Jouw plan",
+      "title": "Jouw plan & huizen",
       "proSubtitle": "Pro is actief voor dit huis. Alles ontgrendeld.",
       "freeSubtitle": "Je zit op het gratis plan. Prima om zelf bij te houden.",
       "freeBadge": "Gratis",
@@ -934,7 +933,12 @@
       "noSubscriptionNote": "Eenmalige betaling — niets te annuleren, niets te beheren.",
       "revokedTitle": "Pro is ingetrokken voor dit huis",
       "revokedOn": "Ingetrokken op {{date}}.",
-      "revokedHelp": "Klopt dit niet? Neem contact op en we regelen het."
+      "revokedHelp": "Klopt dit niet? Neem contact op en we regelen het.",
+      "housesOnYourPlan_one": "{{count}} huis op je plan",
+      "housesOnYourPlan_other": "{{count}} huizen op je plan",
+      "addAnotherHouseCta": "Nog een huis toevoegen",
+      "addAnotherHouseAriaLabel": "Nog een huis toevoegen — eenmalige betaling van {{price}}",
+      "continueToCheckoutCta": "Doorgaan naar betaling — {{price}}"
     },
     "reconcile": {
       "link": "Ik heb betaald maar zie geen Pro",

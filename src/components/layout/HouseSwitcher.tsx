@@ -4,18 +4,16 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown, Plus, Check, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useHousehold } from '@/context/HouseholdContext'
-import { useCanCreateHouse } from '@/hooks/use-can-create-house'
+import { useCreateHouse } from '@/context/CreateHouseContext'
 import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
-import { CreateHouseDialog } from './CreateHouseDialog'
 
 export function HouseSwitcher() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { house, houses, switchHouse } = useHousehold()
-  const { reason: createHouseReason } = useCanCreateHouse()
+  const { reason: createHouseReason, upgradeTargetHouseId, openCreateDialog } = useCreateHouse()
   const { open: openUpgrade } = useUpgradeDialog()
   const [open, setOpen] = useState(false)
-  const [createOpen, setCreateOpen] = useState(false)
   const [switching, setSwitching] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -177,21 +175,36 @@ export function HouseSwitcher() {
               tabIndex={focusIndex === houses.length ? 0 : -1}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
               disabled={createHouseReason === 'loading'}
-              onClick={() => {
+              onClick={async () => {
                 close()
-                // Mirror of SettingsPage: 'first' is the only free path.
-                // 'hasProHouse' routes to the €29 additional_house paywall
-                // which collects the new house's name and lets the webhook
-                // provision it server-side. 'needsUpgrade' routes to the €49
-                // Pro upgrade of the current house; creating more houses is
-                // unlocked after that.
+                // 'first' is the only free path. 'hasProHouse' routes to the
+                // €29 additional_house paywall which collects the new house's
+                // name and lets the webhook provision it server-side.
+                // 'needsUpgrade' routes to the €49 Pro upgrade of the user's
+                // own non-Pro house; creating more houses unlocks after that.
                 if (createHouseReason === 'first') {
-                  setCreateOpen(true)
+                  openCreateDialog()
                   return
                 }
                 if (createHouseReason === 'hasProHouse') {
                   openUpgrade('create_house', { product: 'additional_house' })
                   return
+                }
+                // needsUpgrade: the UpgradeModal targets the currently-viewed
+                // house (useHousehold().house.id). If the user is viewing a
+                // house they don't own (they're just a member), switch to
+                // their own non-Pro house first so the €49 checkout lands on
+                // an ownership-gated house the server will accept.
+                if (
+                  upgradeTargetHouseId &&
+                  upgradeTargetHouseId !== house?.id
+                ) {
+                  try {
+                    await switchHouse(upgradeTargetHouseId)
+                  } catch {
+                    // Switch failed — fall through to open the modal anyway;
+                    // server's paywall check is the final backstop.
+                  }
                 }
                 openUpgrade('create_house', { product: 'pro' })
               }}
@@ -206,8 +219,6 @@ export function HouseSwitcher() {
           </div>
         </div>
       )}
-
-      <CreateHouseDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   )
 }

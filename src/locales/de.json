@@ -535,7 +535,6 @@
     "inviteLinkExpiry": "Der Link ist 7 Tage gültig. Teile ihn mit jedem, der deinem Haushalt beitreten soll.",
     "failedToGenerateInvite": "Einladungslink konnte nicht erstellt werden. Bitte versuche es erneut.",
     "createNewHouse": "Neues Haus erstellen",
-    "createNewHouseDesc": "Erfasse die Kosten einer weiteren Immobilie separat.",
     "dataPrivacy": "Daten & Datenschutz",
     "dataPrivacyDesc": "Deine Daten gehören dir",
     "exportAllData": "Alle meine Daten exportieren",
@@ -918,7 +917,7 @@
       "cta": "Sieh, was Pro bietet"
     },
     "section": {
-      "title": "Dein Plan",
+      "title": "Dein Plan & deine Häuser",
       "proSubtitle": "Pro ist für dieses Haus aktiv. Alles freigeschaltet.",
       "freeSubtitle": "Du bist im kostenlosen Plan. Ideal, um allein zu tracken.",
       "freeBadge": "Kostenlos",
@@ -934,7 +933,12 @@
       "noSubscriptionNote": "Einmalzahlung — nichts zu kündigen, nichts zu verwalten.",
       "revokedTitle": "Pro wurde für dieses Haus widerrufen",
       "revokedOn": "Widerrufen am {{date}}.",
-      "revokedHelp": "Wenn das falsch wirkt, melde dich — wir kümmern uns darum."
+      "revokedHelp": "Wenn das falsch wirkt, melde dich — wir kümmern uns darum.",
+      "housesOnYourPlan_one": "{{count}} Haus in deinem Plan",
+      "housesOnYourPlan_other": "{{count}} Häuser in deinem Plan",
+      "addAnotherHouseCta": "Weiteres Haus hinzufügen",
+      "addAnotherHouseAriaLabel": "Weiteres Haus hinzufügen — Einmalzahlung von {{price}}",
+      "continueToCheckoutCta": "Weiter zur Zahlung — {{price}}"
     },
     "reconcile": {
       "link": "Ich habe bezahlt, sehe aber kein Pro",

@@ -535,7 +535,6 @@
     "inviteLinkExpiry": "O link expira em 7 dias. Partilha-o com quem quiseres que adira ao teu agregado.",
     "failedToGenerateInvite": "Não foi possível gerar o link de convite. Tenta novamente.",
     "createNewHouse": "Criar Nova Casa",
-    "createNewHouseDesc": "Acompanha despesas de outro imóvel em separado.",
     "dataPrivacy": "Dados e Privacidade",
     "dataPrivacyDesc": "Os teus dados pertencem-te",
     "exportAllData": "Exportar Todos os Meus Dados",
@@ -918,7 +917,7 @@
       "cta": "Vê o que inclui o Pro"
     },
     "section": {
-      "title": "O teu plano",
+      "title": "O teu plano e as tuas casas",
       "proSubtitle": "Pro está ativo para esta casa. Tudo desbloqueado.",
       "freeSubtitle": "Estás no plano gratuito. Perfeito para seguires sozinho.",
       "freeBadge": "Grátis",
@@ -934,7 +933,12 @@
       "noSubscriptionNote": "É um pagamento único — nada para cancelar, nada para gerir.",
       "revokedTitle": "Pro foi revogado para esta casa",
       "revokedOn": "Revogado a {{date}}.",
-      "revokedHelp": "Se isto não parece certo, contacta-nos e resolvemos."
+      "revokedHelp": "Se isto não parece certo, contacta-nos e resolvemos.",
+      "housesOnYourPlan_one": "{{count}} casa no teu plano",
+      "housesOnYourPlan_other": "{{count}} casas no teu plano",
+      "addAnotherHouseCta": "Adicionar outra casa",
+      "addAnotherHouseAriaLabel": "Adicionar outra casa — pagamento único de {{price}}",
+      "continueToCheckoutCta": "Continuar para o pagamento — {{price}}"
     },
     "reconcile": {
       "link": "Paguei mas não vejo o Pro",

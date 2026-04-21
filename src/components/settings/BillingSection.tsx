@@ -1,32 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Sparkles, CheckCircle2, Plus, Check, Loader2 } from 'lucide-react'
+import { Sparkles, CheckCircle2, Plus, Check, Loader2, Home, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog'
+import { useAuth } from '@/context/AuthContext'
 import { useEntitlement } from '@/hooks/use-entitlement'
+import { useCreateHouse } from '@/context/CreateHouseContext'
 import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { PRICES, reconcileOrder, type ReconcileStatus } from '@/lib/billing'
+import {
+  CheckoutNotConfigured,
+  PRICES,
+  reconcileOrder,
+  startCheckout,
+  type ReconcileStatus,
+} from '@/lib/billing'
 
 /**
- * Billing section for the Settings page. Shows tier status, purchase history,
- * and the primary upgrade path.
+ * Billing section for the Settings page. Now owns the single source of truth
+ * for "create new house" across all four `useCreateHouse().reason` states —
+ * this consolidates what used to live in three different surfaces (Household
+ * card, HouseSwitcher dropdown, BillingSection button).
  *
- * Free-tier UX: shows an asymmetric "Free includes" + "Pro adds" comparison
- * so users can evaluate what they'd get without having to hit a paywall first.
+ * Key decisions codified here:
+ *   • Upgrade-for-€49 CTA is gated on OWNERSHIP of the current house, not
+ *     just `!isPro`. This removes the "non-owner sees nonsensical upgrade
+ *     button" case and, as a side-effect, eliminates the double-CTA collision
+ *     for Pro users viewing a free house they joined as a member (they now
+ *     see only the €29 add-another-house button).
+ *   • The hasProHouse branch uses an INLINE EXPANDABLE form rather than
+ *     opening the upgrade modal. Removes a click depth and matches the
+ *     Billing-as-inventory-surface mental model.
+ *   • Loading state renders a skeleton button (reserves space) so the card
+ *     doesn't visibly jump on entitlement subscription resolve.
  */
 export function BillingSection() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const { house } = useHousehold()
   const { entitlement, isPro, isLoading } = useEntitlement()
   const { open } = useUpgradeDialog()
+  const { reason: createHouseReason, ownedCount, openCreateDialog } = useCreateHouse()
 
   if (!house || isLoading) return null
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })
+
+  // Only the owner can upgrade THIS house. A member-only user seeing
+  // "Upgrade for €49" on a joined house is nonsensical — they have no
+  // standing to upgrade someone else's house.
+  const isOwnerOfCurrentHouse = user != null && house.ownerId === user.uid
+
+  // The add-another-house CTA is primary (default style) whenever it is the
+  // only action in the row. It's the only action when (a) the user is Pro
+  // (no upgrade CTA rendered) or (b) the upgrade CTA is hidden by ownership.
+  const addAnotherIsPrimary = isPro || !isOwnerOfCurrentHouse
 
   const freeFeatures = [
     'billing.section.freeFeature1',
@@ -66,6 +99,22 @@ export function BillingSection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/*
+          Inventory framing: "Houses on your plan: N". The research on
+          per-entity paywall surfaces says the Billing section should frame
+          houses as inventory (what you own) while the HouseSwitcher frames
+          them as action ("add another"). This one line does the framing.
+          Hidden for ownedCount=0 since "0 houses" reads as a broken state.
+        */}
+        {ownedCount > 0 && (
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Home className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              {t('billing.section.housesOnYourPlan', { count: ownedCount })}
+            </span>
+          </p>
+        )}
+
         {isPro && entitlement && (
           <dl className="text-sm space-y-1.5">
             {entitlement.purchasedAt && (
@@ -136,26 +185,248 @@ export function BillingSection() {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          {!isPro && (
-            <Button onClick={() => open('generic')}>
-              {t('billing.unlockCta', { price: PRICES.pro.display })}
-            </Button>
-          )}
-          {isPro && (
-            <Button
-              variant="outline"
-              onClick={() => open('generic', { product: 'additional_house' })}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              {t('billing.buyAdditionalHouse', { price: PRICES.additional_house.display })}
-            </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
+            {/*
+              Upgrade-for-€49 is gated on OWNERSHIP of the current house.
+              Pre-fix this shipped "Upgrade for €49" to member-only users
+              viewing a house they didn't own — offering an upgrade they
+              literally can't complete (server permission-denied).
+            */}
+            {!isPro && isOwnerOfCurrentHouse && (
+              <Button onClick={() => open('generic')}>
+                {t('billing.unlockCta', { price: PRICES.pro.display })}
+              </Button>
+            )}
+
+            {/*
+              Create-house action — one of three branches, or a skeleton
+              during the subscription window so the card doesn't shift.
+
+                first        → free dialog (new owner path)
+                hasProHouse  → inline "Add another house" form with €29 paid
+                               checkout (subcomponent below)
+                needsUpgrade → hidden: main Upgrade CTA is the path
+                loading      → skeleton placeholder: reserves space, no shift
+            */}
+            {createHouseReason === 'first' && (
+              <Button
+                variant={addAnotherIsPrimary ? 'default' : 'outline'}
+                onClick={openCreateDialog}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                {t('settings.createNewHouse')}
+              </Button>
+            )}
+            {createHouseReason === 'loading' && (
+              <CreateHouseCtaSkeleton />
+            )}
+          </div>
+
+          {/*
+            hasProHouse gets the inline form at the end of the buttons row
+            because the form grows vertically when expanded — putting it
+            last keeps the rest of the row stable during expansion.
+          */}
+          {createHouseReason === 'hasProHouse' && house.id && (
+            <AddAnotherHouseInline
+              houseId={house.id}
+              isPrimary={addAnotherIsPrimary}
+            />
           )}
         </div>
 
         {!isPro && house.id && <ReconcileLink houseId={house.id} />}
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Reserves the visual footprint of the create-house button while
+ * entitlement subscriptions are still loading. Prevents the 100-500ms
+ * layout shift that otherwise occurs when the button materializes.
+ */
+function CreateHouseCtaSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="h-9 w-36 rounded-md bg-muted/60 animate-pulse"
+    />
+  )
+}
+
+/**
+ * Inline expandable form for "Add another house" (product='additional_house').
+ *
+ * Design rationale: for users already on Pro, the additional-house purchase
+ * collects exactly one field (the new house's name). The UpgradeModal adds
+ * ceremony that's valuable for first-time Pro conversion but unnecessary
+ * for repeat buyers. Skipping the modal here drops one click out of the
+ * path to checkout and keeps the user's eyes on the Billing surface where
+ * the inventory context (houses count, plan status) lives.
+ *
+ * The HouseSwitcher still routes through the modal — the two surfaces
+ * serve different user intents (navigation vs billing) and the modal's
+ * product recap is valuable when the entry point isn't itself billing.
+ */
+function AddAnotherHouseInline({
+  houseId,
+  isPrimary,
+}: {
+  houseId: string
+  isPrimary: boolean
+}) {
+  const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(false)
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [notConfigured, setNotConfigured] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Reset transient state every time the form collapses so a failed
+  // checkout doesn't leave a stale error banner on the next open.
+  useEffect(() => {
+    if (!expanded) {
+      setError('')
+      setNotConfigured(false)
+    } else {
+      // Autofocus the input on expand — users clicked explicitly, they want
+      // to type immediately.
+      requestAnimationFrame(() => inputRef.current?.focus())
+    }
+  }, [expanded])
+
+  const trimmed = name.trim()
+  const canSubmit = trimmed.length > 0 && !loading
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canSubmit) return
+    setLoading(true)
+    setError('')
+    setNotConfigured(false)
+    try {
+      await startCheckout(houseId, 'additional_house', 'create_house', {
+        newHouseName: trimmed,
+      })
+      // On success the page navigates to Polar; we don't reach this line.
+    } catch (err) {
+      if (err instanceof CheckoutNotConfigured) {
+        setNotConfigured(true)
+      } else {
+        setError((err as Error).message)
+      }
+      setLoading(false)
+    }
+  }
+
+  if (!expanded) {
+    return (
+      <div>
+        <Button
+          variant={isPrimary ? 'default' : 'outline'}
+          className={
+            isPrimary ? undefined : 'border-primary/40 hover:border-primary/60'
+          }
+          onClick={() => setExpanded(true)}
+          aria-label={t('billing.section.addAnotherHouseAriaLabel', {
+            price: PRICES.additional_house.display,
+          })}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          <span>{t('billing.section.addAnotherHouseCta')}</span>
+          <span className="ml-2 font-semibold text-xs" aria-hidden="true">
+            {PRICES.additional_house.display}
+          </span>
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-lg border border-primary/40 bg-primary/5 p-3 space-y-2"
+      aria-label={t('billing.section.addAnotherHouseCta')}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 space-y-1.5">
+          <Label
+            htmlFor="billing-new-house-name"
+            className="text-sm font-medium"
+          >
+            {t('billing.product.additionalHouse.nameLabel')}
+          </Label>
+          <Input
+            ref={inputRef}
+            id="billing-new-house-name"
+            type="text"
+            maxLength={80}
+            placeholder={t('billing.product.additionalHouse.namePlaceholder')}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={loading}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            {t('billing.product.additionalHouse.nameHelp')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setExpanded(false)
+            setName('')
+          }}
+          className="text-muted-foreground hover:text-foreground p-1 -mr-1 rounded-md"
+          aria-label={t('common.cancel')}
+          disabled={loading}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {notConfigured && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-2.5 py-1.5 text-[11px] text-amber-900 dark:text-amber-200"
+        >
+          {t('billing.checkoutComingSoon')}
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-[11px] text-destructive"
+        >
+          {error}
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        size="sm"
+        className="w-full"
+        disabled={!canSubmit}
+        aria-busy={loading}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" aria-hidden="true" />
+            {t('billing.redirecting')}
+          </>
+        ) : (
+          <>
+            {t('billing.section.continueToCheckoutCta', {
+              price: PRICES.additional_house.display,
+            })}
+          </>
+        )}
+      </Button>
+    </form>
   )
 }
 

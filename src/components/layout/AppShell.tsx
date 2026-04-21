@@ -5,20 +5,18 @@ import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FolderOpen, Shiel
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { useCanCreateHouse } from '@/hooks/use-can-create-house'
+import { useCreateHouse } from '@/context/CreateHouseContext'
 import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { Button } from '@/components/ui/button'
 import { HouseSwitcher } from './HouseSwitcher'
-import { CreateHouseDialog } from './CreateHouseDialog'
 
 function MobileHouseBar() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { house, houses, switchHouse } = useHousehold()
-  const { canCreate: canCreateHouse } = useCanCreateHouse()
+  const { reason: createHouseReason, upgradeTargetHouseId, openCreateDialog } = useCreateHouse()
   const { open: openUpgrade } = useUpgradeDialog()
   const [open, setOpen] = useState(false)
-  const [createOpen, setCreateOpen] = useState(false)
   const [switching, setSwitching] = useState(false)
 
   const handleSwitch = async (houseId: string) => {
@@ -92,17 +90,44 @@ function MobileHouseBar() {
                 type="button"
                 role="option"
                 aria-selected={false}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
-                onClick={() => {
+                disabled={createHouseReason === 'loading'}
+                className={cn(
+                  'flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer',
+                  createHouseReason === 'loading' && 'opacity-50 pointer-events-none'
+                )}
+                onClick={async () => {
                   setOpen(false)
-                  if (!canCreateHouse) {
-                    openUpgrade('create_house')
+                  // Mirror the desktop HouseSwitcher routing exactly. Pre-fix,
+                  // this always opened the €49 upgrade modal — so a Pro user
+                  // on mobile got charged €49 for a second house instead of
+                  // the €29 additional_house price. The reason-based branch
+                  // fixes that silent mobile-only price bug.
+                  if (createHouseReason === 'first') {
+                    openCreateDialog()
                     return
                   }
-                  setCreateOpen(true)
+                  if (createHouseReason === 'hasProHouse') {
+                    openUpgrade('create_house', { product: 'additional_house' })
+                    return
+                  }
+                  // needsUpgrade: if the user is viewing a house they don't
+                  // own, switch to their own non-Pro house first so the €49
+                  // checkout targets an ownership-gated house the server
+                  // accepts. See HouseSwitcher.tsx for the same logic.
+                  if (
+                    upgradeTargetHouseId &&
+                    upgradeTargetHouseId !== house?.id
+                  ) {
+                    try {
+                      await switchHouse(upgradeTargetHouseId)
+                    } catch {
+                      // Fall through — server paywall is the final backstop.
+                    }
+                  }
+                  openUpgrade('create_house', { product: 'pro' })
                 }}
               >
-                {canCreateHouse ? (
+                {createHouseReason === 'first' || createHouseReason === 'hasProHouse' ? (
                   <Plus className="h-4 w-4" aria-hidden="true" />
                 ) : (
                   <Lock className="h-4 w-4" aria-hidden="true" />
@@ -113,8 +138,6 @@ function MobileHouseBar() {
           </div>
         </>
       )}
-
-      <CreateHouseDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   )
 }
