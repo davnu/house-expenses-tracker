@@ -21,15 +21,59 @@ import { DocumentsPage } from '@/pages/DocumentsPage'
 import { MortgagePage } from '@/pages/MortgagePage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
+import { ThanksPage } from '@/pages/ThanksPage'
+import { PricingPage } from '@/pages/PricingPage'
+import { UpgradeDialogProvider, useUpgradeDialog } from '@/context/UpgradeDialogContext'
+import { EntitlementProvider } from '@/context/EntitlementContext'
 // Lazy-loaded auth pages — rarely visited, kept out of the critical bundle.
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
 const AuthActionPage = lazy(() => import('@/pages/AuthActionPage').then(m => ({ default: m.AuthActionPage })))
+// Lazy-load UpgradeModal: only loaded the first time a user hits a paywall.
+// Keeps ~15 KB off the critical bundle for the ~60% who never upgrade.
+const UpgradeModal = lazy(() => import('@/components/billing/UpgradeModal').then(m => ({ default: m.UpgradeModal })))
+
+/** Mounts UpgradeModal only once opened — avoids fetching its chunk on every app mount. */
+function LazyUpgradeModalMount() {
+  const { isOpen } = useUpgradeDialog()
+  if (!isOpen) return null
+  return (
+    <Suspense fallback={null}>
+      <UpgradeModal />
+    </Suspense>
+  )
+}
 
 /* ── App routes (inside /app/*, requires house) ── */
 
 function AppRoutes() {
   const { house, houses, userProfile, loading } = useHousehold()
 
+  // Shell-level providers (entitlement + upgrade-dialog) wrap EVERY render
+  // branch below. Why: AppShell renders HouseSwitcher, which reads
+  // `useUpgradeDialog()`. During the "profile loaded, house still fetching"
+  // window we render the AppShell shell with a skeleton — that branch must
+  // have the provider available or HouseSwitcher throws on mount.
+  //
+  // EntitlementProvider safely handles `house === null` (returns loading=false
+  // with free limits), so hoisting it above the load check is free.
+  return (
+    <EntitlementProvider>
+      <UpgradeDialogProvider>
+        <AppRoutesBody house={house} houses={houses} userProfile={userProfile} loading={loading} />
+        <LazyUpgradeModalMount />
+      </UpgradeDialogProvider>
+    </EntitlementProvider>
+  )
+}
+
+interface AppRoutesBodyProps {
+  house: ReturnType<typeof useHousehold>['house']
+  houses: ReturnType<typeof useHousehold>['houses']
+  userProfile: ReturnType<typeof useHousehold>['userProfile']
+  loading: ReturnType<typeof useHousehold>['loading']
+}
+
+function AppRoutesBody({ house, houses, userProfile, loading }: AppRoutesBodyProps) {
   // User has no houses — show onboarding
   if (!loading && !house && !userProfile?.houseId && houses.length === 0) {
     return (
@@ -177,6 +221,8 @@ function App() {
           {/* Legacy alias — old /reset-password links get upgraded to /auth/action. */}
           <Route path="/reset-password" element={<ResetPasswordAlias />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/thanks" element={<ThanksPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/invite/:inviteId" element={<InviteGate />} />
 
           {/* Protected app */}

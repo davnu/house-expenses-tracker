@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { friendlyError } from '@/lib/utils'
+import { PaywallRequired } from '@/lib/entitlement-limits'
 import { SUPPORTED_COUNTRIES } from '@/lib/mortgage-country'
 
 interface CreateHouseDialogProps {
@@ -19,6 +21,7 @@ export function CreateHouseDialog({ open, onOpenChange }: CreateHouseDialogProps
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { createHouse } = useHousehold()
+  const { open: openUpgrade } = useUpgradeDialog()
   const [houseName, setHouseName] = useState('')
   const [country, setCountry] = useState('')
   const [loading, setLoading] = useState(false)
@@ -45,6 +48,15 @@ export function CreateHouseDialog({ open, onOpenChange }: CreateHouseDialogProps
       onOpenChange(false)
       navigate('/app', { replace: true })
     } catch (err) {
+      // Defence-in-depth: if the UI check was stale (live entitlement arrived
+      // after the dialog opened), the server throws PaywallRequired. Close
+      // the dialog and open the upgrade modal instead of showing a generic
+      // error, so the user gets a clear upgrade path.
+      if (err instanceof PaywallRequired) {
+        onOpenChange(false)
+        openUpgrade(err.gate)
+        return
+      }
       setError(friendlyError(err))
     } finally {
       setLoading(false)

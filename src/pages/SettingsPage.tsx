@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link as RouterLink } from 'react-router'
-import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield, Trash2, DoorOpen, Paperclip, Receipt, Home, Plus, Globe } from 'lucide-react'
+import { Download, LogOut, Link, Copy, Check, Edit2, Users, AlertTriangle, Shield, Trash2, DoorOpen, Paperclip, Receipt, Home, Plus, Globe, Lock } from 'lucide-react'
 import { friendlyError, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,11 @@ import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
 import { CreateHouseDialog } from '@/components/layout/CreateHouseDialog'
 import { CostSharingCard } from '@/components/settings/CostSharingCard'
+import { BillingSection } from '@/components/settings/BillingSection'
+import { useEntitlement } from '@/hooks/use-entitlement'
+import { useCanCreateHouse } from '@/hooks/use-can-create-house'
+import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
+import { PaywallRequired } from '@/lib/entitlement-limits'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
 
 export function SettingsPage() {
@@ -26,6 +31,9 @@ export function SettingsPage() {
   const { userProfile, house, houses, members, generateInvite, updateDisplayName, updateHouseName, removeMember, leaveHouse, deleteHouse } = useHousehold()
   const { mortgage } = useMortgage()
   const { budget } = useBudget()
+  const { limits } = useEntitlement()
+  const { reason: createHouseReason } = useCanCreateHouse()
+  const { open: openUpgrade } = useUpgradeDialog()
 
   const HOUSE_DELETE_STEPS: CascadeStep[] = [
     { id: 'attachments', label: t('settings.removingFiles'), icon: Paperclip },
@@ -73,13 +81,21 @@ export function SettingsPage() {
   const isOwner = house?.ownerId === userProfile?.uid
 
   const handleGenerateInvite = async () => {
+    if (!limits.hasHouseholdInvites) {
+      openUpgrade('invite')
+      return
+    }
     setInviteLoading(true)
     setInviteError('')
     try {
       const link = await generateInvite()
       setInviteLink(link)
-    } catch {
-      setInviteError(t('settings.failedToGenerateInvite'))
+    } catch (err) {
+      if (err instanceof PaywallRequired) {
+        openUpgrade(err.gate)
+      } else {
+        setInviteError(t('settings.failedToGenerateInvite'))
+      }
     } finally {
       setInviteLoading(false)
     }
@@ -141,6 +157,10 @@ export function SettingsPage() {
   }
 
   const handleExport = () => {
+    if (!limits.hasExport) {
+      openUpgrade('export')
+      return
+    }
     const data = {
       exportedAt: new Date().toISOString(),
       profile: userProfile ? {
@@ -369,7 +389,11 @@ export function SettingsPage() {
               </div>
             ) : (
               <Button variant="outline" onClick={handleGenerateInvite} disabled={inviteLoading}>
-                <Link className="h-4 w-4 mr-2" />
+                {limits.hasHouseholdInvites ? (
+                  <Link className="h-4 w-4 mr-2" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2" />
+                )}
                 {inviteLoading ? t('common.generating') : t('settings.generateInviteLink')}
               </Button>
             )}
@@ -381,8 +405,34 @@ export function SettingsPage() {
 
           {/* Create New House */}
           <div className="pt-2 border-t">
-            <Button variant="ghost" onClick={() => setCreateHouseOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button
+              variant="ghost"
+              disabled={createHouseReason === 'loading'}
+              onClick={() => {
+                // Four reasons from `useCanCreateHouse`:
+                //   - 'first'        → free: open the create dialog directly
+                //   - 'hasProHouse'  → €29 per additional house: paywall
+                //                      collects the new house's name and the
+                //                      webhook provisions it on payment
+                //   - 'needsUpgrade' → €49 to make the current house Pro first
+                //   - 'loading'      → button is disabled above
+                if (createHouseReason === 'first') {
+                  setCreateHouseOpen(true)
+                  return
+                }
+                if (createHouseReason === 'hasProHouse') {
+                  openUpgrade('create_house', { product: 'additional_house' })
+                  return
+                }
+                // needsUpgrade
+                openUpgrade('create_house', { product: 'pro' })
+              }}
+            >
+              {createHouseReason === 'first' || createHouseReason === 'hasProHouse' ? (
+                <Plus className="h-4 w-4 mr-2" />
+              ) : (
+                <Lock className="h-4 w-4 mr-2" />
+              )}
               {t('settings.createNewHouse')}
             </Button>
             <p className="text-xs text-muted-foreground mt-1.5">
@@ -392,6 +442,9 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Billing / subscription status */}
+      <BillingSection />
 
       {/* Cost sharing — only relevant once there are multiple members */}
       <CostSharingCard />
@@ -405,7 +458,11 @@ export function SettingsPage() {
         <CardContent className="space-y-3">
           <div>
             <Button variant="outline" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
+              {limits.hasExport ? (
+                <Download className="h-4 w-4 mr-2" />
+              ) : (
+                <Lock className="h-4 w-4 mr-2" />
+              )}
               {t('settings.exportAllData')}
             </Button>
             <p className="text-xs text-muted-foreground mt-1.5">

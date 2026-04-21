@@ -17,6 +17,7 @@
     "print": "Drucken",
     "add": "Hinzufügen",
     "close": "Schließen",
+    "done": "Fertig",
     "saving": "Wird gespeichert...",
     "creating": "Wird erstellt...",
     "loading": "Bitte warten...",
@@ -894,5 +895,160 @@
     "failedToAdd": "Aufgabe konnte nicht hinzugefügt werden. Bitte erneut versuchen.",
     "failedToSave": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
     "failedToDelete": "Löschen fehlgeschlagen. Bitte erneut versuchen."
+  },
+  "billing": {
+    "oneTime": "Einmalzahlung",
+    "lifetimeForHouse": "Lebenslanger Zugang — einmal zahlen für dieses Haus, kein Abo.",
+    "unlockCta": "Pro freischalten für {{price}}",
+    "redirecting": "Weiterleitung zur Zahlung…",
+    "unlockFor": "Freischalten für {{price}}",
+    "ctaSubline": "Einmalzahlung {{price}} · lebenslanger Zugang",
+    "priceContext": "Weniger als die Notargebühr. Einmalig — kein Abo.",
+    "additionalHouseNote": "Noch ein Haus? Füge es für nur {{price}} hinzu.",
+    "buyAdditionalHouse": "Weiteres Haus hinzufügen ({{price}})",
+    "errors": {
+      "unauthenticated": "Deine Sitzung ist abgelaufen. Melde dich ab und wieder an. Falls das öfter passiert, schreib uns kurz.",
+      "transient": "Die Bezahlung macht gerade Zicken. Wir kümmern uns darum — versuch es gleich noch einmal.",
+      "generic": "Wir konnten die Bezahlung nicht öffnen. Versuch es in einem Moment erneut; falls es wiederholt vorkommt, schreib uns."
+    },
+    "checkoutComingSoon": "Die Zahlung wird gerade eingerichtet. Bitte versuche es in Kürze nochmal.",
+    "banner": {
+      "title": "Hol mehr aus CasaTab raus",
+      "subtitle": "Lade deinen Partner ein, schalte erweiterte Hypothek, Budgets, Export und mehr frei — Einmalzahlung {{price}}, kein Abo.",
+      "cta": "Sieh, was Pro bietet"
+    },
+    "section": {
+      "title": "Dein Plan",
+      "proSubtitle": "Pro ist für dieses Haus aktiv. Alles freigeschaltet.",
+      "freeSubtitle": "Du bist im kostenlosen Plan. Ideal, um allein zu tracken.",
+      "freeBadge": "Kostenlos",
+      "purchasedOn": "Gekauft am",
+      "source": "Herkunft",
+      "foundingMember": "Gründungsmitglied",
+      "orderId": "Bestellung",
+      "freeIncludes": "Kostenloser Plan",
+      "proAdds": "Pro schaltet frei",
+      "freeFeature1": "Unbegrenzte Ausgaben in allen Kategorien",
+      "freeFeature2": "Anhänge und einfacher Hypothekenrechner",
+      "freeFeature3": "Dashboard-Charts und Kategorie-Übersicht",
+      "noSubscriptionNote": "Einmalzahlung — nichts zu kündigen, nichts zu verwalten.",
+      "revokedTitle": "Pro wurde für dieses Haus widerrufen",
+      "revokedOn": "Widerrufen am {{date}}.",
+      "revokedHelp": "Wenn das falsch wirkt, melde dich — wir kümmern uns darum."
+    },
+    "reconcile": {
+      "link": "Ich habe bezahlt, sehe aber kein Pro",
+      "title": "Deinen Kauf wiederherstellen",
+      "subtitle": "Wir suchen nach einer aktuellen Zahlung für dieses Haus.",
+      "body": "Wenn deine Zahlung durch ist, Pro aber noch nicht aktiv ist, klick auf Jetzt prüfen. Wir suchen deine Bestellung bei Polar und schalten Pro sofort frei.",
+      "runCta": "Jetzt prüfen",
+      "checking": "Wir fragen bei Polar nach…",
+      "successReconciled": "Gefunden — Pro ist jetzt für dieses Haus aktiv.",
+      "successAlreadyPro": "Dieses Haus hat bereits Pro — alles gut.",
+      "noOrder": "Wir haben keine Zahlung für dieses Haus gefunden. Wenn du sicher bist, dass du bezahlt hast, schreib uns — wir schauen nach."
+    },
+    "product": {
+      "additionalHouse": {
+        "title": "Weiteres Haus hinzufügen",
+        "subtitle": "Pro für ein zweites oder drittes Haus freischalten.",
+        "note": "Einmalzahlung für dieses zusätzliche Haus.",
+        "nameLabel": "Gib deinem neuen Haus einen Namen",
+        "namePlaceholder": "z. B. Wohnung in Berlin",
+        "nameHelp": "Du kannst den Namen später in den Einstellungen ändern."
+      }
+    },
+    "features": {
+      "invites": "Lade Partner oder Mitkäufer ein",
+      "advancedMortgage": "Erweiterte Hypothek: Zinsänderungen, Sondertilgungen, Vergleiche",
+      "budget": "Kategorie-Budgets setzen und verfolgen",
+      "export": "Alles exportieren und sauber ausdrucken",
+      "storage": "500 MB Speicher für deine Dateien"
+    },
+    "gate": {
+      "invite": {
+        "title": "Lade deinen Partner zu diesem Haus ein",
+        "subtitle": "Teile alles mit den Menschen, die mit dir kaufen.",
+        "cta": "Partner einladen"
+      },
+      "advancedMortgage": {
+        "title": "Deine Hypothek voll freischalten",
+        "subtitle": "Zinsperioden, Sondertilgungen und Saldokorrekturen.",
+        "cta": "Erweiterte Hypothek freischalten"
+      },
+      "budget": {
+        "title": "Budget für dein Haus festlegen",
+        "subtitle": "Plan pro Kategorie und behalte das Restbudget im Blick.",
+        "cta": "Budget festlegen"
+      },
+      "export": {
+        "title": "Deine Daten exportieren",
+        "subtitle": "Vollständiger JSON-Export von Ausgaben, Hypothek und Budget.",
+        "cta": "Daten exportieren"
+      },
+      "print": {
+        "title": "Sauberen Bericht drucken",
+        "subtitle": "Kategorie-Tabelle, Monatstabelle und Aufteilung pro Person.",
+        "cta": "Bericht drucken"
+      },
+      "whatIf": {
+        "title": "Was-wäre-wenn bei der Hypothek",
+        "subtitle": "Zins-, Laufzeit- und Kapitaländerungen nebeneinander simulieren.",
+        "cta": "Was-wäre-wenn ausführen"
+      },
+      "storage": {
+        "title": "Mehr Platz für deine Dateien",
+        "subtitle": "Auf 500 MB erweitern — genug für jeden Beleg, Urkunde und Vertrag.",
+        "cta": "Speicher erweitern"
+      },
+      "createHouse": {
+        "title": "Weiteres Haus hinzufügen",
+        "subtitle": "Der kostenlose Plan umfasst ein Haus. Upgrade auf Pro, um mehr Häuser hinzuzufügen — zusätzliche Häuser kosten danach 29 € je.",
+        "cta": "Auf Pro upgraden für 49 €"
+      },
+      "generic": {
+        "title": "CasaTab Pro freischalten",
+        "subtitle": "Alles für dieses Haus, Einmalzahlung, kein Abo."
+      }
+    },
+    "thanks": {
+      "title": "Willkommen bei Pro",
+      "subtitle": "Alles für dieses Haus ist freigeschaltet. Deine Zahlung ist bestätigt.",
+      "nextStepsTitle": "Nächste Schritte",
+      "step1": "Lade deinen Partner ein — er sieht alles, was du erfasst hast",
+      "step2": "Öffne die Hypotheken-Seite für Zinsperioden und Vergleiche",
+      "step3": "In Dokumente kannst du Urkunden, Verträge und Versicherungen ablegen",
+      "cta": "Zurück zu deinem Haus",
+      "waitingTitle": "Wir bestätigen deinen Kauf…",
+      "waitingSubtitle": "Dauert meist nur ein paar Sekunden.",
+      "pendingTitle": "Fast geschafft",
+      "pendingSubtitle": "Deine Zahlung ist bei uns angekommen. Pro wird normalerweise innerhalb weniger Sekunden aktiv; falls es nach einer Minute immer noch nicht klappt, schreib uns.",
+      "pendingCta": "Zurück zu deinem Haus",
+      "pendingContact": "Schreib uns"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Preise",
+    "title": "Ehrliche Preise für einen einmaligen Kauf",
+    "subtitle": "Gratis zum Ausprobieren. Einmalzahlung, wenn du bereit bist. Kein Abo, niemals.",
+    "heroCta": "Kostenlos starten",
+    "freeTitle": "Kostenlos",
+    "freeSubtitle": "Perfekt, um deinen eigenen Kauf zu verfolgen.",
+    "forever": "für immer",
+    "freeCta": "Kostenlos starten",
+    "proTitle": "Pro",
+    "proSubtitle": "Für Paare und ernsthafte Käufer.",
+    "oneTimeLabel": "einmalig · pro Haus",
+    "recommended": "Die meisten Käufer",
+    "proCta": "Pro holen",
+    "everythingInFree": "Alles aus Kostenlos, plus:",
+    "additionalHouseTitle": "Weiteres Haus — {{price}}",
+    "additionalHouseDesc": "Kaufst du ein zweites oder Investment-Objekt? Füge es mit 40 % Rabatt hinzu.",
+    "faqTitle": "Häufige Fragen",
+    "faq1Q": "Ist es wirklich einmalig? Kein Abo?",
+    "faq1A": "Ja. Du zahlst einmal für dein Haus. Keine wiederkehrenden Gebühren. Wenn dein Kauf abgeschlossen ist, gehören dir deine Daten weiterhin.",
+    "faq2Q": "Was, wenn ich mir noch nicht sicher bin?",
+    "faq2A": "Starte kostenlos. Trage Ausgaben ein, hänge Belege an, nutze den einfachen Hypothekenrechner. Upgrade nur, wenn du deinen Partner einlädst oder die erweiterten Tools brauchst.",
+    "faq3Q": "Was, wenn ich ein zweites Haus kaufe?",
+    "faq3A": "Füge es für 29 € hinzu — 40 % Rabatt gegenüber dem ersten Haus. Jedes Haus ist unabhängig; die Zahlung schaltet genau dieses Haus für alle Mitglieder frei."
   }
 }

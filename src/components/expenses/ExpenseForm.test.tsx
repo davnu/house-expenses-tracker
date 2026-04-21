@@ -29,6 +29,31 @@ const { mockMembers } = vi.hoisted(() => ({
 
 const generateInviteMock = vi.fn()
 
+// Entitlement + upgrade dialog — tests exercise Pro behavior so the invite
+// flow is fully available. Invite-dialog free-tier path has its own test
+// coverage in InviteHousemateDialog.test.tsx.
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => ({
+    entitlement: { tier: 'pro', purchasedAt: '' },
+    limits: {
+      maxMembers: Infinity,
+      maxStorageMB: 500,
+      hasHouseholdInvites: true,
+      hasAdvancedMortgage: true,
+      hasBudget: true,
+      hasExport: true,
+      hasPrintSummary: true,
+      hasMortgageWhatIf: true,
+    },
+    isPro: true,
+    isLoading: false,
+  }),
+}))
+vi.mock('@/context/UpgradeDialogContext', () => ({
+  useUpgradeDialog: () => ({ isOpen: false, gate: null, open: vi.fn(), close: vi.fn() }),
+  UpgradeDialogProvider: ({ children }: { children: unknown }) => children,
+}))
+
 vi.mock('@/context/HouseholdContext', () => ({
   useHousehold: () => ({
     members: mockMembers.current,

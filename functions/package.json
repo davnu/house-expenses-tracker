@@ -15,7 +15,8 @@
   "dependencies": {
     "firebase-admin": "^13.0.0",
     "firebase-functions": "^6.3.0",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "standardwebhooks": "^1.0.0"
   },
   "devDependencies": {
     "@types/node-fetch": "^2.6.12",

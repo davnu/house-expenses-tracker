@@ -5,8 +5,20 @@ import {
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 
-// Must match the client-side MAX_HOUSEHOLD_STORAGE in src/lib/constants.ts
+// Free-tier default — matches client-side MAX_HOUSEHOLD_STORAGE in src/lib/constants.ts.
+// Houses with a Pro entitlement get a larger cap (see maxBytesForHouse below).
 export const MAX_HOUSEHOLD_STORAGE = 50 * 1024 * 1024; // 50 MB
+export const PRO_HOUSEHOLD_STORAGE = 500 * 1024 * 1024; // 500 MB
+
+/**
+ * Compute the storage cap for a house given its entitlement doc.
+ * Defaults to free-tier 50 MB when entitlement is missing or not Pro.
+ */
+export function maxBytesForEntitlement(
+  entitlement: { tier?: string } | null | undefined
+): number {
+  return entitlement?.tier === "pro" ? PRO_HOUSEHOLD_STORAGE : MAX_HOUSEHOLD_STORAGE;
+}
 
 /**
  * Extract the houseId from a Storage file path.
@@ -53,15 +65,26 @@ export async function enforceQuotaOnUpload(
   if (!houseId) return "skipped";
 
   const ref = db.doc(storageDocPath(houseId));
+  const entitlementRef = db.doc(`houses/${houseId}/meta/entitlement`);
 
   try {
     await db.runTransaction(async (tx) => {
-      const doc = await tx.get(ref);
+      // Firestore transactions require all reads before any writes. Read the
+      // storage counter and entitlement doc in parallel so the cap is always
+      // based on the freshest tier (handles the post-purchase window where a
+      // Pro user uploads immediately after payment).
+      const [doc, entitlementDoc] = await Promise.all([
+        tx.get(ref),
+        tx.get(entitlementRef),
+      ]);
       const currentUsed: number = doc.exists
         ? (doc.data()?.usedBytes ?? 0)
         : 0;
+      const maxBytes = maxBytesForEntitlement(
+        entitlementDoc.exists ? (entitlementDoc.data() as { tier?: string }) : null
+      );
 
-      if (currentUsed + fileSize > MAX_HOUSEHOLD_STORAGE) {
+      if (currentUsed + fileSize > maxBytes) {
         throw new Error("QUOTA_EXCEEDED");
       }
 
@@ -147,6 +170,27 @@ export const onFileUploaded = onObjectFinalized(
       const bucket = getStorage().bucket(event.data.bucket);
       await bucket.file(filePath).delete().catch(() => {});
       console.warn(`Quota exceeded for house, deleted ${filePath}`);
+
+      // Write a notification so the user sees WHY their upload vanished.
+      // Common cause: Pro was revoked (refund/chargeback) between when the
+      // upload began and when this trigger ran. Without this, files appear
+      // to silently disappear — terrible UX.
+      const houseId = extractHouseId(filePath);
+      if (houseId) {
+        const fileName = filePath.split("/").pop() ?? "file";
+        await db
+          .collection(`houses/${houseId}/notifications`)
+          .add({
+            type: "storage_quota_rejected",
+            fileName,
+            fileSize,
+            createdAt: new Date().toISOString(),
+          })
+          .catch((err) => {
+            // Best-effort — if the notification write fails we still logged.
+            console.warn(`Failed to write quota notification:`, err);
+          });
+      }
     } else if (result === "accepted") {
       console.log(`Storage +${fileSize}B (${filePath})`);
     }

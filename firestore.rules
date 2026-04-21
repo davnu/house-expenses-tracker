@@ -84,11 +84,23 @@ service cloud.firestore {
       }
 
       // Settings (mortgage config, house settings, etc.)
-      // The 'storage' doc is written exclusively by Cloud Functions (admin SDK)
+      //
+      // ALLOWLIST not denylist — any future admin-only meta doc is denied by
+      // default. To let the client write a new meta doc, add its docId here
+      // explicitly. Admin-SDK Cloud Functions bypass these rules regardless.
+      //
+      // Client-writable docs:
+      //   - settings     → currency/country overrides
+      //   - mortgage     → mortgage config (principal, rate, term, rate periods, etc.)
+      //   - budget       → spending budget configuration
+      //
+      // Admin-only docs (NOT in allowlist, written by Cloud Functions only):
+      //   - storage      → used-byte quota (enforced by storage-quota function)
+      //   - entitlement  → billing tier (written by Polar webhook)
       match /meta/{docId} {
         allow read: if request.auth != null && isMember();
         allow write: if request.auth != null && isVerifiedEmail() && isMember()
-                    && docId != 'storage';
+                    && (docId == 'settings' || docId == 'mortgage' || docId == 'budget');
       }
 
       // Document folders
@@ -108,12 +120,39 @@ service cloud.firestore {
         allow read: if request.auth != null && isMember();
         allow write: if request.auth != null && isVerifiedEmail() && isMember();
       }
+
+      // Notifications — written only by Cloud Functions (admin SDK), readable
+      // by house members so the UI can surface them. Members can delete
+      // (i.e. dismiss) but never create/update.
+      match /notifications/{notificationId} {
+        allow read: if request.auth != null && isMember();
+        allow delete: if request.auth != null && isVerifiedEmail() && isMember();
+        allow create, update: if false;
+      }
     }
 
     // Reference rates — public data, written by Cloud Functions only
     match /reference_rates/{rateId} {
       allow read: if true;
       allow write: if false; // only Cloud Functions (admin SDK) can write
+    }
+
+    // Webhook audit log — server-only, not user-facing. Deny all client
+    // access; inspect via Firebase console.
+    match /webhook_attempts/{attemptId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // Polar order idempotency markers — server-only. Written inside the
+    // additional_house provisioning transaction so webhook retries and
+    // reconcile calls converge on the same houseId. Must never be
+    // client-readable/writable: Polar order ids are the rate-limit-free
+    // "which house did this order provision?" lookup and would leak other
+    // users' purchase history otherwise.
+    match /polar_orders/{polarOrderId} {
+      allow read: if false;
+      allow write: if false;
     }
 
     // Invites — readable by anyone (unauthenticated users need to see house name on landing page)

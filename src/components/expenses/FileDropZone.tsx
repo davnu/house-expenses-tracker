@@ -7,9 +7,9 @@ import { getFileTypeInfo } from '@/lib/file-type-info'
 import {
   ACCEPTED_FILE_TYPES,
   MAX_FILES_PER_EXPENSE,
-  MAX_HOUSEHOLD_STORAGE,
 } from '@/lib/constants'
 import { validateExpenseAttachments, rejectionMessage } from '@/lib/attachment-validation'
+import { useEntitlement } from '@/hooks/use-entitlement'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
 
@@ -22,15 +22,17 @@ interface FileDropZoneProps {
 
 export function FileDropZone({ files, onChange, existingCount = 0, householdStorageUsed = 0 }: FileDropZoneProps) {
   const { t } = useTranslation()
+  const { limits } = useEntitlement()
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const maxHouseholdBytes = limits.maxStorageMB * 1024 * 1024
   const totalCount = existingCount + files.length
   const remainingSlots = MAX_FILES_PER_EXPENSE - totalCount
   const newFilesSize = files.reduce((sum, f) => sum + f.size, 0)
   const storageAfterNew = householdStorageUsed + newFilesSize
-  const storageRemaining = MAX_HOUSEHOLD_STORAGE - storageAfterNew
+  const storageRemaining = maxHouseholdBytes - storageAfterNew
 
   const addFiles = useCallback(
     (newFiles: FileList | File[]) => {
@@ -39,11 +41,12 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
         stagedFiles: files,
         existingCount,
         householdStorageUsed,
+        maxHouseholdBytes,
       })
       if (rejection) setError(rejectionMessage(t, rejection))
       if (accepted.length > 0) onChange([...files, ...accepted])
     },
-    [files, onChange, existingCount, householdStorageUsed, t]
+    [files, onChange, existingCount, householdStorageUsed, maxHouseholdBytes, t]
   )
 
   const handleDragOver = (e: DragEvent) => {
@@ -99,7 +102,7 @@ export function FileDropZone({ files, onChange, existingCount = 0, householdStor
           {t('files.fileInfo', { count: totalCount, max: MAX_FILES_PER_EXPENSE })}
         </p>
         <p className="text-xs text-muted-foreground">
-          {t('files.storageUsed', { used: formatFileSize(storageAfterNew), total: formatFileSize(MAX_HOUSEHOLD_STORAGE) })}
+          {t('files.storageUsed', { used: formatFileSize(storageAfterNew), total: formatFileSize(maxHouseholdBytes) })}
         </p>
         <p className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground/70 mt-1.5">
           <ShieldCheck className="h-3 w-3" />

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
-import { render, within } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest'
+import { render, within, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 
@@ -63,9 +63,34 @@ vi.mock('@/context/HouseholdContext', () => ({
     house: { id: 'h1', name: 'Test House', ownerId: 'alice', memberIds: ['alice'], createdAt: '' },
     members: [{ uid: 'alice', displayName: 'Alice', email: 'a@a.com', color: '#3b82f6', role: 'owner', joinedAt: '' }],
     houseSplit: [{ uid: 'alice', shareBps: 10000 }],
+    generateInvite: vi.fn().mockResolvedValue('https://example.com/invite/abc'),
     getMemberName: () => 'Alice',
     getMemberColor: () => '#3b82f6',
   }),
+}))
+
+// Entitlement + upgrade dialog — tests exercise the Pro experience (no soft locks)
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => ({
+    entitlement: { tier: 'pro', purchasedAt: '' },
+    limits: {
+      maxMembers: Infinity,
+      maxStorageMB: 500,
+      hasHouseholdInvites: true,
+      hasAdvancedMortgage: true,
+      hasBudget: true,
+      hasDocumentsPage: true,
+      hasExport: true,
+      hasPrintSummary: true,
+      hasMortgageWhatIf: true,
+    },
+    isPro: true,
+    isLoading: false,
+  }),
+}))
+vi.mock('@/context/UpgradeDialogContext', () => ({
+  useUpgradeDialog: () => ({ isOpen: false, gate: null, open: vi.fn(), close: vi.fn() }),
+  UpgradeDialogProvider: ({ children }: { children: unknown }) => children,
 }))
 
 vi.mock('@/context/AuthContext', () => ({
@@ -118,9 +143,9 @@ vi.mock('recharts', () => ({
 import React from 'react'
 import { DashboardPage } from './DashboardPage'
 
-function renderPage() {
+function renderPage(initialUrl = '/') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialUrl]}>
       <DashboardPage />
     </MemoryRouter>
   )
@@ -133,6 +158,10 @@ describe('DashboardPage', () => {
     mockExpenses.current = []
     mockMortgage.current = null
     mockBudget.current = null
+  })
+
+  afterEach(() => {
+    cleanup()
   })
 
   describe('empty state', () => {
@@ -257,6 +286,30 @@ describe('DashboardPage', () => {
 
       const { container } = renderPage()
       expect(container.textContent).not.toContain('Spending Limits')
+    })
+  })
+
+  describe('post-purchase onboarding (?onboard=invite)', () => {
+    it('auto-opens the invite dialog when returning from Polar checkout as a Pro user', async () => {
+      // Dashboard test mocks useEntitlement as Pro by default. Fresh signup from
+      // /thanks → /app?onboard=invite should greet the user with the invite dialog.
+      mockExpenses.current = [{
+        id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
+        description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
+      }]
+      const { findByText } = renderPage('/?onboard=invite')
+      // InviteHousemateDialog renders a "Invite a housemate" title
+      expect(await findByText(/Invite a housemate/i)).toBeTruthy()
+    })
+
+    it('does NOT auto-open for a regular dashboard visit (no URL param)', () => {
+      mockExpenses.current = [{
+        id: 'e1', amount: 100000, category: 'notary_legal', payer: 'alice',
+        description: 'Notary', date: '2026-01-01', createdAt: '', updatedAt: '',
+      }]
+      const { queryByText } = renderPage('/')
+      // Dialog is not auto-opened on a plain URL
+      expect(queryByText(/Invite a housemate/i)).toBeNull()
     })
   })
 })

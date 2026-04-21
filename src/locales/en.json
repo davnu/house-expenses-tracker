@@ -17,6 +17,7 @@
     "print": "Print",
     "add": "Add",
     "close": "Close",
+    "done": "Done",
     "saving": "Saving...",
     "creating": "Creating...",
     "loading": "Please wait...",
@@ -894,5 +895,160 @@
     "failedToAdd": "Failed to add task. Please try again.",
     "failedToSave": "Failed to save. Please try again.",
     "failedToDelete": "Failed to delete. Please try again."
+  },
+  "billing": {
+    "oneTime": "One-time",
+    "lifetimeForHouse": "Lifetime access — pay once for this house, no subscription.",
+    "unlockCta": "Unlock Pro for {{price}}",
+    "redirecting": "Redirecting to checkout…",
+    "unlockFor": "Unlock for {{price}}",
+    "ctaSubline": "One-time {{price}} · lifetime access",
+    "priceContext": "Less than the notary signing fee. Paid once — no subscription.",
+    "additionalHouseNote": "Buying a second house? Add it for just {{price}}.",
+    "buyAdditionalHouse": "Add another house ({{price}})",
+    "checkoutComingSoon": "Checkout is being set up. We'll have this live very soon — please try again in a moment.",
+    "errors": {
+      "unauthenticated": "Your session expired. Sign out and back in to try again. If it keeps happening, get in touch.",
+      "transient": "Checkout is having a moment. Give it a few seconds and try again — we've already been notified.",
+      "generic": "We couldn't open the checkout. Try again in a moment, and if it keeps happening, get in touch."
+    },
+    "banner": {
+      "title": "Get more out of CasaTab",
+      "subtitle": "Invite your partner, unlock advanced mortgage tools, budgets, exports and more — one-time {{price}}, no subscription.",
+      "cta": "See what's in Pro"
+    },
+    "section": {
+      "title": "Your plan",
+      "proSubtitle": "Pro is active for this house. Everything is unlocked.",
+      "freeSubtitle": "You're on the free plan. Great for tracking on your own.",
+      "freeBadge": "Free",
+      "purchasedOn": "Purchased",
+      "source": "Source",
+      "foundingMember": "Founding member",
+      "orderId": "Order",
+      "freeIncludes": "Free plan",
+      "proAdds": "Pro unlocks",
+      "freeFeature1": "Unlimited expenses across every category",
+      "freeFeature2": "Attachments and a basic mortgage calculator",
+      "freeFeature3": "Dashboard charts and category breakdown",
+      "noSubscriptionNote": "This is a one-time purchase — nothing to cancel, nothing to manage.",
+      "revokedTitle": "Pro was revoked for this house",
+      "revokedOn": "Revoked on {{date}}.",
+      "revokedHelp": "If this looks wrong, reach out and we'll sort it."
+    },
+    "reconcile": {
+      "link": "I paid but don't see Pro",
+      "title": "Recover your purchase",
+      "subtitle": "We'll look for a recent payment linked to this house.",
+      "body": "If your payment went through but Pro still isn't active, click Check now. We'll look up your order at Polar and unlock Pro straight away.",
+      "runCta": "Check now",
+      "checking": "Checking with Polar…",
+      "successReconciled": "Found it — Pro is now active for this house.",
+      "successAlreadyPro": "This house is already on Pro — you're all set.",
+      "noOrder": "We couldn't find a paid order for this house. If you're sure you paid, get in touch and we'll take a look."
+    },
+    "product": {
+      "additionalHouse": {
+        "title": "Add another house",
+        "subtitle": "Unlock Pro for a second or third house.",
+        "note": "One-time payment for this extra house.",
+        "nameLabel": "Name your new house",
+        "namePlaceholder": "e.g. Lisbon apartment",
+        "nameHelp": "You can rename it later in Settings."
+      }
+    },
+    "features": {
+      "invites": "Invite your partner or co-buyers",
+      "advancedMortgage": "Advanced mortgage: rate changes, extra payments, what-if",
+      "budget": "Set category budgets and track them",
+      "export": "Export everything and print a clean summary",
+      "storage": "500 MB of storage for your files"
+    },
+    "gate": {
+      "invite": {
+        "title": "Invite your partner to this house",
+        "subtitle": "Share everything with the people buying with you.",
+        "cta": "Invite your partner"
+      },
+      "advancedMortgage": {
+        "title": "Unlock your full mortgage",
+        "subtitle": "Rate periods, extra repayments and balance corrections.",
+        "cta": "Unlock advanced mortgage"
+      },
+      "budget": {
+        "title": "Set a budget for your house",
+        "subtitle": "Plan by category and track what's left as you spend.",
+        "cta": "Set a budget"
+      },
+      "export": {
+        "title": "Export your data",
+        "subtitle": "Download a full JSON export of your expenses, mortgage and budget.",
+        "cta": "Export your data"
+      },
+      "print": {
+        "title": "Print a clean summary",
+        "subtitle": "Category table, monthly table and per-person breakdown, ready for your records.",
+        "cta": "Print your summary"
+      },
+      "whatIf": {
+        "title": "Try 'what if?' on your mortgage",
+        "subtitle": "Simulate rate, term and principal changes side by side.",
+        "cta": "Run what-if"
+      },
+      "storage": {
+        "title": "More room for your files",
+        "subtitle": "Upgrade to 500 MB — plenty for every receipt, deed and contract.",
+        "cta": "Upgrade storage"
+      },
+      "createHouse": {
+        "title": "Add another house",
+        "subtitle": "Free plans include one house. Upgrade to Pro to add more — additional houses are €29 each after that.",
+        "cta": "Upgrade for €49"
+      },
+      "generic": {
+        "title": "Unlock CasaTab Pro",
+        "subtitle": "Everything for this house, one-time payment, no subscription."
+      }
+    },
+    "thanks": {
+      "title": "Welcome to Pro",
+      "subtitle": "Everything is unlocked for this house. Your payment is confirmed.",
+      "nextStepsTitle": "What's next",
+      "step1": "Invite your partner — they'll see everything you've tracked",
+      "step2": "Open the mortgage page for rate periods and what-if tools",
+      "step3": "Head to Documents to file your deed, contracts and insurance",
+      "cta": "Back to your house",
+      "waitingTitle": "Confirming your purchase…",
+      "waitingSubtitle": "This usually takes a couple of seconds.",
+      "pendingTitle": "Almost there",
+      "pendingSubtitle": "We've received your payment. Pro usually activates within a few seconds — if you're still on free after a minute, let us know.",
+      "pendingCta": "Back to your house",
+      "pendingContact": "Contact us"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Pricing",
+    "title": "Honest pricing for a once-in-a-lifetime purchase",
+    "subtitle": "Free to try. One-time payment when you're ready. No subscription, ever.",
+    "heroCta": "Get started free",
+    "freeTitle": "Free",
+    "freeSubtitle": "Perfect for tracking your own house purchase.",
+    "forever": "forever",
+    "freeCta": "Start tracking for free",
+    "proTitle": "Pro",
+    "proSubtitle": "For couples and serious buyers.",
+    "oneTimeLabel": "one-time · per house",
+    "recommended": "Most home buyers",
+    "proCta": "Get Pro",
+    "everythingInFree": "Everything in Free, plus:",
+    "additionalHouseTitle": "Additional house — {{price}}",
+    "additionalHouseDesc": "Buying a second or investment property? Add another Pro house at 40% off.",
+    "faqTitle": "Questions, answered",
+    "faq1Q": "Is it really one-time? No subscription?",
+    "faq1A": "Yes. You pay once for your house. No recurring charges. When your purchase is done, you still own your data.",
+    "faq2Q": "What if I'm not sure yet?",
+    "faq2A": "Start free. Track expenses, attach receipts, use the basic mortgage calculator. Upgrade only when you invite your partner or need the advanced tools.",
+    "faq3Q": "What if I buy a second house?",
+    "faq3A": "Add it for €29 — 40% off the first-house price. Each house is independent; payment unlocks that specific house for everyone in the household."
   }
 }

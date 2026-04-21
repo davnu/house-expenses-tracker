@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
-import { Link } from 'react-router'
-import { Plus, Landmark, Printer, Target } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import { Plus, Landmark, Printer, Target, Lock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { ToolbarButton } from '@/components/ui/toolbar-button'
@@ -16,11 +16,15 @@ import { QuickAddDialog } from '@/components/expenses/QuickAddDialog'
 import { BudgetSetupDialog } from '@/components/budget/BudgetSetupDialog'
 import { BudgetHealthCard } from '@/components/budget/BudgetHealthCard'
 import { TodoCard } from '@/components/todos/TodoCard'
+import { UpgradeBanner } from '@/components/billing/UpgradeBanner'
+import { InviteHousemateDialog } from '@/components/household/InviteHousemateDialog'
 import { PageSkeleton } from '@/components/ui/loading'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useMortgage } from '@/context/MortgageContext'
 import { useBudget } from '@/context/BudgetContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useEntitlement } from '@/hooks/use-entitlement'
+import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { getMortgageStats } from '@/lib/mortgage-utils'
 import { applyFilters, isExpensePaid, type DashboardFilters as Filters } from '@/lib/expense-utils'
 import type { ExpenseCategory } from '@/types/expense'
@@ -31,9 +35,47 @@ export function DashboardPage() {
   const { mortgage, loading: mortgageLoading } = useMortgage()
   const { budget } = useBudget()
   const { house } = useHousehold()
+  const { limits, isPro, isLoading: entitlementLoading } = useEntitlement()
+  const { open: openUpgrade } = useUpgradeDialog()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState<Filters>({})
   const [addExpenseOpen, setAddExpenseOpen] = useState(false)
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+
+  // Post-purchase onboarding: when the user returns from Polar checkout via
+  // `/thanks` → `/app?onboard=invite`, auto-open the invite dialog. Inviting
+  // the partner is the #1 reason most users just paid — skipping the extra
+  // navigation step is the single biggest UX win for a just-upgraded user.
+  // We wait for the entitlement to confirm Pro so the invite actually works
+  // (webhook → onSnapshot propagation is usually <1s but not instant).
+  useEffect(() => {
+    if (searchParams.get('onboard') !== 'invite') return
+    if (entitlementLoading) return
+    if (isPro) {
+      setInviteDialogOpen(true)
+    }
+    // Clear the param either way so a refresh doesn't re-trigger
+    const next = new URLSearchParams(searchParams)
+    next.delete('onboard')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, entitlementLoading, isPro, setSearchParams])
+
+  const handleBudgetClick = () => {
+    if (!limits.hasBudget) {
+      openUpgrade('budget')
+      return
+    }
+    setBudgetDialogOpen(true)
+  }
+
+  const handlePrintClick = () => {
+    if (!limits.hasPrintSummary) {
+      openUpgrade('print')
+      return
+    }
+    window.print()
+  }
 
   const filteredExpenses = useMemo(() => applyFilters(expenses, filters), [expenses, filters])
 
@@ -63,18 +105,20 @@ export function DashboardPage() {
           {hasData && (
             <div className="flex items-center gap-2">
               <ToolbarButton
-                icon={Target}
+                icon={limits.hasBudget ? Target : Lock}
                 label={t('budget.setBudget')}
-                onClick={() => setBudgetDialogOpen(true)}
+                onClick={handleBudgetClick}
               />
               <ToolbarButton
-                icon={Printer}
+                icon={limits.hasPrintSummary ? Printer : Lock}
                 label={t('common.print')}
-                onClick={() => window.print()}
+                onClick={handlePrintClick}
               />
             </div>
           )}
         </div>
+
+        {hasData && <UpgradeBanner />}
 
         {expenses.length > 0 && (
           <DashboardFilters
@@ -167,6 +211,11 @@ export function DashboardPage() {
       )}
 
       <BudgetSetupDialog open={budgetDialogOpen} onOpenChange={setBudgetDialogOpen} />
+      <InviteHousemateDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        houseName={house?.name}
+      />
     </>
   )
 }

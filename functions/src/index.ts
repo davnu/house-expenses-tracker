@@ -5,6 +5,12 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 export { onFileUploaded, onFileDeleted } from "./storage-quota";
+export {
+  createCheckoutSession,
+  onPolarWebhook,
+  reconcileOrder,
+  grandfatherExistingHouses,
+} from "./billing";
 import { getStorage } from "firebase-admin/storage";
 import {
   fetchEuribor,

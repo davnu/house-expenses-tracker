@@ -25,6 +25,30 @@ vi.mock('@/context/HouseholdContext', () => ({
   }),
 }))
 
+// Default entitlement mock: Pro tier. Tests that exercise the free-tier
+// path override this via `vi.mocked(...)` or by importing from the hook.
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => ({
+    entitlement: { tier: 'pro', purchasedAt: '' },
+    limits: {
+      maxMembers: Infinity,
+      maxStorageMB: 500,
+      hasHouseholdInvites: true,
+      hasAdvancedMortgage: true,
+      hasBudget: true,
+      hasExport: true,
+      hasPrintSummary: true,
+      hasMortgageWhatIf: true,
+    },
+    isPro: true,
+    isLoading: false,
+  }),
+}))
+vi.mock('@/context/UpgradeDialogContext', () => ({
+  useUpgradeDialog: () => ({ isOpen: false, gate: null, open: vi.fn(), close: vi.fn() }),
+  UpgradeDialogProvider: ({ children }: { children: unknown }) => children,
+}))
+
 import { InviteHousemateDialog } from './InviteHousemateDialog'
 
 const writeTextMock = vi.fn()

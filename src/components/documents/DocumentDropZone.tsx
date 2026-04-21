@@ -2,8 +2,9 @@ import { useState, useRef, useCallback, type DragEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Upload, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ACCEPTED_FILE_TYPES, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { ACCEPTED_FILE_TYPES } from '@/lib/constants'
 import { validateDocumentFiles, rejectionMessage } from '@/lib/attachment-validation'
+import { useEntitlement } from '@/hooks/use-entitlement'
 
 const ACCEPT_STRING = ACCEPTED_FILE_TYPES.join(',')
 
@@ -15,11 +16,13 @@ interface DocumentDropZoneProps {
 
 export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }: DocumentDropZoneProps) {
   const { t } = useTranslation()
+  const { limits } = useEntitlement()
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const storageRemaining = MAX_HOUSEHOLD_STORAGE - totalStorageUsed
+  const maxHouseholdBytes = limits.maxStorageMB * 1024 * 1024
+  const storageRemaining = maxHouseholdBytes - totalStorageUsed
   const atStorageLimit = storageRemaining <= 0
 
   const processFiles = useCallback(
@@ -27,11 +30,12 @@ export function DocumentDropZone({ onFilesSelected, totalStorageUsed, disabled }
       setError('')
       const { accepted, rejection } = validateDocumentFiles(Array.from(fileList), {
         householdStorageUsed: totalStorageUsed,
+        maxHouseholdBytes,
       })
       if (rejection) setError(rejectionMessage(t, rejection))
       if (accepted.length > 0) onFilesSelected(accepted)
     },
-    [onFilesSelected, totalStorageUsed, t]
+    [onFilesSelected, totalStorageUsed, maxHouseholdBytes, t]
   )
 
   const handleDragOver = (e: DragEvent) => {

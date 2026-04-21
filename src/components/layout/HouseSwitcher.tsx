@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, Plus, Check } from 'lucide-react'
+import { ChevronDown, Plus, Check, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useCanCreateHouse } from '@/hooks/use-can-create-house'
+import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { CreateHouseDialog } from './CreateHouseDialog'
 
 export function HouseSwitcher() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { house, houses, switchHouse } = useHousehold()
+  const { reason: createHouseReason } = useCanCreateHouse()
+  const { open: openUpgrade } = useUpgradeDialog()
   const [open, setOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [switching, setSwitching] = useState(false)
@@ -172,12 +176,31 @@ export function HouseSwitcher() {
               aria-selected={false}
               tabIndex={focusIndex === houses.length ? 0 : -1}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+              disabled={createHouseReason === 'loading'}
               onClick={() => {
                 close()
-                setCreateOpen(true)
+                // Mirror of SettingsPage: 'first' is the only free path.
+                // 'hasProHouse' routes to the €29 additional_house paywall
+                // which collects the new house's name and lets the webhook
+                // provision it server-side. 'needsUpgrade' routes to the €49
+                // Pro upgrade of the current house; creating more houses is
+                // unlocked after that.
+                if (createHouseReason === 'first') {
+                  setCreateOpen(true)
+                  return
+                }
+                if (createHouseReason === 'hasProHouse') {
+                  openUpgrade('create_house', { product: 'additional_house' })
+                  return
+                }
+                openUpgrade('create_house', { product: 'pro' })
               }}
             >
-              <Plus className="h-4 w-4" aria-hidden="true" />
+              {createHouseReason === 'first' || createHouseReason === 'hasProHouse' ? (
+                <Plus className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Lock className="h-4 w-4" aria-hidden="true" />
+              )}
               <span>{t('settings.createNewHouse')}</span>
             </button>
           </div>

@@ -1,9 +1,30 @@
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { DocumentDropZone } from './DocumentDropZone'
 import { MAX_FILE_SIZE, MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
 import { makeFile } from '@/test-utils/files'
+
+// Entitlement mock: default to free tier so MAX_HOUSEHOLD_STORAGE (50 MB)
+// stays the effective cap — preserves the existing test semantics.
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => ({
+    entitlement: null,
+    limits: {
+      maxMembers: 1,
+      maxStorageMB: 50,
+      hasHouseholdInvites: false,
+      hasAdvancedMortgage: false,
+      hasBudget: false,
+      hasExport: false,
+      hasPrintSummary: false,
+      hasMortgageWhatIf: false,
+    },
+    isPro: false,
+    isLoading: false,
+  }),
+}))
+
+import { DocumentDropZone } from './DocumentDropZone'
 
 // ── jsdom polyfills ──
 

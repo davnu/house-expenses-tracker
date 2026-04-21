@@ -21,7 +21,7 @@ import { searchUnified, getRecentDocuments, attachmentToHouseDocument, type Unif
 import { getCategoryLabel } from '@/lib/constants'
 import { cn, formatCurrency, formatFileSize } from '@/lib/utils'
 import { getFolderIconBg } from '@/lib/file-type-info'
-import { MAX_HOUSEHOLD_STORAGE } from '@/lib/constants'
+import { useEntitlement } from '@/hooks/use-entitlement'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { Attachment } from '@/types/expense'
 
@@ -29,7 +29,9 @@ export function DocumentsPage() {
   const { t } = useTranslation()
   const { folders, documents, loading, totalStorageUsed, pendingDocumentIds, moveDocument, uploadDocuments, updateDocumentNotes } = useDocuments()
   const { expenses } = useExpenses()
+  const { limits } = useEntitlement()
   const isMobile = useIsMobile()
+  const maxHouseholdBytes = limits.maxStorageMB * 1024 * 1024
   const [selectedFolder, setSelectedFolder] = useState<DocFolder | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [quickUploadOpen, setQuickUploadOpen] = useState(false)
@@ -283,12 +285,12 @@ export function DocumentsPage() {
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{t('documents.storageUsed')}</span>
-              <span>{formatFileSize(totalStorageUsed)} / {formatFileSize(MAX_HOUSEHOLD_STORAGE)}</span>
+              <span>{formatFileSize(totalStorageUsed)} / {formatFileSize(maxHouseholdBytes)}</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${Math.min((totalStorageUsed / MAX_HOUSEHOLD_STORAGE) * 100, 100)}%` }}
+                style={{ width: `${Math.min((totalStorageUsed / maxHouseholdBytes) * 100, 100)}%` }}
               />
             </div>
           </div>

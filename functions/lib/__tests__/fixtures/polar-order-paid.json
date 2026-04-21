@@ -1,0 +1,50 @@
+{
+    "_fixture_note": "Captured from a real Polar sandbox order.paid delivery on 2026-04-21. Schema pulled verbatim from the Polar dashboard 'Deliveries' tab payload view. If Polar evolves this shape, an order.paid fixture test will fail visibly in CI before a real payment silently stops granting Pro in production.",
+    "type": "order.paid",
+    "timestamp": "2026-04-21T09:35:18.478841Z",
+    "data": {
+        "id": "e2148ebc-838e-4592-9073-ddda8fb71597",
+        "created_at": "2026-04-21T09:35:18.063617Z",
+        "modified_at": "2026-04-21T09:35:18.365780Z",
+        "status": "paid",
+        "paid": true,
+        "subtotal_amount": 4900,
+        "discount_amount": 0,
+        "net_amount": 4050,
+        "tax_amount": 850,
+        "total_amount": 4900,
+        "applied_balance_amount": 0,
+        "due_amount": 4900,
+        "refunded_amount": 0,
+        "refunded_tax_amount": 0,
+        "currency": "eur",
+        "billing_reason": "purchase",
+        "billing_name": null,
+        "billing_address": {
+            "line1": null,
+            "line2": null,
+            "postal_code": null,
+            "city": null,
+            "state": null,
+            "country": "ES"
+        },
+        "invoice_number": "NUALSOLUTIONS-TRBTUZMNDN-0010",
+        "is_invoice_generated": false,
+        "seats": null,
+        "customer_id": "4af8695e-bfb8-4293-92c6-1350bf0931fd",
+        "product_id": "b448cda8-678e-429d-8cea-4551d48c02bf",
+        "product_price_id": "c5be3b43-7869-4076-bbd3-87df50aa6f57",
+        "discount_id": null,
+        "subscription_id": null,
+        "checkout_id": "7db025b4-4b3c-4563-b612-0ccd2b3aed9c",
+        "metadata": {
+            "uid": "b8ZoWpZ85egCwjIbebscJwmH30e2",
+            "houseId": "MXPGh2Pg3zecRXuADTFM",
+            "product": "pro"
+        },
+        "custom_field_data": {},
+        "platform_fee_amount": 0,
+        "platform_fee_currency": null,
+        "amount": 4050
+    }
+}

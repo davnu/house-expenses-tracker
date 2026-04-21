@@ -17,6 +17,7 @@
     "print": "Imprimir",
     "add": "Adicionar",
     "close": "Fechar",
+    "done": "Pronto",
     "saving": "A guardar...",
     "creating": "A criar...",
     "loading": "Aguarda...",
@@ -894,5 +895,160 @@
     "failedToAdd": "Não foi possível adicionar a tarefa. Tente novamente.",
     "failedToSave": "Não foi possível guardar. Tente novamente.",
     "failedToDelete": "Não foi possível eliminar. Tente novamente."
+  },
+  "billing": {
+    "oneTime": "Pagamento único",
+    "lifetimeForHouse": "Acesso vitalício — paga uma vez por esta casa, sem subscrição.",
+    "unlockCta": "Desbloqueia Pro por {{price}}",
+    "redirecting": "A encaminhar para o pagamento…",
+    "unlockFor": "Desbloquear por {{price}}",
+    "ctaSubline": "Pagamento único de {{price}} · acesso vitalício",
+    "priceContext": "Menos do que a escritura notarial. Pagamento único — sem subscrição.",
+    "additionalHouseNote": "Vais comprar outra casa? Adiciona-a por apenas {{price}}.",
+    "buyAdditionalHouse": "Adicionar outra casa ({{price}})",
+    "errors": {
+      "unauthenticated": "A tua sessão expirou. Termina sessão e volta a entrar. Se continuar a falhar, escreve-nos.",
+      "transient": "O pagamento não está disponível neste momento. Já estamos a tratar — tenta de novo daqui a uns segundos.",
+      "generic": "Não conseguimos abrir o pagamento. Tenta novamente daqui a pouco; se continuar a falhar, escreve-nos."
+    },
+    "checkoutComingSoon": "O pagamento está a ser configurado. Tenta novamente daqui a pouco.",
+    "banner": {
+      "title": "Tira mais partido do CasaTab",
+      "subtitle": "Convida o teu parceiro, desbloqueia hipoteca avançada, orçamentos, exportação e mais — pagamento único {{price}}, sem subscrição.",
+      "cta": "Vê o que inclui o Pro"
+    },
+    "section": {
+      "title": "O teu plano",
+      "proSubtitle": "Pro está ativo para esta casa. Tudo desbloqueado.",
+      "freeSubtitle": "Estás no plano gratuito. Perfeito para seguires sozinho.",
+      "freeBadge": "Grátis",
+      "purchasedOn": "Comprado a",
+      "source": "Origem",
+      "foundingMember": "Membro fundador",
+      "orderId": "Encomenda",
+      "freeIncludes": "Plano grátis",
+      "proAdds": "Pro desbloqueia",
+      "freeFeature1": "Despesas ilimitadas em todas as categorias",
+      "freeFeature2": "Anexos e calculadora de hipoteca básica",
+      "freeFeature3": "Gráficos do painel e desagregação por categoria",
+      "noSubscriptionNote": "É um pagamento único — nada para cancelar, nada para gerir.",
+      "revokedTitle": "Pro foi revogado para esta casa",
+      "revokedOn": "Revogado a {{date}}.",
+      "revokedHelp": "Se isto não parece certo, contacta-nos e resolvemos."
+    },
+    "reconcile": {
+      "link": "Paguei mas não vejo o Pro",
+      "title": "Recupera a tua compra",
+      "subtitle": "Procuramos um pagamento recente ligado a esta casa.",
+      "body": "Se o pagamento já passou mas o Pro ainda não está ativo, carrega em Verificar agora. Procuramos o teu pedido na Polar e ativamos o Pro logo de seguida.",
+      "runCta": "Verificar agora",
+      "checking": "A consultar a Polar…",
+      "successReconciled": "Encontrado — o Pro está ativo para esta casa.",
+      "successAlreadyPro": "Esta casa já tem Pro — está tudo pronto.",
+      "noOrder": "Não encontrámos nenhum pagamento para esta casa. Se tens a certeza de que pagaste, fala connosco e verificamos."
+    },
+    "product": {
+      "additionalHouse": {
+        "title": "Adicionar outra casa",
+        "subtitle": "Desbloqueia Pro para uma segunda ou terceira casa.",
+        "note": "Pagamento único por esta casa adicional.",
+        "nameLabel": "Dá um nome à tua nova casa",
+        "namePlaceholder": "por ex. Apartamento em Lisboa",
+        "nameHelp": "Podes mudar o nome mais tarde em Definições."
+      }
+    },
+    "features": {
+      "invites": "Convida o teu parceiro ou co-compradores",
+      "advancedMortgage": "Hipoteca avançada: mudanças de taxa, amortizações, comparações",
+      "budget": "Define orçamentos por categoria e acompanha-os",
+      "export": "Exporta tudo e imprime um resumo limpo",
+      "storage": "500 MB de espaço para os teus ficheiros"
+    },
+    "gate": {
+      "invite": {
+        "title": "Convida o teu parceiro para esta casa",
+        "subtitle": "Partilha tudo com quem está a comprar contigo.",
+        "cta": "Convidar o teu parceiro"
+      },
+      "advancedMortgage": {
+        "title": "Hipoteca completa",
+        "subtitle": "Períodos de taxa, amortizações antecipadas e correções de saldo.",
+        "cta": "Desbloquear hipoteca avançada"
+      },
+      "budget": {
+        "title": "Define um orçamento para a tua casa",
+        "subtitle": "Planeia por categoria e vê quanto ainda tens.",
+        "cta": "Definir orçamento"
+      },
+      "export": {
+        "title": "Exporta os teus dados",
+        "subtitle": "Descarrega um JSON completo de despesas, hipoteca e orçamento.",
+        "cta": "Exportar dados"
+      },
+      "print": {
+        "title": "Imprime um resumo limpo",
+        "subtitle": "Tabela por categoria, tabela mensal e divisão por pessoa.",
+        "cta": "Imprimir resumo"
+      },
+      "whatIf": {
+        "title": "Experimenta 'e se...?' na tua hipoteca",
+        "subtitle": "Simula mudanças de taxa, prazo e capital lado a lado.",
+        "cta": "Executar 'e se?'"
+      },
+      "storage": {
+        "title": "Mais espaço para os teus ficheiros",
+        "subtitle": "Sobe para 500 MB — suficiente para cada recibo, escritura e contrato.",
+        "cta": "Aumentar espaço"
+      },
+      "createHouse": {
+        "title": "Adicionar outra casa",
+        "subtitle": "O plano grátis inclui uma casa. Passa para Pro para adicionares mais — casas adicionais são 29 € cada depois disso.",
+        "cta": "Passar a Pro por 49 €"
+      },
+      "generic": {
+        "title": "Desbloqueia o CasaTab Pro",
+        "subtitle": "Tudo para esta casa, pagamento único, sem subscrição."
+      }
+    },
+    "thanks": {
+      "title": "Bem-vindo ao Pro",
+      "subtitle": "Tudo desbloqueado para esta casa. O teu pagamento está confirmado.",
+      "nextStepsTitle": "Próximos passos",
+      "step1": "Convida o teu parceiro — ele verá tudo o que registaste",
+      "step2": "Abre a página da hipoteca para períodos e comparações",
+      "step3": "Vai a Documentos para arquivar escritura, contratos e seguros",
+      "cta": "Voltar à tua casa",
+      "waitingTitle": "A confirmar a tua compra…",
+      "waitingSubtitle": "Normalmente leva só uns segundos.",
+      "pendingTitle": "Já quase",
+      "pendingSubtitle": "Recebemos o teu pagamento. O Pro costuma ficar ativo em poucos segundos; se passado um minuto continuares no Gratuito, avisa-nos.",
+      "pendingCta": "Voltar à tua casa",
+      "pendingContact": "Fala connosco"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Preços",
+    "title": "Preços honestos para uma compra única na vida",
+    "subtitle": "Grátis para experimentar. Pagamento único quando estiveres pronto. Nunca subscrição.",
+    "heroCta": "Começar grátis",
+    "freeTitle": "Grátis",
+    "freeSubtitle": "Perfeito para seguires a tua própria compra.",
+    "forever": "para sempre",
+    "freeCta": "Começar grátis",
+    "proTitle": "Pro",
+    "proSubtitle": "Para casais e compradores sérios.",
+    "oneTimeLabel": "pagamento único · por casa",
+    "recommended": "A maioria dos compradores",
+    "proCta": "Obter Pro",
+    "everythingInFree": "Tudo o do Grátis, mais:",
+    "additionalHouseTitle": "Casa adicional — {{price}}",
+    "additionalHouseDesc": "Vais comprar uma segunda casa ou investimento? Adiciona com 40% de desconto.",
+    "faqTitle": "Perguntas frequentes",
+    "faq1Q": "É mesmo pagamento único? Sem subscrição?",
+    "faq1A": "Sim. Pagas uma vez pela tua casa. Sem cobranças recorrentes. Depois da compra, os teus dados continuam a ser teus.",
+    "faq2Q": "E se ainda não tiver a certeza?",
+    "faq2A": "Começa grátis. Regista despesas, anexa recibos, usa a calculadora básica de hipoteca. Atualiza só quando convidares o teu parceiro ou precisares das ferramentas avançadas.",
+    "faq3Q": "E se comprar uma segunda casa?",
+    "faq3A": "Adiciona-a por 29 € — 40% de desconto face à primeira. Cada casa é independente; o pagamento desbloqueia essa casa específica para todos os membros do agregado."
   }
 }

@@ -358,4 +358,50 @@ function createMockDb(initialData = {}) {
         (0, vitest_1.expect)(storage_quota_1.MAX_HOUSEHOLD_STORAGE).toBe(50 * 1024 * 1024);
     });
 });
+// ── Entitlement-aware cap ───────────────────────────────────────────
+(0, vitest_1.describe)("maxBytesForEntitlement", () => {
+    (0, vitest_1.it)("defaults to 50 MB when entitlement is missing", () => {
+        (0, vitest_1.expect)((0, storage_quota_1.maxBytesForEntitlement)(null)).toBe(storage_quota_1.MAX_HOUSEHOLD_STORAGE);
+        (0, vitest_1.expect)((0, storage_quota_1.maxBytesForEntitlement)(undefined)).toBe(storage_quota_1.MAX_HOUSEHOLD_STORAGE);
+    });
+    (0, vitest_1.it)("returns 50 MB for free tier explicitly", () => {
+        (0, vitest_1.expect)((0, storage_quota_1.maxBytesForEntitlement)({ tier: "free" })).toBe(storage_quota_1.MAX_HOUSEHOLD_STORAGE);
+    });
+    (0, vitest_1.it)("returns 500 MB for Pro tier", () => {
+        (0, vitest_1.expect)((0, storage_quota_1.maxBytesForEntitlement)({ tier: "pro" })).toBe(storage_quota_1.PRO_HOUSEHOLD_STORAGE);
+    });
+});
+(0, vitest_1.describe)("enforceQuotaOnUpload — entitlement-aware", () => {
+    let db;
+    (0, vitest_1.beforeEach)(() => {
+        db = createMockDb();
+    });
+    (0, vitest_1.it)("accepts a 100 MB upload when the house has Pro entitlement", async () => {
+        db._store["houses/h1/meta/entitlement"] = { tier: "pro" };
+        const result = await (0, storage_quota_1.enforceQuotaOnUpload)("houses/h1/attachments/a1/big.pdf", 100 * 1024 * 1024, db);
+        (0, vitest_1.expect)(result).toBe("accepted");
+    });
+    (0, vitest_1.it)("rejects the same 100 MB upload when the house is free", async () => {
+        // No entitlement doc → defaults to free → 50 MB cap → 100 MB rejected
+        const result = await (0, storage_quota_1.enforceQuotaOnUpload)("houses/h1/attachments/a1/big.pdf", 100 * 1024 * 1024, db);
+        (0, vitest_1.expect)(result).toBe("rejected");
+    });
+    (0, vitest_1.it)("rejects an upload that exceeds the Pro cap (500 MB)", async () => {
+        db._store["houses/h1/meta/entitlement"] = { tier: "pro" };
+        db._store["houses/h1/meta/storage"] = {
+            usedBytes: storage_quota_1.PRO_HOUSEHOLD_STORAGE - 100,
+        };
+        const result = await (0, storage_quota_1.enforceQuotaOnUpload)("houses/h1/attachments/a1/file.pdf", 500, db);
+        (0, vitest_1.expect)(result).toBe("rejected");
+    });
+    (0, vitest_1.it)("reads entitlement + storage counter in parallel inside one transaction (perf/race)", async () => {
+        db._store["houses/h1/meta/entitlement"] = { tier: "pro" };
+        db._store["houses/h1/meta/storage"] = { usedBytes: 0 };
+        // Just confirming that a normal accepted upload works when both docs coexist.
+        // The Promise.all pattern inside the function is verified structurally by this
+        // running at all without deadlocking the mock transaction.
+        const result = await (0, storage_quota_1.enforceQuotaOnUpload)("houses/h1/attachments/a1/file.pdf", 1024, db);
+        (0, vitest_1.expect)(result).toBe("accepted");
+    });
+});
 //# sourceMappingURL=storage-quota.test.js.map

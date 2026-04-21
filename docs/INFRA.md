@@ -70,7 +70,7 @@ app" promise in the privacy policy and landing hero.
 - **Vercel project name**: `casatab-umami` (or whatever you named it during deploy)
 - **Vercel dashboard**: https://vercel.com/dashboard → select the project
 - **Umami dashboard URL**: the project's Vercel preview URL (currently `https://casatab-umami-*.vercel.app`). Stored in CasaTab's `.env` as `VITE_UMAMI_HOST`.
-- **Admin login**: `admin` / `<password in your password manager>`
+- **Admin `login**: `admin` / `<password in your password manager>`
 - **Website ID**: stored in CasaTab's `.env` as `VITE_UMAMI_WEBSITE_ID`. Also visible in Umami dashboard → Settings → Websites → CasaTab.
 - **Tracked events**:
   - Auto: `page_view` on every public route change

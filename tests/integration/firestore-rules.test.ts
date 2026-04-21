@@ -626,6 +626,82 @@ describe('Meta docs (/houses/{houseId}/meta/{docId})', () => {
       alice.firestore().doc('houses/house1/meta/settings').set({ currency: 'EUR' })
     )
   })
+
+  it('member can write to the other allowlisted meta docs (mortgage, budget)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/meta/mortgage').set({ principal: 30000000 })
+    )
+    await assertSucceeds(
+      alice.firestore().doc('houses/house1/meta/budget').set({ total: 100000 })
+    )
+  })
+
+  it('rules use an ALLOWLIST — a docId not explicitly permitted is rejected', async () => {
+    // Regression guard: after switching from denylist to allowlist, any future
+    // meta docId that isn't explicitly enumerated should be denied. This is
+    // the safety-by-default behaviour the allowlist is meant to provide.
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(
+      alice.firestore().doc('houses/house1/meta/some-future-field').set({ foo: 'bar' })
+    )
+  })
+
+  // ── Entitlement (billing) ────────────────────────────────────────────
+  // `meta/entitlement` is the Pro-unlock doc written only by the Polar
+  // webhook Cloud Function. Clients must never be able to self-upgrade.
+
+  it('member cannot write to meta/entitlement (server-managed — would be a free upgrade)', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(
+      alice.firestore().doc('houses/house1/meta/entitlement').set({ tier: 'pro' })
+    )
+  })
+
+  it('member cannot update an existing meta/entitlement to extend it', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/meta/entitlement').set({ tier: 'free' })
+    })
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(
+      alice.firestore().doc('houses/house1/meta/entitlement').update({ tier: 'pro' })
+    )
+  })
+
+  it('house members (including non-owners) can read meta/entitlement — enables Pro inheritance', async () => {
+    // Alice owns a Pro house and has invited Bob.
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore()
+      await db.doc('houses/house1').update({ memberIds: ['alice', 'bob'] })
+      await db.doc('houses/house1/members/bob').set({
+        displayName: 'Bob', email: 'b@t.com', color: '#e76e50',
+        role: 'member', joinedAt: new Date().toISOString(),
+      })
+      await db.doc('houses/house1/meta/entitlement').set({
+        tier: 'pro',
+        purchasedAt: new Date().toISOString(),
+      })
+    })
+
+    const bob = testEnv.authenticatedContext('bob', { email_verified: true })
+    // Bob must be able to read the entitlement to inherit Pro features —
+    // this is the whole point of storing entitlement per-house.
+    await assertSucceeds(bob.firestore().doc('houses/house1/meta/entitlement').get())
+  })
+
+  it('non-member cannot read meta/entitlement', async () => {
+    await seedHouseWithMember('house1', 'alice')
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('houses/house1/meta/entitlement').set({ tier: 'pro' })
+    })
+    const outsider = testEnv.authenticatedContext('outsider', { email_verified: true })
+    await assertFails(outsider.firestore().doc('houses/house1/meta/entitlement').get())
+  })
 })
 
 // ── Reference Rates ──────────────────────────────────────────────────
@@ -644,6 +720,58 @@ describe('Reference rates (/reference_rates/{rateId})', () => {
     const alice = testEnv.authenticatedContext('alice', { email_verified: true })
     await assertFails(
       alice.firestore().doc('reference_rates/euribor_12m').set({ values: {}, source: 'Hacked' })
+    )
+  })
+})
+
+// ── Webhook Attempts (billing audit log) ─────────────────────────────
+
+describe('Webhook attempts (/webhook_attempts/{id})', () => {
+  it('clients cannot read — server-only audit log', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('webhook_attempts/evt_123').set({
+        webhookId: 'evt_123',
+        status: 'accepted',
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(alice.firestore().doc('webhook_attempts/evt_123').get())
+  })
+
+  it('clients cannot write — only admin SDK can append audit rows', async () => {
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(
+      alice.firestore().doc('webhook_attempts/forged_123').set({
+        webhookId: 'forged',
+        status: 'accepted',
+      })
+    )
+  })
+})
+
+// ── Polar order idempotency markers ──────────────────────────────────
+
+describe('Polar orders (/polar_orders/{polarOrderId})', () => {
+  it('clients cannot read — order history would leak via these markers', async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('polar_orders/ord_abc').set({
+        houseId: 'house1',
+        uid: 'alice',
+        product: 'additional_house',
+      })
+    })
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(alice.firestore().doc('polar_orders/ord_abc').get())
+  })
+
+  it('clients cannot write — only admin SDK can set the idempotency marker', async () => {
+    const alice = testEnv.authenticatedContext('alice', { email_verified: true })
+    await assertFails(
+      alice.firestore().doc('polar_orders/forged_order').set({
+        houseId: 'attacker_house',
+        uid: 'alice',
+        product: 'additional_house',
+      })
     )
   })
 })

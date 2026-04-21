@@ -15,10 +15,13 @@ import { BalanceCorrectionCard } from '@/components/mortgage/BalanceCorrectionCa
 import { MortgageComparisonSection } from '@/components/mortgage/MortgageComparisonSection'
 import { Button } from '@/components/ui/button'
 import { Landmark, Edit2, Trash2 } from 'lucide-react'
+import { LockOverlay } from '@/components/billing/LockOverlay'
+import { useEntitlement } from '@/hooks/use-entitlement'
 
 export function MortgagePage() {
   const { t } = useTranslation()
   const { mortgage, loading, deleteMortgage } = useMortgage()
+  const { limits } = useEntitlement()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -95,21 +98,33 @@ export function MortgagePage() {
       <MortgageOverviewCard config={mortgage} />
 
       {/* What-If Comparison */}
-      <MortgageComparisonSection config={mortgage} stats={stats} />
+      <LockOverlay gate="what_if" active={!limits.hasMortgageWhatIf}>
+        <MortgageComparisonSection config={mortgage} stats={stats} />
+      </LockOverlay>
 
       {/* Section 3: Management — rate history, extra repayments, corrections */}
       {showRateManagement ? (
         <>
-          <RatePeriodsCard />
+          <LockOverlay gate="advanced_mortgage" active={!limits.hasAdvancedMortgage}>
+            <RatePeriodsCard />
+          </LockOverlay>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ExtraRepaymentsCard />
-            <BalanceCorrectionCard />
+            <LockOverlay gate="advanced_mortgage" active={!limits.hasAdvancedMortgage} compact>
+              <ExtraRepaymentsCard />
+            </LockOverlay>
+            <LockOverlay gate="advanced_mortgage" active={!limits.hasAdvancedMortgage} compact>
+              <BalanceCorrectionCard />
+            </LockOverlay>
           </div>
         </>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ExtraRepaymentsCard />
-          <BalanceCorrectionCard />
+          <LockOverlay gate="advanced_mortgage" active={!limits.hasAdvancedMortgage} compact>
+            <ExtraRepaymentsCard />
+          </LockOverlay>
+          <LockOverlay gate="advanced_mortgage" active={!limits.hasAdvancedMortgage} compact>
+            <BalanceCorrectionCard />
+          </LockOverlay>
         </div>
       )}
 

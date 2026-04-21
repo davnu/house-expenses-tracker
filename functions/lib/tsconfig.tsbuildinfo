@@ -1,0 +1,1 @@
+{"root":["../src/billing.ts","../src/fetch-rates.ts","../src/index.ts","../src/storage-quota.ts","../src/__tests__/billing.test.ts","../src/__tests__/storage-quota.test.ts"],"version":"5.9.3"}

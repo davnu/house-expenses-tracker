@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Copy, Link as LinkIcon, RefreshCw, Share2, Sparkles, Users } from 'lucide-react'
+import { Check, Copy, Link as LinkIcon, Lock, RefreshCw, Share2, Sparkles, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useEntitlement } from '@/hooks/use-entitlement'
+import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
+import { PaywallRequired } from '@/lib/entitlement-limits'
+import { PRICES } from '@/lib/billing'
 
 interface InviteHousemateDialogProps {
   open: boolean
@@ -29,6 +33,8 @@ interface InviteHousemateDialogProps {
 export function InviteHousemateDialog({ open, onOpenChange, houseName }: InviteHousemateDialogProps) {
   const { t } = useTranslation()
   const { generateInvite, house } = useHousehold()
+  const { limits } = useEntitlement()
+  const { open: openUpgrade } = useUpgradeDialog()
 
   const [link, setLink] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,6 +68,14 @@ export function InviteHousemateDialog({ open, onOpenChange, houseName }: InviteH
   }, [])
 
   async function handleGenerate() {
+    // Free tier: close this dialog and open the upgrade modal. The primary
+    // CTA for free users is already labelled "Unlock" — this is the defensive
+    // path in case the pre-check was stale when entitlement loaded.
+    if (!limits.hasHouseholdInvites) {
+      onOpenChange(false)
+      openUpgrade('invite')
+      return
+    }
     const myId = ++requestIdRef.current
     setLoading(true)
     setError('')
@@ -69,8 +83,13 @@ export function InviteHousemateDialog({ open, onOpenChange, houseName }: InviteH
       const url = await generateInvite()
       if (myId !== requestIdRef.current) return // superseded — discard
       setLink(url)
-    } catch {
+    } catch (err) {
       if (myId !== requestIdRef.current) return
+      if (err instanceof PaywallRequired) {
+        onOpenChange(false)
+        openUpgrade(err.gate)
+        return
+      }
       setError(t('settings.failedToGenerateInvite'))
     } finally {
       if (myId === requestIdRef.current) setLoading(false)
@@ -127,6 +146,11 @@ export function InviteHousemateDialog({ open, onOpenChange, houseName }: InviteH
                 <>
                   <Sparkles className="h-4 w-4 mr-2 animate-pulse" aria-hidden="true" />
                   {t('invite.preparing')}
+                </>
+              ) : !limits.hasHouseholdInvites ? (
+                <>
+                  <Lock className="h-4 w-4 mr-2" aria-hidden="true" />
+                  {t('billing.unlockCta', { price: PRICES.pro.display })}
                 </>
               ) : (
                 <>

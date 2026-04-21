@@ -17,6 +17,7 @@
     "print": "Afdrukken",
     "add": "Toevoegen",
     "close": "Sluiten",
+    "done": "Klaar",
     "saving": "Opslaan...",
     "creating": "Aanmaken...",
     "loading": "Even geduld...",
@@ -894,5 +895,160 @@
     "failedToAdd": "Taak toevoegen mislukt. Probeer het opnieuw.",
     "failedToSave": "Opslaan mislukt. Probeer het opnieuw.",
     "failedToDelete": "Verwijderen mislukt. Probeer het opnieuw."
+  },
+  "billing": {
+    "oneTime": "Eenmalig",
+    "lifetimeForHouse": "Levenslange toegang — één keer betalen voor dit huis, geen abonnement.",
+    "unlockCta": "Ontgrendel Pro voor {{price}}",
+    "redirecting": "Je wordt doorgestuurd naar de betaling…",
+    "unlockFor": "Ontgrendelen voor {{price}}",
+    "ctaSubline": "Eenmalig {{price}} · levenslange toegang",
+    "priceContext": "Minder dan de notariskosten. Eenmalig — geen abonnement.",
+    "additionalHouseNote": "Koop je een tweede huis? Voeg het toe voor maar {{price}}.",
+    "buyAdditionalHouse": "Nog een huis toevoegen ({{price}})",
+    "errors": {
+      "unauthenticated": "Je sessie is verlopen. Log uit en weer in om het opnieuw te proberen. Blijft het misgaan? Laat het ons weten.",
+      "transient": "Afrekenen lukt nu even niet. We zijn ermee bezig — probeer het over een paar seconden opnieuw.",
+      "generic": "Afrekenen kon niet worden gestart. Probeer het zo nog eens; blijft het misgaan, laat het ons weten."
+    },
+    "checkoutComingSoon": "De betaling wordt ingesteld. Probeer het zo nog eens.",
+    "banner": {
+      "title": "Haal meer uit CasaTab",
+      "subtitle": "Nodig je partner uit, ontgrendel geavanceerde hypotheek, budgetten, export en meer — eenmalig {{price}}, geen abonnement.",
+      "cta": "Bekijk wat Pro biedt"
+    },
+    "section": {
+      "title": "Jouw plan",
+      "proSubtitle": "Pro is actief voor dit huis. Alles ontgrendeld.",
+      "freeSubtitle": "Je zit op het gratis plan. Prima om zelf bij te houden.",
+      "freeBadge": "Gratis",
+      "purchasedOn": "Gekocht op",
+      "source": "Bron",
+      "foundingMember": "Oprichtend lid",
+      "orderId": "Bestelling",
+      "freeIncludes": "Gratis plan",
+      "proAdds": "Pro ontgrendelt",
+      "freeFeature1": "Onbeperkte uitgaven in alle categorieën",
+      "freeFeature2": "Bijlagen en basis-hypotheekberekening",
+      "freeFeature3": "Dashboardgrafieken en categorieverdeling",
+      "noSubscriptionNote": "Eenmalige betaling — niets te annuleren, niets te beheren.",
+      "revokedTitle": "Pro is ingetrokken voor dit huis",
+      "revokedOn": "Ingetrokken op {{date}}.",
+      "revokedHelp": "Klopt dit niet? Neem contact op en we regelen het."
+    },
+    "reconcile": {
+      "link": "Ik heb betaald maar zie geen Pro",
+      "title": "Je aankoop herstellen",
+      "subtitle": "We zoeken naar een recente betaling voor dit huis.",
+      "body": "Is je betaling gelukt maar staat Pro er nog niet? Klik op Nu controleren. We zoeken je bestelling op bij Polar en activeren Pro meteen.",
+      "runCta": "Nu controleren",
+      "checking": "We checken het bij Polar…",
+      "successReconciled": "Gevonden — Pro is nu actief voor dit huis.",
+      "successAlreadyPro": "Dit huis heeft al Pro — je zit goed.",
+      "noOrder": "We konden geen betaling voor dit huis vinden. Weet je zeker dat je betaald hebt? Laat het ons weten, dan zoeken we het uit."
+    },
+    "product": {
+      "additionalHouse": {
+        "title": "Nog een huis toevoegen",
+        "subtitle": "Ontgrendel Pro voor een tweede of derde huis.",
+        "note": "Eenmalige betaling voor dit extra huis.",
+        "nameLabel": "Geef je nieuwe huis een naam",
+        "namePlaceholder": "bv. Appartement Amsterdam",
+        "nameHelp": "Je kunt de naam later wijzigen in Instellingen."
+      }
+    },
+    "features": {
+      "invites": "Nodig je partner of medekopers uit",
+      "advancedMortgage": "Geavanceerde hypotheek: renteaanpassingen, extra aflossingen, vergelijkingen",
+      "budget": "Stel budgetten per categorie in en volg ze",
+      "export": "Alles exporteren en netjes afdrukken",
+      "storage": "500 MB opslag voor je bestanden"
+    },
+    "gate": {
+      "invite": {
+        "title": "Nodig je partner uit voor dit huis",
+        "subtitle": "Deel alles met de mensen die met je meekopen.",
+        "cta": "Partner uitnodigen"
+      },
+      "advancedMortgage": {
+        "title": "Volledige hypotheek ontgrendelen",
+        "subtitle": "Renteperiodes, extra aflossingen en saldo-correcties.",
+        "cta": "Geavanceerde hypotheek ontgrendelen"
+      },
+      "budget": {
+        "title": "Budget voor je huis",
+        "subtitle": "Plan per categorie en zie hoeveel er nog over is.",
+        "cta": "Budget instellen"
+      },
+      "export": {
+        "title": "Exporteer je gegevens",
+        "subtitle": "Download een volledige JSON-export van uitgaven, hypotheek en budget.",
+        "cta": "Gegevens exporteren"
+      },
+      "print": {
+        "title": "Print een nette samenvatting",
+        "subtitle": "Categorie-tabel, maandtabel en verdeling per persoon.",
+        "cta": "Samenvatting afdrukken"
+      },
+      "whatIf": {
+        "title": "Probeer 'wat als?' op je hypotheek",
+        "subtitle": "Simuleer rente-, termijn- en hoofdsomwijzigingen naast elkaar.",
+        "cta": "'Wat als?' uitvoeren"
+      },
+      "storage": {
+        "title": "Meer ruimte voor je bestanden",
+        "subtitle": "Upgrade naar 500 MB — ruim genoeg voor elke bon, akte en contract.",
+        "cta": "Opslag uitbreiden"
+      },
+      "createHouse": {
+        "title": "Nog een huis toevoegen",
+        "subtitle": "Het gratis plan bevat één huis. Upgrade naar Pro om meer huizen toe te voegen — extra huizen kosten daarna € 29 per stuk.",
+        "cta": "Upgrade naar Pro voor € 49"
+      },
+      "generic": {
+        "title": "Ontgrendel CasaTab Pro",
+        "subtitle": "Alles voor dit huis, eenmalig, geen abonnement."
+      }
+    },
+    "thanks": {
+      "title": "Welkom bij Pro",
+      "subtitle": "Alles is ontgrendeld voor dit huis. Je betaling is bevestigd.",
+      "nextStepsTitle": "Wat nu",
+      "step1": "Nodig je partner uit — hij of zij ziet alles wat je hebt bijgehouden",
+      "step2": "Open de hypotheekpagina voor renteperiodes en vergelijkingen",
+      "step3": "Ga naar Documenten voor akte, contracten en verzekeringen",
+      "cta": "Terug naar je huis",
+      "waitingTitle": "We bevestigen je aankoop…",
+      "waitingSubtitle": "Dit duurt meestal maar een paar seconden.",
+      "pendingTitle": "Bijna klaar",
+      "pendingSubtitle": "We hebben je betaling binnen. Pro wordt meestal binnen een paar seconden actief; zit je na een minuut nog in Gratis, laat het ons weten.",
+      "pendingCta": "Terug naar je huis",
+      "pendingContact": "Neem contact op"
+    }
+  },
+  "pricing": {
+    "eyebrow": "Prijzen",
+    "title": "Eerlijke prijzen voor een eenmalige aankoop",
+    "subtitle": "Gratis om te proberen. Eenmalige betaling wanneer je er klaar voor bent. Nooit een abonnement.",
+    "heroCta": "Gratis beginnen",
+    "freeTitle": "Gratis",
+    "freeSubtitle": "Perfect om je eigen aankoop bij te houden.",
+    "forever": "voor altijd",
+    "freeCta": "Gratis beginnen",
+    "proTitle": "Pro",
+    "proSubtitle": "Voor stellen en serieuze kopers.",
+    "oneTimeLabel": "eenmalig · per huis",
+    "recommended": "De meeste kopers",
+    "proCta": "Pro nemen",
+    "everythingInFree": "Alles uit Gratis, plus:",
+    "additionalHouseTitle": "Extra huis — {{price}}",
+    "additionalHouseDesc": "Koop je een tweede of beleggingshuis? Voeg het toe met 40% korting.",
+    "faqTitle": "Veelgestelde vragen",
+    "faq1Q": "Is het echt eenmalig? Geen abonnement?",
+    "faq1A": "Ja. Je betaalt één keer voor je huis. Geen terugkerende kosten. Na je aankoop blijft je data van jou.",
+    "faq2Q": "Wat als ik het nog niet zeker weet?",
+    "faq2A": "Begin gratis. Houd uitgaven bij, hang bonnen aan, gebruik de basis-hypotheekberekening. Upgrade pas als je je partner uitnodigt of de geavanceerde tools nodig hebt.",
+    "faq3Q": "Wat als ik een tweede huis koop?",
+    "faq3A": "Voeg het toe voor € 29 — 40% korting op de prijs van het eerste huis. Elk huis staat op zichzelf; de betaling ontgrendelt dat specifieke huis voor iedereen in het huishouden."
   }
 }

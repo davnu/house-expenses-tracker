@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Link, Outlet, useNavigate } from 'react-router'
-import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FolderOpen, Shield, ChevronDown, Plus, Check } from 'lucide-react'
+import { LayoutDashboard, Landmark, Receipt, Settings, LogOut, FolderOpen, Shield, ChevronDown, Plus, Check, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useCanCreateHouse } from '@/hooks/use-can-create-house'
+import { useUpgradeDialog } from '@/context/UpgradeDialogContext'
 import { Button } from '@/components/ui/button'
 import { HouseSwitcher } from './HouseSwitcher'
 import { CreateHouseDialog } from './CreateHouseDialog'
@@ -13,6 +15,8 @@ function MobileHouseBar() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { house, houses, switchHouse } = useHousehold()
+  const { canCreate: canCreateHouse } = useCanCreateHouse()
+  const { open: openUpgrade } = useUpgradeDialog()
   const [open, setOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [switching, setSwitching] = useState(false)
@@ -91,10 +95,18 @@ function MobileHouseBar() {
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
                 onClick={() => {
                   setOpen(false)
+                  if (!canCreateHouse) {
+                    openUpgrade('create_house')
+                    return
+                  }
                   setCreateOpen(true)
                 }}
               >
-                <Plus className="h-4 w-4" aria-hidden="true" />
+                {canCreateHouse ? (
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Lock className="h-4 w-4" aria-hidden="true" />
+                )}
                 <span>{t('settings.createNewHouse')}</span>
               </button>
             </div>

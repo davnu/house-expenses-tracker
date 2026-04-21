@@ -64,6 +64,30 @@ vi.mock('@/context/HouseholdContext', () => ({
   }),
 }))
 
+// Entitlement + upgrade dialog — tests exercise Pro experience (no free-tier gate)
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => ({
+    entitlement: { tier: 'pro', purchasedAt: '' },
+    limits: {
+      maxMembers: Infinity,
+      maxStorageMB: 500,
+      hasHouseholdInvites: true,
+      hasAdvancedMortgage: true,
+      hasBudget: true,
+      hasDocumentsPage: true,
+      hasExport: true,
+      hasPrintSummary: true,
+      hasMortgageWhatIf: true,
+    },
+    isPro: true,
+    isLoading: false,
+  }),
+}))
+vi.mock('@/context/UpgradeDialogContext', () => ({
+  useUpgradeDialog: () => ({ isOpen: false, gate: null, open: vi.fn(), close: vi.fn() }),
+  UpgradeDialogProvider: ({ children }: { children: unknown }) => children,
+}))
+
 import { DocumentsPage } from './DocumentsPage'
 import { getFolderIconBg } from '@/lib/file-type-info'
 

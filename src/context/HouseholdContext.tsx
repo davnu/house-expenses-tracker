@@ -22,6 +22,8 @@ import { deleteAttachments } from '@/data/firebase-attachment-store'
 import { deleteDocumentFiles } from '@/data/firebase-document-store'
 import { useAuth } from './AuthContext'
 import { MEMBER_COLOR_PALETTE, SHARED_PAYER, SHARED_PAYER_COLOR, SHARED_PAYER_LABEL, SPLIT_PAYER, SPLIT_PAYER_COLOR, SPLIT_PAYER_LABEL } from '@/lib/constants'
+import { PaywallRequired } from '@/lib/entitlement-limits'
+import type { HouseEntitlement } from '@/types/entitlement'
 import { setCurrencyContext, stripInvalid } from '@/lib/utils'
 import { getEffectiveHouseSplit } from '@/lib/cost-split'
 import { FOLDER_DEFS } from '@/types/document'
@@ -214,6 +216,25 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const createHouse = useCallback(async (name: string, country: string, currency: string) => {
     if (!user) return
 
+    // Entitlement gate — free tier is "1 house". Creating a second (or third, …)
+    // house requires the user to have Pro on at least one of the houses they
+    // already own. The first-house onboarding path naturally bypasses this
+    // because the owned-count is 0 at that point.
+    //
+    // Rule: if the user owns ≥1 house AND none of those houses has Pro, block.
+    // Reading the entitlement per owned house in parallel keeps this cheap for
+    // the common case (1–3 owned houses).
+    const ownedHouses = housesRef.current.filter((h) => h.ownerId === user.uid)
+    if (ownedHouses.length >= 1) {
+      const entSnaps = await Promise.all(
+        ownedHouses.map((h) => getDoc(doc(db, 'houses', h.id, 'meta', 'entitlement')))
+      )
+      const anyPro = entSnaps.some((snap) => snap.exists() && snap.data()?.tier === 'pro')
+      if (!anyPro) {
+        throw new PaywallRequired('create_house')
+      }
+    }
+
     // Fallback to Firebase Auth user for display name and email when userProfile
     // hasn't loaded yet (Google sign-up race: ensureUserProfile runs fire-and-forget
     // in onAuthStateChanged, so the profile doc may not exist when this runs).
@@ -333,6 +354,16 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
   const generateInvite = useCallback(async (): Promise<string> => {
     if (!user || !house) throw new Error('No house')
+
+    // Entitlement gate — free tier cannot invite. We read the entitlement doc
+    // at call time (not from a hook) to avoid requiring every HouseholdContext
+    // consumer to wait on an entitlement subscription. The doc is tiny and
+    // this code path is rare (user-initiated invite).
+    const entSnap = await getDoc(doc(db, 'houses', house.id, 'meta', 'entitlement'))
+    const ent = entSnap.exists() ? (entSnap.data() as HouseEntitlement) : null
+    if (ent?.tier !== 'pro') {
+      throw new PaywallRequired('invite')
+    }
 
     const now = new Date()
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days
