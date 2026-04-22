@@ -87,6 +87,21 @@ vi.mock('./ExpenseContext', () => ({
   useExpenses: () => ({ storageUsed: 0 }),
 }))
 
+// Entitlement mock: mutable so individual tests can flip the tier to Pro and
+// assert the 500 MB quota is honored instead of the 50 MB free-tier default.
+const mockEntitlement = vi.hoisted(() => ({
+  value: {
+    entitlement: null as unknown,
+    limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+    isPro: false,
+    isLoading: false,
+  },
+}))
+
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => mockEntitlement.value,
+}))
+
 import { DocumentProvider, useDocuments } from './DocumentContext'
 import { sizedFile } from '@/test-utils/files'
 
@@ -156,6 +171,14 @@ describe('DocumentContext', () => {
     vi.clearAllMocks()
     folderSnapshotCallback = null
     documentSnapshotCallback = null
+    // Reset entitlement to free tier so tests that don't opt into Pro see the
+    // same 50 MB quota as production free users.
+    mockEntitlement.value = {
+      entitlement: null,
+      limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+      isPro: false,
+      isLoading: false,
+    }
     mockGenerateThumbnail.mockResolvedValue(null)
     mockUploadDocument.mockResolvedValue('https://example.com/uploaded.pdf')
     mockDeleteDocumentFile.mockResolvedValue(undefined)
@@ -237,6 +260,72 @@ describe('DocumentContext', () => {
 
       await expect(
         act(async () => { await result.current.uploadDocuments('folder-1', [a, b]) })
+      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
+
+      expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('Pro tier: accepts uploads above 50 MB up to the 500 MB quota', async () => {
+      // Regression: the context's defense-in-depth validator used to always
+      // cap at the free-tier 50 MB default, so Pro users saw
+      // "Household storage limit reached (50 MB)" even with 450 MB free.
+      mockEntitlement.value = {
+        entitlement: { tier: 'pro' },
+        limits: { maxMembers: Number.POSITIVE_INFINITY, maxStorageMB: 500, hasHouseholdInvites: true, hasAdvancedMortgage: true, hasBudget: true, hasExport: true, hasPrintSummary: true, hasMortgageWhatIf: true },
+        isPro: true,
+        isLoading: false,
+      }
+      // Seed 60 MB — comfortably over the free-tier 50 MB cliff that used to block this.
+      const seeds = [
+        makeDoc({ id: 'seed-1', name: 'a.pdf', size: 20 * 1024 * 1024 }),
+        makeDoc({ id: 'seed-2', name: 'b.pdf', size: 20 * 1024 * 1024 }),
+        makeDoc({ id: 'seed-3', name: 'c.pdf', size: 20 * 1024 * 1024 }),
+      ]
+      const { result } = await setupHook([makeFolder()], seeds)
+      const newFile = sizedFile('report.pdf', 'application/pdf', 10 * 1024 * 1024)
+
+      await act(async () => { await result.current.uploadDocuments('folder-1', [newFile]) })
+
+      expect(mockUploadDocument).toHaveBeenCalledTimes(1)
+    })
+
+    it('blocks uploads while entitlement is still loading (cold-start race)', async () => {
+      // Before the entitlement snapshot lands, limits fall back to free —
+      // a Pro user hitting upload in the first few hundred ms would silently
+      // get the 50 MB cap applied. Context guards by throwing so the UI can
+      // render its "preparing" state instead of corrupting the tier.
+      mockEntitlement.value = {
+        entitlement: null,
+        limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+        isPro: false,
+        isLoading: true,
+      }
+      const { result } = await setupHook([makeFolder()])
+      const good = new File(['hi'], 'ok.pdf', { type: 'application/pdf' })
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', [good]) })
+      ).rejects.toThrow(/entitlement_loading/)
+
+      expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('Pro tier: still rejects batches that would push household over 500 MB', async () => {
+      mockEntitlement.value = {
+        entitlement: { tier: 'pro' },
+        limits: { maxMembers: Number.POSITIVE_INFINITY, maxStorageMB: 500, hasHouseholdInvites: true, hasAdvancedMortgage: true, hasBudget: true, hasExport: true, hasPrintSummary: true, hasMortgageWhatIf: true },
+        isPro: true,
+        isLoading: false,
+      }
+      // Seed ~495 MB with per-file sizes that satisfy MAX_FILE_SIZE (25 MB).
+      const seeds = Array.from({ length: 25 }, (_, i) =>
+        makeDoc({ id: `seed-${i}`, name: `f${i}.pdf`, size: 20 * 1024 * 1024 - 200 * 1024 }),
+      )
+      const { result } = await setupHook([makeFolder()], seeds)
+      const overflow = sizedFile('overflow.pdf', 'application/pdf', 10 * 1024 * 1024)
+
+      await expect(
+        act(async () => { await result.current.uploadDocuments('folder-1', [overflow]) })
       ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
 
       expect(mockUploadDocument).not.toHaveBeenCalled()

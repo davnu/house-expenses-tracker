@@ -217,6 +217,15 @@
     "exceedsLimit": "« {{name}} » dépasse la limite de 25 Mo",
     "maxFilesPerExpense": "Maximum {{max}} fichiers par dépense",
     "householdStorageLimit": "Limite de stockage du foyer atteinte ({{size}})",
+    "preparing": "Un instant…",
+    "quotaReachedPro": "Les 500 Mo de cette maison sont pleins. Supprime quelques fichiers pour libérer de la place.",
+    "quotaReachedFree": {
+      "title": "Plus d'espace libre",
+      "body": "Tu as rempli les 50 Mo du plan gratuit. Passe à 500 Mo avec Pro — largement de quoi garder actes, contrats, rapports d'inspection et photos.",
+      "inline": "Plan gratuit saturé.",
+      "cta": "Augmenter l'espace"
+    },
+    "quotaManageLink": "Gérer mes fichiers",
     "securityNote": "Chiffré et visible uniquement par les membres de ton foyer",
     "securityTooltip": "Tes fichiers sont envoyés via une connexion sécurisée et stockés avec un chiffrement professionnel. Seuls les membres de ton foyer peuvent y accéder. Tu peux les supprimer à tout moment."
   },
@@ -966,6 +975,7 @@
       "advancedMortgage": "Hypothèque avancée : changements de taux, remboursements, simulations",
       "budget": "Définissez des budgets par catégorie et suivez-les",
       "export": "Exportez tout et imprimez un résumé propre",
+      "storageFree": "50 Mo d'espace pour vos fichiers",
       "storage": "500 Mo d'espace pour vos fichiers"
     },
     "gate": {

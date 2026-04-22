@@ -11,9 +11,11 @@ import { AttachmentViewer } from './AttachmentViewer'
 import { EditExpenseDialog } from './EditExpenseDialog'
 import { useExpenses } from '@/context/ExpenseContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useStorageQuota } from '@/hooks/use-storage-quota'
+import { QuotaError } from '@/components/documents/QuotaError'
 import { cn, formatCurrency, friendlyError, getDateLocale } from '@/lib/utils'
 import { EXPENSE_CATEGORIES, CATEGORY_COLORS, SHARED_PAYER, SPLIT_PAYER, UNPAID_BADGE_CLASSES, getSharedPayerLabel, getSplitPayerLabel, getCategoryLabel } from '@/lib/constants'
-import { validateExpenseAttachments, rejectionMessage } from '@/lib/attachment-validation'
+import { rejectionMessage } from '@/lib/attachment-validation'
 import { filterByPayer, groupExpensesByMonth, isExpensePaid } from '@/lib/expense-utils'
 import { format } from 'date-fns'
 import type { Expense, Attachment } from '@/types/expense'
@@ -32,8 +34,12 @@ interface ExpenseListProps {
 
 export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseListProps) {
   const { t } = useTranslation()
-  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds, attachmentProgress, storageUsed } = useExpenses()
+  const { expenses, deleteExpense, updateExpense, addAttachmentsToExpense, removeAttachment, pendingExpenseIds, pendingAttachmentIds, attachmentProgress } = useExpenses()
   const { members, getMemberName, getMemberColor } = useHousehold()
+  // useStorageQuota owns the cross-feature household-quota check: its
+  // `bytesUsed` counts expenses + documents, and its `validate()` threads
+  // the tier-resolved cap through automatically.
+  const quota = useStorageQuota()
   const isMultiMember = members.length > 1
   const [filterCategory, setFilterCategory] = useState('')
   const [filterPayer, setFilterPayer] = useState('')
@@ -54,6 +60,10 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [attachTargetId, setAttachTargetId] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
+  // True when the most recent validation rejected a file because the household
+  // cap would be exceeded — drives QuotaError rendering (with upgrade CTA for
+  // free users) instead of a bare error string.
+  const [quotaHit, setQuotaHit] = useState(false)
 
   // ── Deep-link highlight ──
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -187,16 +197,17 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
     setAttachTargetId(null)
 
     const target = expenses.find((x) => x.id === targetId)
-    const { accepted, rejection } = validateExpenseAttachments(files, {
+    const { accepted, rejection } = quota.validateExpenseAttachment(files, {
       existingCount: target?.attachments?.length ?? 0,
-      householdStorageUsed: storageUsed,
     })
     // Set the validation error directly — we deliberately do NOT use
     // withErrorHandling() here because it would clear this message before
     // the upload runs, and the user would never see why their oversize file
     // was skipped in a mixed batch. The upload's own try/catch still
     // surfaces real Firebase/network failures.
-    setActionError(rejection ? rejectionMessage(t, rejection) : '')
+    const isQuota = rejection?.code === 'householdStorageLimit'
+    setQuotaHit(isQuota)
+    setActionError(rejection && !isQuota ? rejectionMessage(t, rejection) : '')
     if (accepted.length === 0) return
     try {
       await addAttachmentsToExpense(targetId, accepted)
@@ -551,6 +562,9 @@ export function ExpenseList({ highlightExpenseId, onHighlightDone }: ExpenseList
         </div>
       )}
 
+      {quotaHit && (
+        <QuotaError isPro={quota.isPro} variant="inline" />
+      )}
       {actionError && (
         <p className="text-sm text-destructive p-3 rounded-lg bg-destructive/5 border border-destructive/20">{actionError}</p>
       )}

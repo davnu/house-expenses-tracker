@@ -22,6 +22,7 @@ import { getCategoryLabel } from '@/lib/constants'
 import { cn, formatCurrency, formatFileSize } from '@/lib/utils'
 import { getFolderIconBg } from '@/lib/file-type-info'
 import { useEntitlement } from '@/hooks/use-entitlement'
+import { maxBytesForLimits } from '@/lib/entitlement-limits'
 import type { DocFolder, HouseDocument } from '@/types/document'
 import type { Attachment } from '@/types/expense'
 
@@ -31,7 +32,7 @@ export function DocumentsPage() {
   const { expenses } = useExpenses()
   const { limits } = useEntitlement()
   const isMobile = useIsMobile()
-  const maxHouseholdBytes = limits.maxStorageMB * 1024 * 1024
+  const maxHouseholdBytes = maxBytesForLimits(limits)
   const [selectedFolder, setSelectedFolder] = useState<DocFolder | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [quickUploadOpen, setQuickUploadOpen] = useState(false)
@@ -281,19 +282,34 @@ export function DocumentsPage() {
         </div>
       ) : (
         <>
-          {/* Storage bar */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{t('documents.storageUsed')}</span>
-              <span>{formatFileSize(totalStorageUsed)} / {formatFileSize(maxHouseholdBytes)}</span>
-            </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${Math.min((totalStorageUsed / maxHouseholdBytes) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
+          {/* Storage bar with urgency color progression.
+              Bar stays primary-colored until 60% — above that, amber to signal
+              "think about cleanup"; above 85%, destructive red to communicate
+              urgency. The usage counter picks up the same color so the numeric
+              readout tracks the bar. Thresholds match typical SaaS storage
+              UX (Google Drive / Dropbox warn around 60%, turn red near full). */}
+          {(() => {
+            const fillPct = maxHouseholdBytes === 0 ? 0 : (totalStorageUsed / maxHouseholdBytes) * 100
+            const tone = fillPct >= 85 ? 'danger' : fillPct >= 60 ? 'warn' : 'ok'
+            const barColor = tone === 'danger' ? 'bg-destructive' : tone === 'warn' ? 'bg-amber-500' : 'bg-primary'
+            const textColor = tone === 'danger' ? 'text-destructive' : tone === 'warn' ? 'text-amber-600 dark:text-amber-500' : 'text-muted-foreground'
+            return (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{t('documents.storageUsed')}</span>
+                  <span className={cn('tabular-nums font-medium', textColor)}>
+                    {formatFileSize(totalStorageUsed)} / {formatFileSize(maxHouseholdBytes)}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={cn('h-full rounded-full transition-all', barColor)}
+                    style={{ width: `${Math.min(fillPct, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Recent documents (standalone only) */}
           {recentDocs.length > 0 && (

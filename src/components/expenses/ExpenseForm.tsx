@@ -14,10 +14,11 @@ import { SplitEditor } from './SplitEditor'
 import { Switch } from '@/components/ui/switch'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { InviteHousemateDialog } from '@/components/household/InviteHousemateDialog'
+import { QuotaError } from '@/components/documents/QuotaError'
 import { EXPENSE_CATEGORIES, SHARED_PAYER, SPLIT_PAYER, SPLIT_PAYER_COLOR } from '@/lib/constants'
 import { useHousehold } from '@/context/HouseholdContext'
-import { useExpenses } from '@/context/ExpenseContext'
 import { useAuth } from '@/context/AuthContext'
+import { useStorageQuota } from '@/hooks/use-storage-quota'
 import { applyRatioToAmount, makeEqualSplit } from '@/lib/cost-split'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -54,8 +55,13 @@ export function ExpenseForm({
   const { t } = useTranslation()
   const [files, setFiles] = useState<File[]>([])
   const { members, houseSplit, house } = useHousehold()
-  const { storageUsed } = useExpenses()
   const { user } = useAuth()
+  // Preemptive quota signal: if the household is at cap, show an inline banner
+  // at the top of the form so the user knows BEFORE scrolling to Attachments
+  // that they can't add files. Submitting without files is still fine — the
+  // expense itself is unaffected, only the attachment path is blocked.
+  const quota = useStorageQuota()
+  const showQuotaBanner = !hideAttachments && !quota.isLoading && quota.bytesRemaining <= 0
 
   // Per-expense cash contribution breakdown. Only meaningful when payer is SPLIT_PAYER.
   const [splits, setSplits] = useState<ExpenseSplit[] | null>(defaultSplits ?? null)
@@ -197,6 +203,7 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      {showQuotaBanner && <QuotaError isPro={quota.isPro} variant="inline" />}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="amount">{t('common.amount')}</Label>
@@ -354,7 +361,7 @@ export function ExpenseForm({
         <div className="space-y-2">
           <Label>{t('expenses.attachments')} <span className="text-muted-foreground font-normal">({t('common.optional')})</span><InfoTooltip text={t('files.securityTooltip')} /></Label>
           <p className="text-xs text-muted-foreground -mt-1">{t('expenses.attachmentsHint')}</p>
-          <FileDropZone files={files} onChange={setFiles} householdStorageUsed={storageUsed} />
+          <FileDropZone files={files} onChange={setFiles} />
         </div>
       )}
 

@@ -217,6 +217,15 @@
     "exceedsLimit": "\"{{name}}\" supera el límite de 25 MB",
     "maxFilesPerExpense": "Máximo {{max}} archivos por gasto",
     "householdStorageLimit": "Límite de almacenamiento del hogar alcanzado ({{size}})",
+    "preparing": "Un momento…",
+    "quotaReachedPro": "Has ocupado los 500 MB de esta casa. Borra algunos archivos para liberar espacio.",
+    "quotaReachedFree": {
+      "title": "Te has quedado sin espacio",
+      "body": "Has llenado los 50 MB del plan gratuito. Sube a Pro y ten 500 MB: espacio de sobra para escrituras, contratos, informes técnicos y fotos.",
+      "inline": "Sin espacio en el plan gratuito.",
+      "cta": "Ampliar almacenamiento"
+    },
+    "quotaManageLink": "Gestionar archivos",
     "securityNote": "Cifrado y visible solo para los miembros de tu hogar",
     "securityTooltip": "Tus archivos se envían por conexión segura y se almacenan con cifrado de nivel empresarial. Solo los miembros de tu hogar pueden acceder a ellos. Puedes eliminarlos en cualquier momento."
   },
@@ -966,6 +975,7 @@
       "advancedMortgage": "Hipoteca avanzada: cambios de tipo, amortizaciones, comparaciones",
       "budget": "Define presupuestos por categoría y llévalos al día",
       "export": "Exporta todo e imprime un resumen limpio",
+      "storageFree": "50 MB de espacio para tus archivos",
       "storage": "500 MB de espacio para tus archivos"
     },
     "gate": {

@@ -32,6 +32,9 @@ export function PricingPage() {
     'billing.section.freeFeature1',
     'billing.section.freeFeature2',
     'billing.section.freeFeature3',
+    // Storage quota — parallel position to Pro's `features.storage` so readers
+    // compare 50 MB ↔ 500 MB at the same index in both columns.
+    'billing.features.storageFree',
   ] as const
 
   const proAdds: Array<{ key: string; icon: typeof Users }> = [

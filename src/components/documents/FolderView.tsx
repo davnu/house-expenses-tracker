@@ -23,7 +23,7 @@ interface FolderViewProps {
 
 export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
   const { t } = useTranslation()
-  const { folders, documents, pendingDocumentIds, documentProgress, totalStorageUsed, uploadDocuments, renameDocument, updateDocumentNotes, deleteFolder, moveDocument } = useDocuments()
+  const { folders, documents, pendingDocumentIds, documentProgress, uploadDocuments, renameDocument, updateDocumentNotes, deleteFolder, moveDocument } = useDocuments()
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [showDropZone, setShowDropZone] = useState(false)
@@ -192,7 +192,6 @@ export function FolderView({ folder, onBack, onNavigate }: FolderViewProps) {
       {showDropZone || folderDocs.length === 0 ? (
         <DocumentDropZone
           onFilesSelected={handleFilesSelected}
-          totalStorageUsed={totalStorageUsed}
           disabled={uploading}
         />
       ) : (

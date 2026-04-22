@@ -36,12 +36,14 @@ const { mockFolders, mockDocuments } = vi.hoisted(() => ({
 
 // ── Mocks ─────────────────────────────────────────────
 
+// Mutable so per-test storage state can drive the color-progression assertions.
+const mockTotalStorageUsed = vi.hoisted(() => ({ value: 0 }))
 vi.mock('@/context/DocumentContext', () => ({
   useDocuments: () => ({
     folders: mockFolders.current,
     documents: mockDocuments.current,
     loading: false,
-    totalStorageUsed: 0,
+    get totalStorageUsed() { return mockTotalStorageUsed.value },
     pendingDocumentIds: new Set(),
     moveDocument: vi.fn(),
     uploadDocuments: vi.fn(),
@@ -114,6 +116,7 @@ describe('DocumentsPage', () => {
   beforeEach(() => {
     mockFolders.current = []
     mockDocuments.current = []
+    mockTotalStorageUsed.value = 0
   })
 
   describe('empty state', () => {
@@ -325,6 +328,53 @@ describe('DocumentsPage', () => {
       renderPage()
       expect(screen.getByText('Contracts and deeds')).toBeDefined()
       expect(screen.getByText('Loan documents')).toBeDefined()
+    })
+  })
+
+  // Storage bar urgency colors. Matches typical SaaS storage UX (Google Drive
+  // / Dropbox warn amber around 60%, red near full). Thresholds are
+  // implementation details but worth asserting because a silent bug here
+  // would mean a user at 95% sees the same calm primary color as at 5%.
+  describe('storage bar color progression', () => {
+    beforeEach(() => {
+      mockFolders.current = testFolders
+    })
+
+    function findBar(container: Element) {
+      // Progress fill is the only element with width:X% inline style under the
+      // h-1.5 track. Use the track's overflow-hidden class as the anchor.
+      const track = container.querySelector('.h-1\\.5.rounded-full.overflow-hidden')
+      return track?.firstElementChild as HTMLElement | null
+    }
+
+    it('uses primary color under 60% fill (steady-state, no warning)', () => {
+      mockTotalStorageUsed.value = 100 * 1024 * 1024 // 20% of 500 MB (Pro)
+      const container = renderPage()
+      const bar = findBar(container)
+      expect(bar?.className).toContain('bg-primary')
+    })
+
+    it('switches to amber between 60% and 85% fill (get-ready-to-clean-up signal)', () => {
+      mockTotalStorageUsed.value = 350 * 1024 * 1024 // 70% of 500 MB
+      const container = renderPage()
+      const bar = findBar(container)
+      expect(bar?.className).toContain('bg-amber-500')
+    })
+
+    it('switches to destructive red at 85%+ fill (urgent)', () => {
+      mockTotalStorageUsed.value = 450 * 1024 * 1024 // 90% of 500 MB
+      const container = renderPage()
+      const bar = findBar(container)
+      expect(bar?.className).toContain('bg-destructive')
+    })
+
+    it('clamps bar width to 100% even if usage drifts past the cap', () => {
+      // Server-side quota enforcement has a documented drift window. Don't
+      // render a bar wider than the track when that happens.
+      mockTotalStorageUsed.value = 600 * 1024 * 1024 // 120% of 500 MB
+      const container = renderPage()
+      const bar = findBar(container)
+      expect(bar?.style.width).toBe('100%')
     })
   })
 })

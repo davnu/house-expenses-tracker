@@ -217,6 +217,15 @@
     "exceedsLimit": "\"{{name}}\" überschreitet das 25-MB-Limit",
     "maxFilesPerExpense": "Maximal {{max}} Dateien pro Ausgabe",
     "householdStorageLimit": "Speicherlimit des Haushalts erreicht ({{size}})",
+    "preparing": "Einen Moment…",
+    "quotaReachedPro": "Die 500 MB für dieses Haus sind voll. Lösche ein paar Dateien, um Platz zu schaffen.",
+    "quotaReachedFree": {
+      "title": "Speicher voll",
+      "body": "Die 50 MB des Gratis-Tarifs sind aufgebraucht. Hol dir Pro und erweitere auf 500 MB — genug Platz für Kaufvertrag, Urkunden, Gutachten und Fotos.",
+      "inline": "Speicher voll im Gratis-Tarif.",
+      "cta": "Speicher erweitern"
+    },
+    "quotaManageLink": "Dateien verwalten",
     "securityNote": "Verschlüsselt und nur für deinen Haushalt sichtbar",
     "securityTooltip": "Deine Dateien werden über eine sichere Verbindung übertragen und mit Verschlüsselung auf Unternehmensniveau gespeichert. Nur Mitglieder deines Haushalts können darauf zugreifen. Du kannst sie jederzeit löschen."
   },
@@ -966,6 +975,7 @@
       "advancedMortgage": "Erweiterte Hypothek: Zinsänderungen, Sondertilgungen, Vergleiche",
       "budget": "Kategorie-Budgets setzen und verfolgen",
       "export": "Alles exportieren und sauber ausdrucken",
+      "storageFree": "50 MB Speicher für deine Dateien",
       "storage": "500 MB Speicher für deine Dateien"
     },
     "gate": {

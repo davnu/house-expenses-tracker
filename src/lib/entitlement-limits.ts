@@ -50,6 +50,11 @@ export function resolveLimits(entitlement?: HouseEntitlement | null): TierLimits
   return limitsForTier(entitlement?.tier ?? 'free')
 }
 
+/** Canonical bytes conversion so no caller re-derives `maxStorageMB * 1024 * 1024`. */
+export function maxBytesForLimits(limits: TierLimits): number {
+  return limits.maxStorageMB * 1024 * 1024
+}
+
 /** Gate identifier — used by the upgrade modal to show context-specific copy and analytics. */
 export type PaywallGate =
   | 'invite'

@@ -97,6 +97,11 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'alice' } }),
 }))
 
+// DashboardPage → QuickAddDialog → ExpenseForm → FileDropZone → useStorageQuota → useDocuments
+vi.mock('@/context/DocumentContext', () => ({
+  useDocuments: () => ({ totalStorageUsed: 0 }),
+}))
+
 vi.mock('@/context/TodoContext', () => ({
   useTodos: () => ({
     todos: [],

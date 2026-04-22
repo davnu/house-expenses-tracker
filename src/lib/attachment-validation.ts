@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, MAX_FILES_PER_EXPENSE, MAX_HOUSEHOLD_STORAGE } from './constants'
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, MAX_FILES_PER_EXPENSE } from './constants'
 import { formatFileSize } from './utils'
 
 export type AttachmentRejection =
@@ -8,21 +8,43 @@ export type AttachmentRejection =
   | { code: 'maxFilesPerExpense'; max: number }
   | { code: 'householdStorageLimit'; maxBytes: number }
 
-export interface AttachmentValidationOptions {
+export type AttachmentValidationOptions =
+  | (AttachmentValidationBase & {
+      /** When true, skip household-quota enforcement entirely. Household params become optional.
+       *  Use this when the caller cannot see the cross-feature total (e.g. ExpenseContext sits above
+       *  DocumentContext in the provider tree, so it only knows its own bytes — household-quota
+       *  enforcement must happen at the UI layer via `useStorageQuota()` which has full visibility,
+       *  with the server-side Cloud Function as the authoritative backstop). */
+      skipHouseholdQuota: true
+      householdStorageUsed?: number
+      maxHouseholdBytes?: number
+    })
+  | (AttachmentValidationBase & {
+      skipHouseholdQuota?: false
+      /** Bytes currently used across the household (expenses + documents combined). */
+      householdStorageUsed: number
+      /**
+       * Household-wide storage quota in bytes. REQUIRED unless `skipHouseholdQuota: true`.
+       * Derive from the tier's limits via `maxBytesForLimits(useEntitlement().limits)` — or use
+       * `useStorageQuota()` which wraps the whole thing. Passed explicitly (rather than read from
+       * a constant) so Pro houses aren't silently capped at the free-tier default. An earlier
+       * version defaulted this to 50 MB; that default bit a paying Pro customer at ~43.9 MB used.
+       * Don't bring it back.
+       */
+      maxHouseholdBytes: number
+    })
+
+interface AttachmentValidationBase {
   /** Files already staged client-side (e.g. pending create form). Used for duplicate detection and quota accumulation. */
   stagedFiles?: readonly File[]
   /** Count of attachments already persisted on the target expense. */
   existingCount?: number
-  /** Bytes currently used across the household (all expenses). */
-  householdStorageUsed: number
   /**
    * Per-expense max file count. `undefined` (the default when using
    * {@link validateDocumentFiles}) disables the count check entirely — use for
    * document flows that don't cap per-folder.
    */
   maxFiles?: number
-  /** Household-wide storage quota in bytes. Override for tests. */
-  maxHouseholdBytes?: number
   /** Per-file max size in bytes. Override for tests. */
   maxFileBytes?: number
   /** If false, duplicates are accepted. Default true. */
@@ -49,12 +71,23 @@ export function validateAttachmentFiles(
   const {
     stagedFiles = [],
     existingCount = 0,
-    householdStorageUsed,
     maxFiles,
-    maxHouseholdBytes = MAX_HOUSEHOLD_STORAGE,
     maxFileBytes = MAX_FILE_SIZE,
     dedupe = true,
+    skipHouseholdQuota = false,
   } = opts
+  const householdStorageUsed = skipHouseholdQuota ? 0 : opts.householdStorageUsed
+  const maxHouseholdBytes = skipHouseholdQuota ? Number.POSITIVE_INFINITY : opts.maxHouseholdBytes
+
+  // Runtime guard: household-quota mode must carry a valid cap. TypeScript's
+  // discriminated union enforces this at compile time, but a JS/`as any`
+  // caller could still slip past — a missing cap would silently accept any
+  // size because every comparison against `undefined`/`NaN` returns false.
+  // That's the exact shape of the 50 MB regression, but worse (unlimited
+  // instead of undersized). Fail loud unless the caller explicitly opted out.
+  if (!skipHouseholdQuota && (!Number.isFinite(maxHouseholdBytes) || (maxHouseholdBytes as number) < 0)) {
+    throw new TypeError('validateAttachmentFiles: maxHouseholdBytes must be a non-negative finite number (or pass skipHouseholdQuota: true)')
+  }
 
   const accepted: File[] = []
   let rejection: AttachmentRejection | null = null
@@ -84,8 +117,8 @@ export function validateAttachmentFiles(
       rejection = { code: 'maxFilesPerExpense', max: maxFiles }
       break
     }
-    if (householdStorageUsed + pendingSize + file.size > maxHouseholdBytes) {
-      rejection = { code: 'householdStorageLimit', maxBytes: maxHouseholdBytes }
+    if (!skipHouseholdQuota && (householdStorageUsed as number) + pendingSize + file.size > (maxHouseholdBytes as number)) {
+      rejection = { code: 'householdStorageLimit', maxBytes: maxHouseholdBytes as number }
       break
     }
     accepted.push(file)

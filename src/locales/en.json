@@ -217,6 +217,15 @@
     "exceedsLimit": "\"{{name}}\" exceeds 25 MB limit",
     "maxFilesPerExpense": "Maximum {{max}} files per expense",
     "householdStorageLimit": "Household storage limit reached ({{size}})",
+    "preparing": "Getting things ready…",
+    "quotaReachedPro": "You've used all 500 MB on this house. Delete a few files to free up space.",
+    "quotaReachedFree": {
+      "title": "You're out of space",
+      "body": "You've filled up the 50 MB that come with the free plan. Upgrade to Pro and get 500 MB — plenty of room for every deed, contract, inspection report and photo.",
+      "inline": "You're out of space on the free plan.",
+      "cta": "Upgrade storage"
+    },
+    "quotaManageLink": "Manage files",
     "securityNote": "Encrypted and visible only to your household",
     "securityTooltip": "Your files are sent over a secure connection and stored with enterprise-grade encryption. Only household members can access them. You can delete them at any time."
   },
@@ -966,6 +975,7 @@
       "advancedMortgage": "Advanced mortgage: rate changes, extra payments, what-if",
       "budget": "Set category budgets and track them",
       "export": "Export everything and print a clean summary",
+      "storageFree": "50 MB of storage for your files",
       "storage": "500 MB of storage for your files"
     },
     "gate": {

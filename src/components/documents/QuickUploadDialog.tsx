@@ -14,7 +14,7 @@ interface QuickUploadDialogProps {
 
 export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: QuickUploadDialogProps) {
   const { t } = useTranslation()
-  const { folders, totalStorageUsed, uploadDocuments } = useDocuments()
+  const { folders, uploadDocuments } = useDocuments()
   const [files, setFiles] = useState<File[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -71,7 +71,6 @@ export function QuickUploadDialog({ open, onOpenChange, initialFolderId }: Quick
           {/* File selection */}
           <DocumentDropZone
             onFilesSelected={handleFilesSelected}
-            totalStorageUsed={totalStorageUsed}
             disabled={uploading}
           />
 

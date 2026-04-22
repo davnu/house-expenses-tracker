@@ -34,6 +34,46 @@ vi.mock('@/context/HouseholdContext', () => ({
   useHousehold: () => mockHouseholdCtx,
 }))
 
+// Mutable entitlement mock so individual tests can opt into Pro without
+// having to stand up the full EntitlementProvider wiring.
+const mockEntitlement = vi.hoisted(() => ({
+  value: {
+    entitlement: null as unknown,
+    limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+    isPro: false,
+    isLoading: false,
+  },
+}))
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => mockEntitlement.value,
+}))
+
+// useStorageQuota reads useDocuments().totalStorageUsed. Mock it so tests
+// can set household-total bytes independently of the expense mock. Default
+// 0 — individual tests that exercise quota behavior override explicitly.
+const mockDocuments = vi.hoisted(() => ({ value: { totalStorageUsed: 0 } }))
+vi.mock('@/context/DocumentContext', () => ({
+  useDocuments: () => mockDocuments.value,
+}))
+
+// QuotaError reads useUpgradeDialog; mock it so free-tier quota tests don't
+// need the provider.
+const mockOpenUpgrade = vi.fn()
+vi.mock('@/context/UpgradeDialogContext', () => ({
+  useUpgradeDialog: () => ({ open: mockOpenUpgrade, close: vi.fn(), isOpen: false, gate: null, product: 'pro' }),
+}))
+
+// QuotaError renders a <Link> from react-router ("Manage files" CTA). Mock
+// as a plain anchor — these tests don't exercise navigation.
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual<typeof import('react-router')>('react-router')
+  return {
+    ...actual,
+    Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) =>
+      <a href={typeof to === 'string' ? to : '#'} {...rest}>{children}</a>,
+  }
+})
+
 // Avoid Radix portal issues in jsdom
 vi.mock('./AttachmentViewer', () => ({ AttachmentViewer: () => null }))
 vi.mock('./EditExpenseDialog', () => ({ EditExpenseDialog: () => null }))
@@ -70,6 +110,13 @@ describe('ExpenseList highlight behavior', () => {
     mockExpenseCtx.expenses = TWO_EXPENSES
     mockExpenseCtx.pendingExpenseIds = new Set()
     mockExpenseCtx.pendingAttachmentIds = new Set()
+    // Reset entitlement to free tier between tests.
+    mockEntitlement.value = {
+      entitlement: null,
+      limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+      isPro: false,
+      isLoading: false,
+    }
   })
 
   afterEach(() => {
@@ -430,6 +477,18 @@ describe('ExpenseList attachment upload validation', () => {
     mockExpenseCtx.pendingAttachmentIds = new Set()
     mockExpenseCtx.storageUsed = 0
     mockExpenseCtx.addAttachmentsToExpense = vi.fn()
+    // Reset entitlement to free tier so the Pro-opt-in tests below can't leak
+    // isPro=true into subsequent tests in this describe block. Without this,
+    // QuotaError renders the wrong variant (Pro notice vs free-tier CTA) in
+    // any test that runs after a Pro-opt-in test.
+    mockEntitlement.value = {
+      entitlement: null,
+      limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+      isPro: false,
+      isLoading: false,
+    }
+    // Reset cross-feature storage mock so quota state doesn't leak.
+    mockDocuments.value = { totalStorageUsed: 0 }
   })
 
   afterEach(cleanup)
@@ -519,8 +578,11 @@ describe('ExpenseList attachment upload validation', () => {
     expect(screen.getByText(/not a supported file type/i)).toBeDefined()
   })
 
-  it('rejects a file that would push household past 50 MB quota (via context storageUsed)', async () => {
-    mockExpenseCtx.storageUsed = MAX_HOUSEHOLD_STORAGE - 1000 // 1 KB remaining
+  it('shows upgrade CTA (not raw error) when free user hits 50 MB quota', async () => {
+    // Household bytes now come from useDocuments (via useStorageQuota), not
+    // from ExpenseContext.storageUsed. That's the cross-feature fix: doc
+    // bytes and expense bytes share one cap.
+    mockDocuments.value = { totalStorageUsed: MAX_HOUSEHOLD_STORAGE - 1000 } // 1 KB remaining
     const { container } = render(<ExpenseList />)
 
     const file = new File([''], 'too-big-for-quota.pdf', { type: 'application/pdf' })
@@ -529,7 +591,63 @@ describe('ExpenseList attachment upload validation', () => {
     await selectFileForExpense(container, file)
 
     expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
-    expect(screen.getByText(/storage limit/i)).toBeDefined()
+    // Free-tier quota rejection renders the upgrade CTA instead of a bare message.
+    expect(screen.getByText('Upgrade storage')).toBeDefined()
+  })
+
+  it('blocks expense attachment when ONLY documents have filled the cap (cross-feature regression)', async () => {
+    // The reported bug: user was at 50/50 from document uploads, but the
+    // expense dropzone/attachment flow still saw 0 bytes used (it read only
+    // expense bytes). The UI should now block via useStorageQuota which
+    // sees the combined total.
+    mockDocuments.value = { totalStorageUsed: MAX_HOUSEHOLD_STORAGE }
+    mockExpenseCtx.storageUsed = 0 // zero expense bytes — all usage is from docs
+    const { container } = render(<ExpenseList />)
+
+    const file = new File([''], 'receipt.pdf', { type: 'application/pdf' })
+    Object.defineProperty(file, 'size', { value: 1000 })
+    await selectFileForExpense(container, file)
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).not.toHaveBeenCalled()
+    expect(screen.getByText('Upgrade storage')).toBeDefined()
+  })
+
+  it('Pro-tier: attach succeeds past 50 MB — regression for the 50 MB default bug', async () => {
+    mockEntitlement.value = {
+      entitlement: { tier: 'pro' },
+      limits: { maxMembers: Number.POSITIVE_INFINITY, maxStorageMB: 500, hasHouseholdInvites: true, hasAdvancedMortgage: true, hasBudget: true, hasExport: true, hasPrintSummary: true, hasMortgageWhatIf: true },
+      isPro: true,
+      isLoading: false,
+    }
+    // 45 MB across the household (docs + expenses) — overflows free, fits Pro.
+    mockDocuments.value = { totalStorageUsed: 45 * 1024 * 1024 }
+    const { container } = render(<ExpenseList />)
+
+    const file = new File([''], 'invoice.pdf', { type: 'application/pdf' })
+    Object.defineProperty(file, 'size', { value: 10 * 1024 * 1024 })
+
+    await selectFileForExpense(container, file)
+
+    expect(mockExpenseCtx.addAttachmentsToExpense).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('Upgrade storage')).toBeNull()
+  })
+
+  it('clears the quota CTA after a subsequent valid drop succeeds', async () => {
+    mockDocuments.value = { totalStorageUsed: MAX_HOUSEHOLD_STORAGE - 1000 }
+    const { container } = render(<ExpenseList />)
+
+    const overflow = new File([''], 'overflow.pdf', { type: 'application/pdf' })
+    Object.defineProperty(overflow, 'size', { value: 2000 })
+    await selectFileForExpense(container, overflow)
+    expect(screen.queryByText('Upgrade storage')).not.toBeNull()
+
+    // User "frees space" (simulated by dropping the household total) and retries.
+    mockDocuments.value = { totalStorageUsed: 0 }
+    const small = new File([''], 'small.pdf', { type: 'application/pdf' })
+    Object.defineProperty(small, 'size', { value: 500 })
+    await selectFileForExpense(container, small)
+
+    expect(screen.queryByText('Upgrade storage')).toBeNull()
   })
 
   it('rejects attach when target expense is already at MAX_FILES_PER_EXPENSE', async () => {

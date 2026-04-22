@@ -12,6 +12,8 @@ import { db } from '@/data/firebase'
 import { useAuth } from './AuthContext'
 import { useHousehold } from './HouseholdContext'
 import { useExpenses } from './ExpenseContext'
+import { useEntitlement } from '@/hooks/use-entitlement'
+import { maxBytesForLimits } from '@/lib/entitlement-limits'
 import { validateDocumentFiles, AttachmentValidationError } from '@/lib/attachment-validation'
 
 interface DocumentContextValue {
@@ -40,6 +42,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const { house } = useHousehold()
   const { storageUsed: expenseStorageUsed } = useExpenses()
+  const { limits, isLoading: entitlementLoading } = useEntitlement()
+  const maxHouseholdBytes = maxBytesForLimits(limits)
   const [repo, setRepo] = useState<ExpenseRepository | null>(null)
   const [rawFolders, setRawFolders] = useState<DocFolder[]>([])
   const [documents, setDocuments] = useState<HouseDocument[]>([])
@@ -274,12 +278,21 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     if (!repo || !houseId) return
     if (files.length === 0) return
 
+    // Block uploads during the cold-start window where entitlement hasn't
+    // resolved yet — otherwise a Pro user hitting upload in the first few
+    // hundred ms silently gets the free-tier 50 MB cap from the fallback.
+    if (entitlementLoading) {
+      throw new Error('entitlement_loading')
+    }
+
     const currentTotal = expenseStorageUsed + documentsRef.current.reduce((t, d) => t + d.size, 0)
     // Defense-in-depth: DocumentDropZone validates first, but re-check here
     // so the contract holds for any future caller (bulk import, mobile
-    // wrapper, etc.).
+    // wrapper, etc.). Pass the tier's quota so Pro houses aren't capped at
+    // the free-tier default.
     const { rejection } = validateDocumentFiles(files, {
       householdStorageUsed: currentTotal,
+      maxHouseholdBytes,
     })
     if (rejection) throw new AttachmentValidationError(rejection)
 
@@ -349,7 +362,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       })
       clearProgress(placeholderIds)
     }
-  }, [repo, houseId, user?.uid, expenseStorageUsed, setProgressThrottled, clearProgress])
+  }, [repo, houseId, user?.uid, expenseStorageUsed, maxHouseholdBytes, entitlementLoading, setProgressThrottled, clearProgress])
 
   const renameDocument = useCallback(async (id: string, name: string) => {
     if (!repo) return

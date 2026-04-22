@@ -217,6 +217,15 @@
     "exceedsLimit": "\"{{name}}\" is groter dan 25 MB",
     "maxFilesPerExpense": "Maximaal {{max}} bestanden per uitgave",
     "householdStorageLimit": "Opslaglimiet van het huishouden bereikt ({{size}})",
+    "preparing": "Een moment…",
+    "quotaReachedPro": "De 500 MB van dit huis zit vol. Verwijder een paar bestanden om ruimte vrij te maken.",
+    "quotaReachedFree": {
+      "title": "Opslag zit vol",
+      "body": "Je hebt de 50 MB van het gratis plan vol. Ga naar Pro voor 500 MB — ruim voldoende voor aktes, koopcontract, bouwkundig rapport en foto's.",
+      "inline": "Gratis plan zit vol.",
+      "cta": "Opslag uitbreiden"
+    },
+    "quotaManageLink": "Bestanden beheren",
     "securityNote": "Versleuteld en alleen zichtbaar voor je huishouden",
     "securityTooltip": "Je bestanden worden via een beveiligde verbinding verzonden en opgeslagen met bedrijfsmatige versleuteling. Alleen leden van je huishouden hebben toegang. Je kunt ze op elk moment verwijderen."
   },
@@ -966,6 +975,7 @@
       "advancedMortgage": "Geavanceerde hypotheek: renteaanpassingen, extra aflossingen, vergelijkingen",
       "budget": "Stel budgetten per categorie in en volg ze",
       "export": "Alles exporteren en netjes afdrukken",
+      "storageFree": "50 MB opslag voor je bestanden",
       "storage": "500 MB opslag voor je bestanden"
     },
     "gate": {

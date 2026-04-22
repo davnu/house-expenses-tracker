@@ -80,13 +80,34 @@ vi.mock('@/context/ExpenseContext', () => ({
   useExpenses: () => ({ storageUsed: 0 }),
 }))
 
+// ExpenseForm renders FileDropZone which uses useStorageQuota →
+// useDocuments. Mutable mock so the preemptive-banner test can flip to cap.
+const mockDocuments = vi.hoisted(() => ({ value: { totalStorageUsed: 0 } }))
+vi.mock('@/context/DocumentContext', () => ({
+  useDocuments: () => mockDocuments.value,
+}))
+
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ user: { uid: 'alice' } }),
 }))
 
+// QuotaError (banner at top when at cap) renders a <Link> from react-router.
+// Mock as a plain anchor — these tests don't exercise navigation.
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual<typeof import('react-router')>('react-router')
+  return {
+    ...actual,
+    Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) =>
+      <a href={typeof to === 'string' ? to : '#'} {...rest}>{children}</a>,
+  }
+})
+
 import { ExpenseForm } from './ExpenseForm'
 
-afterEach(cleanup)
+afterEach(() => {
+  mockDocuments.value = { totalStorageUsed: 0 }
+  cleanup()
+})
 
 const noopSubmit = vi.fn().mockResolvedValue(undefined)
 
@@ -108,6 +129,42 @@ describe('ExpenseForm attachments section', () => {
   it('hides attachments section when hideAttachments is true', () => {
     render(<ExpenseForm onSubmit={noopSubmit} hideAttachments />)
     expect(screen.queryByText('Attachments')).toBeNull()
+  })
+
+  it('shows a preemptive quota banner at the top when household storage is at cap (Pro tier)', () => {
+    // UX decision: when the user opens Add Expense at cap, don't make them
+    // scroll down to Attachments to discover the problem. Surface it at the
+    // top of the form via the inline QuotaError. The expense itself is still
+    // valid (no attachments = fine), so we don't block the form.
+    // This file's default entitlement mock is Pro (500 MB cap), so we hit
+    // the cap exactly. Pro inline variant shows the "delete + manage files"
+    // notice; free tier (tested in QuotaError.test.tsx) shows the upgrade CTA.
+    mockDocuments.value = { totalStorageUsed: 500 * 1024 * 1024 }
+    render(<ExpenseForm onSubmit={noopSubmit} />)
+    // Two links in the DOM at cap — one at the top banner, one inside the
+    // FileDropZone's standing variant. Both link to /app/documents. That's
+    // intentional: top = warning as user opens the form; bottom = contextual
+    // to the attach action. Asserting ≥1 catches the banner's presence
+    // without being brittle to the dropzone's parallel CTA.
+    const links = screen.getAllByRole('link', { name: /manage files/i })
+    expect(links.length).toBeGreaterThanOrEqual(1)
+    expect(links[0].getAttribute('href')).toBe('/app/documents')
+    // Attachments section still rendered — form is NOT blocked.
+    expect(screen.queryByText('Attachments')).not.toBeNull()
+  })
+
+  it('does NOT show the preemptive banner when the form is set to hide attachments', () => {
+    // If the parent hides attachments entirely (e.g. a minimal quick-add
+    // variant), the quota is irrelevant — no banner.
+    mockDocuments.value = { totalStorageUsed: 500 * 1024 * 1024 }
+    render(<ExpenseForm onSubmit={noopSubmit} hideAttachments />)
+    expect(screen.queryByRole('link', { name: /manage files/i })).toBeNull()
+  })
+
+  it('does NOT show the preemptive banner when under cap (banner is opt-in by state, not always-on)', () => {
+    mockDocuments.value = { totalStorageUsed: 100 * 1024 * 1024 } // 100 MB of 500
+    render(<ExpenseForm onSubmit={noopSubmit} />)
+    expect(screen.queryByRole('link', { name: /manage files/i })).toBeNull()
   })
 })
 

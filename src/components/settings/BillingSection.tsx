@@ -65,6 +65,10 @@ export function BillingSection() {
     'billing.section.freeFeature1',
     'billing.section.freeFeature2',
     'billing.section.freeFeature3',
+    // Storage quota — sits last in both columns so the reader's eye tracks
+    // 50 MB ↔ 500 MB at matching positions in Free vs Pro Unlocks. Parallel
+    // structure does the upsell work without needing salesy framing.
+    'billing.features.storageFree',
   ] as const
 
   const proFeatures = [

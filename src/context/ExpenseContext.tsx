@@ -7,6 +7,7 @@ import { uploadBatchWithRollback } from '@/data/upload-batch'
 import { generateThumbnail } from '@/lib/thumbnail'
 import { db } from '@/data/firebase'
 import { useHousehold } from './HouseholdContext'
+import { useEntitlement } from '@/hooks/use-entitlement'
 import { validateExpenseAttachments, AttachmentValidationError } from '@/lib/attachment-validation'
 
 interface ExpenseContextValue {
@@ -64,6 +65,18 @@ async function uploadAttachmentAtomic(
 
 export function ExpenseProvider({ children }: { children: ReactNode }) {
   const { house } = useHousehold()
+  // ExpenseContext sits ABOVE DocumentContext in the provider tree, so it
+  // can't read document bytes from useDocuments(). That means its defense-
+  // in-depth check can only see its own expense bytes — enforcing the
+  // household quota here would silo expenses and produce the bug where a
+  // user at 50/50 from docs could still upload expense attachments.
+  // The household-quota gate lives at the UI layer (via useStorageQuota,
+  // which sits inside DocumentProvider and has cross-feature visibility)
+  // and at the server via the storage-quota Cloud Function. This context
+  // still gates per-file size, MIME type, and per-expense count via
+  // skipHouseholdQuota: true. The entitlement-loading gate stays for
+  // programmatic callers during the cold-start window.
+  const { isLoading: entitlementLoading } = useEntitlement()
   const [repo, setRepo] = useState<ExpenseRepository | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
@@ -158,13 +171,17 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
 
   const addExpenseWithFiles = useCallback(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>, files: File[]) => {
     if (!repo || !houseId) return
-    const currentStorageUsed = expensesRef.current.reduce((total, exp) =>
-      total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
-    // Defense-in-depth: the UI validates first, but re-check here so the
-    // contract holds regardless of caller. Throws AttachmentValidationError
-    // which UI layers translate via rejectionMessage().
+    // Block programmatic callers during the entitlement cold-start — the UI
+    // already has a matching gate via useStorageQuota().isLoading, so users
+    // never hit this path, but it closes the race for non-UI callers.
+    if (entitlementLoading) {
+      throw new Error('entitlement_loading')
+    }
+    // Per-file/type/count only. Household-quota is enforced by the UI layer
+    // (useStorageQuota — cross-feature total) and the Cloud Function
+    // (server-authoritative tier enforcement).
     const { rejection } = validateExpenseAttachments(files, {
-      householdStorageUsed: currentStorageUsed,
+      skipHouseholdQuota: true,
     })
     if (rejection) throw new AttachmentValidationError(rejection)
 
@@ -219,7 +236,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
         clearProgress(placeholderAttIds)
       }
     }
-  }, [repo, houseId, setProgressThrottled, clearProgress])
+  }, [repo, houseId, entitlementLoading, setProgressThrottled, clearProgress])
 
   const updateExpense = useCallback(async (id: string, updates: ExpenseUpdate) => {
     if (!repo) return
@@ -266,15 +283,17 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const addAttachmentsToExpense = useCallback(async (expenseId: string, files: File[]) => {
     if (!repo || !houseId) return
     if (files.length === 0) return
+    // See addExpenseWithFiles — block during entitlement cold-start.
+    if (entitlementLoading) {
+      throw new Error('entitlement_loading')
+    }
     const expense = expensesRef.current.find((e) => e.id === expenseId)
     if (!expense) return
-    const currentStorageUsed = expensesRef.current.reduce((total, exp) =>
-      total + (exp.attachments ?? []).reduce((sum, a) => sum + a.size, 0), 0)
-    // Defense-in-depth: ExpenseList pre-validates, but we re-check here so
-    // the contract holds even if a future caller skips the UI layer.
+    // Per-file/type/count only. See addExpenseWithFiles for why household-
+    // quota is not enforced here — UI + Cloud Function own that check.
     const { rejection } = validateExpenseAttachments(files, {
       existingCount: expense.attachments?.length ?? 0,
-      householdStorageUsed: currentStorageUsed,
+      skipHouseholdQuota: true,
     })
     if (rejection) throw new AttachmentValidationError(rejection)
 
@@ -325,7 +344,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       })
       clearProgress(placeholderIdSet)
     }
-  }, [repo, houseId, setProgressThrottled, clearProgress])
+  }, [repo, houseId, entitlementLoading, setProgressThrottled, clearProgress])
 
   const removeAttachment = useCallback(async (expenseId: string, attachmentId: string) => {
     if (!repo || !houseId) return

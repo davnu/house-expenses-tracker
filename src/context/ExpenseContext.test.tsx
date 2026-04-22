@@ -77,6 +77,20 @@ vi.mock('./HouseholdContext', () => ({
   }),
 }))
 
+// Entitlement mock: mutable so individual tests can flip the tier to Pro.
+const mockEntitlement = vi.hoisted(() => ({
+  value: {
+    entitlement: null as unknown,
+    limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+    isPro: false,
+    isLoading: false,
+  },
+}))
+
+vi.mock('@/hooks/use-entitlement', () => ({
+  useEntitlement: () => mockEntitlement.value,
+}))
+
 // Import after mocks are set up
 import { ExpenseProvider, useExpenses } from './ExpenseContext'
 import { sizedFile } from '@/test-utils/files'
@@ -99,6 +113,14 @@ async function setupHook() {
 describe('ExpenseContext', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset to free tier (50 MB) so existing storage-quota tests keep their
+    // original expectations. Individual Pro tests opt in explicitly.
+    mockEntitlement.value = {
+      entitlement: null,
+      limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+      isPro: false,
+      isLoading: false,
+    }
     mockGenerateThumbnail.mockResolvedValue(null) // No thumbnail by default
     mockRepo.getExpenses.mockResolvedValue(mockExpenses.map((e) => ({ ...e, attachments: e.attachments?.map((a) => ({ ...a })) })))
     mockRepo.addExpense.mockImplementation(async (input: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => ({
@@ -765,64 +787,62 @@ describe('ExpenseContext', () => {
       expect(result.current.storageUsed).toBe(5000)
     })
 
-    it('accepts a batch that fills household to EXACTLY MAX_HOUSEHOLD_STORAGE', async () => {
-      // 6 × 8 MB = 48 MB + 5000 existing ≈ fits within 50 MB with a small pad
-      // file. Each file comfortably under MAX_FILE_SIZE (25 MB per file).
+    it('skips household-quota check at the context layer (UI + Cloud Function own that gate)', async () => {
+      // Regression: ExpenseContext used to run a defense-in-depth check that
+      // only saw expense bytes (not documents) — siloing the quota and letting
+      // expense uploads sneak past when docs had filled the cap. The context
+      // now opts out via `skipHouseholdQuota: true`; household enforcement
+      // lives at the UI (useStorageQuota — cross-feature visibility) and the
+      // Cloud Function (server-authoritative). A batch that would've been
+      // rejected by the old context-layer check is now accepted — uploads
+      // would still be blocked at the UI + server.
       const { result } = await setupHook()
-      const pad = 50 * 1024 * 1024 - 5000 - 6 * 8 * 1024 * 1024
-      const files = [
-        ...Array.from({ length: 6 }, (_, i) =>
-          sizedFile(`big${i}.pdf`, 'application/pdf', 8 * 1024 * 1024),
-        ),
-        sizedFile('pad.pdf', 'application/pdf', pad),
-      ]
-      await act(async () => { await result.current.addAttachmentsToExpense('exp-2', files) })
-
-      expect(result.current.storageUsed).toBe(50 * 1024 * 1024)
-      expect(mockUploadAttachment).toHaveBeenCalledTimes(7)
+      const overflowFiles = Array.from({ length: 6 }, (_, i) =>
+        sizedFile(`big${i}.pdf`, 'application/pdf', 9 * 1024 * 1024),
+      )
+      // 5000 existing + 6 × 9 MB = ~54 MB — beyond the old free-tier cap.
+      await act(async () => { await result.current.addAttachmentsToExpense('exp-2', overflowFiles) })
+      expect(mockUploadAttachment).toHaveBeenCalledTimes(6)
     })
 
-    it('rejects a batch that would push household one byte past MAX_HOUSEHOLD_STORAGE', async () => {
+    it('addAttachmentsToExpense blocks uploads during entitlement cold-start', async () => {
+      // See DocumentContext counterpart — a Pro user hitting this path in the
+      // first few hundred ms post-mount would otherwise get the free 50 MB cap.
+      mockEntitlement.value = {
+        entitlement: null,
+        limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+        isPro: false,
+        isLoading: true,
+      }
       const { result } = await setupHook()
-      // 6 × 8 MB + pad = exactly MAX. One extra byte on the pad file overflows.
-      const overBy = 1
-      const pad = 50 * 1024 * 1024 - 5000 - 6 * 8 * 1024 * 1024 + overBy
-      const files = [
-        ...Array.from({ length: 6 }, (_, i) =>
-          sizedFile(`big${i}.pdf`, 'application/pdf', 8 * 1024 * 1024),
-        ),
-        sizedFile('overflow.pdf', 'application/pdf', pad),
-      ]
+      const file = sizedFile('ok.pdf', 'application/pdf', 1_000_000)
 
       await expect(
-        act(async () => { await result.current.addAttachmentsToExpense('exp-2', files) })
-      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
+        act(async () => { await result.current.addAttachmentsToExpense('exp-2', [file]) })
+      ).rejects.toThrow(/entitlement_loading/)
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
-      expect(result.current.storageUsed).toBe(5000)
     })
 
-    it('allows re-upload after deleting an expense frees quota', async () => {
+    it('addExpenseWithFiles blocks uploads during entitlement cold-start', async () => {
+      mockEntitlement.value = {
+        entitlement: null,
+        limits: { maxMembers: 1, maxStorageMB: 50, hasHouseholdInvites: false, hasAdvancedMortgage: false, hasBudget: false, hasExport: false, hasPrintSummary: false, hasMortgageWhatIf: false },
+        isPro: false,
+        isLoading: true,
+      }
       const { result } = await setupHook()
-      // Fill storage to ~45 MB via multiple files (each well under per-file cap) attached to exp-2
-      const fill = Array.from({ length: 5 }, (_, i) =>
-        sizedFile(`fill${i}.pdf`, 'application/pdf', 9 * 1024 * 1024 - 1000),
-      )
-      await act(async () => { await result.current.addAttachmentsToExpense('exp-2', fill) })
-      // 5 × (~9 MB - 1000) + 5000 ≈ just under 45 MB
+      const draft = {
+        amount: 100, category: 'other' as const, payer: 'alice',
+        description: 'Notary', date: '2026-04-01',
+      }
+      const file = sizedFile('ok.pdf', 'application/pdf', 1_000_000)
 
-      // An 8 MB upload would NOT fit (current + 8 > 50)
-      const eight = sizedFile('eight.pdf', 'application/pdf', 8 * 1024 * 1024)
       await expect(
-        act(async () => { await result.current.addAttachmentsToExpense('exp-1', [eight]) })
-      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
+        act(async () => { await result.current.addExpenseWithFiles(draft, [file]) })
+      ).rejects.toThrow(/entitlement_loading/)
 
-      // Delete the big expense → quota frees up
-      await act(async () => { await result.current.deleteExpense('exp-2') })
-
-      // Now the 8 MB upload fits
-      await act(async () => { await result.current.addAttachmentsToExpense('exp-1', [eight]) })
-      expect(mockUploadAttachment).toHaveBeenCalledTimes(fill.length + 1)
+      expect(mockUploadAttachment).not.toHaveBeenCalled()
     })
 
     it('addAttachmentsToExpense returns silently for empty file list (no-op)', async () => {
@@ -871,20 +891,6 @@ describe('ExpenseContext', () => {
       await expect(
         act(async () => { await result.current.addExpenseWithFiles(newExpense, [bad]) })
       ).rejects.toMatchObject({ reason: { code: 'unsupportedType' } })
-
-      expect(mockUploadAttachment).not.toHaveBeenCalled()
-    })
-
-    it('rejects batch that would exceed household quota', async () => {
-      const { result } = await setupHook()
-      // 5000 existing + 9 MB + 9 MB + 9 MB + 9 MB + 9 MB = 45 MB, next 9 would overflow
-      const files = Array.from({ length: 6 }, (_, i) =>
-        sizedFile(`f${i}.pdf`, 'application/pdf', 9 * 1024 * 1024),
-      )
-
-      await expect(
-        act(async () => { await result.current.addExpenseWithFiles(newExpense, files) })
-      ).rejects.toMatchObject({ reason: { code: 'householdStorageLimit' } })
 
       expect(mockUploadAttachment).not.toHaveBeenCalled()
     })

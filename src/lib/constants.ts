@@ -52,7 +52,12 @@ export const CATEGORY_COLORS: Record<string, string> = {
 // Attachment limits
 export const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25 MB per file
 export const MAX_FILES_PER_EXPENSE = 10
-export const MAX_HOUSEHOLD_STORAGE = 50 * 1024 * 1024 // 50 MB total per household
+// Free-tier household storage quota. Pro tier uses limits.maxStorageMB
+// (resolved via useEntitlement / resolveLimits). Callers that need the
+// effective limit for the current house must read it from entitlement and
+// pass it into the validator as maxHouseholdBytes — this constant is only
+// the fallback for unauthenticated / free contexts.
+export const MAX_HOUSEHOLD_STORAGE = 50 * 1024 * 1024 // 50 MB (free tier)
 
 // Document limits (shared with attachment quota)
 export const MAX_DOCUMENTS_PER_FOLDER = 50

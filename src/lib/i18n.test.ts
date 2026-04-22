@@ -780,6 +780,43 @@ describe('locale files', () => {
     }
   })
 
+  it('every leaf key in en.json exists in every other locale (deep parity)', async () => {
+    // Top-level key parity doesn't catch nested holes like a missing
+    // `files.quotaReachedFree.body` in de.json — which would fall back to
+    // the key string literal at runtime ("files.quotaReachedFree.body")
+    // shown to German users. This test walks the entire en.json tree and
+    // asserts every leaf path resolves to a non-empty string in each locale.
+    // Excludes the `landing` subtree (intentionally en-only per existing policy).
+    const en = (await locales.en()).default as Record<string, unknown>
+
+    const leafPaths = (obj: unknown, prefix: string[] = []): string[][] => {
+      if (obj === null || typeof obj !== 'object') return [prefix]
+      return Object.entries(obj as Record<string, unknown>).flatMap(([k, v]) =>
+        leafPaths(v, [...prefix, k]),
+      )
+    }
+    const paths = leafPaths(en).filter(p => p[0] !== 'landing')
+
+    const resolve = (root: unknown, path: string[]): unknown => {
+      return path.reduce<unknown>((acc, key) => {
+        if (acc !== null && typeof acc === 'object') return (acc as Record<string, unknown>)[key]
+        return undefined
+      }, root)
+    }
+
+    for (const [code, loader] of Object.entries(locales)) {
+      if (code === 'en') continue
+      const mod = (await loader()).default as Record<string, unknown>
+      for (const path of paths) {
+        const value = resolve(mod, path)
+        expect(
+          typeof value === 'string' && value.length > 0,
+          `${code}.json missing or empty leaf at "${path.join('.')}"`,
+        ).toBe(true)
+      }
+    }
+  })
+
   it('pluralization keys are paired (_one and _other)', async () => {
     const en = (await locales.en()).default
     // Check that every _one key has a corresponding _other
