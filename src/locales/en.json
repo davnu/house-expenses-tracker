@@ -750,6 +750,7 @@
       "features": "Features",
       "howItWorks": "How It Works",
       "faq": "FAQ",
+      "blog": "Blog",
       "logIn": "Log In",
       "getStarted": "Get Started",
       "openApp": "Open App"
@@ -851,6 +852,10 @@
       "a5": "Yes. Create multiple houses and switch between them. Each property has its own expenses, mortgage, and members.",
       "q6": "What countries are supported?",
       "a6": "34+ countries across Europe, North America, Asia-Pacific, and more. Each country comes with the right currency and, for mortgages, the relevant reference rates (Euribor, SOFR, etc.)."
+    },
+    "learn": {
+      "eyebrow": "From the blog",
+      "viewAll": "Browse all articles"
     },
     "cta": {
       "title": "Start tracking your home purchase costs today",
@@ -1064,5 +1069,40 @@
     "faq2A": "Start free. Track expenses, attach receipts, use the basic mortgage calculator. Upgrade only when you invite your partner or need the advanced tools.",
     "faq3Q": "What if I buy a second house?",
     "faq3A": "Add it for €29 — 40% off the first-house price. Each house is independent; payment unlocks that specific house for everyone in the household."
+  },
+  "blog": {
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Guides for buying your home",
+      "subtitle": "Clear, practical writing about every cost, fee, and step of buying a house.",
+      "featuredLabel": "Featured",
+      "readMore": "Read article",
+      "noArticles": "More articles coming soon.",
+      "backToHome": "Back to home"
+    },
+    "article": {
+      "backToBlog": "All articles",
+      "readingTime": "{{count}} min read",
+      "publishedOn": "Published {{date}}",
+      "updatedOn": "Updated {{date}}",
+      "author": "CasaTab Team",
+      "tableOfContents": "On this page",
+      "relatedArticles": "Continue reading",
+      "share": "Share",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "readingProgress": "Reading progress",
+      "ctaTitle": "Track every cost. Organize every document.",
+      "ctaSubtitle": "Expenses, receipts, invoices, contracts, mortgage payments — all in one organized place. Free to start.",
+      "ctaButton": "Start tracking free"
+    },
+    "categories": {
+      "all": "All",
+      "costs": "Costs",
+      "mortgage": "Mortgage",
+      "renovation": "Renovation",
+      "legal": "Legal",
+      "moving": "Moving"
+    }
   }
 }

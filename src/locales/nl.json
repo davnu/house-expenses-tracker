@@ -750,6 +750,7 @@
       "features": "Functies",
       "howItWorks": "Hoe het werkt",
       "faq": "Veelgestelde vragen",
+      "blog": "Blog",
       "logIn": "Inloggen",
       "getStarted": "Aan de slag",
       "openApp": "Open app"
@@ -851,6 +852,10 @@
       "a5": "Ja. Maak meerdere huizen aan en wissel ertussen. Elke woning heeft eigen uitgaven, hypotheek en leden.",
       "q6": "Welke landen worden ondersteund?",
       "a6": "34+ landen in Europa, Noord-Amerika, Azië-Pacific en meer. Elk land heeft de juiste valuta en, voor hypotheken, de relevante referentierentes (Euribor, SOFR, etc.)."
+    },
+    "learn": {
+      "eyebrow": "Vanuit het blog",
+      "viewAll": "Bekijk alle artikelen"
     },
     "cta": {
       "title": "Begin vandaag met het bijhouden van je aankoopkosten",
@@ -1064,5 +1069,40 @@
     "faq2A": "Begin gratis. Houd uitgaven bij, hang bonnen aan, gebruik de basis-hypotheekberekening. Upgrade pas als je je partner uitnodigt of de geavanceerde tools nodig hebt.",
     "faq3Q": "Wat als ik een tweede huis koop?",
     "faq3A": "Voeg het toe voor € 29 — 40% korting op de prijs van het eerste huis. Elk huis staat op zichzelf; de betaling ontgrendelt dat specifieke huis voor iedereen in het huishouden."
+  },
+  "blog": {
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Gidsen voor het kopen van een huis",
+      "subtitle": "Heldere, praktische artikelen over elke kostenpost en stap van de aankoop.",
+      "featuredLabel": "Uitgelicht",
+      "readMore": "Lees verder",
+      "noArticles": "Meer artikelen verschijnen binnenkort.",
+      "backToHome": "Terug naar home"
+    },
+    "article": {
+      "backToBlog": "Alle artikelen",
+      "readingTime": "{{count}} min leestijd",
+      "publishedOn": "Gepubliceerd op {{date}}",
+      "updatedOn": "Bijgewerkt op {{date}}",
+      "author": "CasaTab Team",
+      "tableOfContents": "Op deze pagina",
+      "relatedArticles": "Verder lezen",
+      "share": "Delen",
+      "copyLink": "Link kopiëren",
+      "copied": "Gekopieerd",
+      "readingProgress": "Leesvoortgang",
+      "ctaTitle": "Volg elke kost. Orden elk document.",
+      "ctaSubtitle": "Uitgaven, bonnetjes, facturen, contracten, hypotheeklasten — overzichtelijk op één plek. Gratis starten.",
+      "ctaButton": "Gratis starten"
+    },
+    "categories": {
+      "all": "Alle",
+      "costs": "Kosten",
+      "mortgage": "Hypotheek",
+      "renovation": "Verbouwing",
+      "legal": "Juridisch",
+      "moving": "Verhuizing"
+    }
   }
 }

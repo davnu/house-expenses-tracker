@@ -750,6 +750,7 @@
       "features": "Funktionen",
       "howItWorks": "So funktioniert's",
       "faq": "Häufige Fragen",
+      "blog": "Blog",
       "logIn": "Anmelden",
       "getStarted": "Loslegen",
       "openApp": "App öffnen"
@@ -851,6 +852,10 @@
       "a5": "Ja. Erstellen Sie mehrere Häuser und wechseln Sie zwischen ihnen. Jede Immobilie hat eigene Ausgaben, Hypothek und Mitglieder.",
       "q6": "Welche Länder werden unterstützt?",
       "a6": "34+ Länder in Europa, Nordamerika, Asien-Pazifik und mehr. Jedes Land kommt mit der richtigen Währung und, für Hypotheken, den relevanten Referenzzinssätzen (Euribor, SOFR, etc.)."
+    },
+    "learn": {
+      "eyebrow": "Aus dem Blog",
+      "viewAll": "Alle Artikel ansehen"
     },
     "cta": {
       "title": "Beginnen Sie noch heute mit der Erfassung Ihrer Hauskaufkosten",
@@ -1064,5 +1069,40 @@
     "faq2A": "Starte kostenlos. Trage Ausgaben ein, hänge Belege an, nutze den einfachen Hypothekenrechner. Upgrade nur, wenn du deinen Partner einlädst oder die erweiterten Tools brauchst.",
     "faq3Q": "Was, wenn ich ein zweites Haus kaufe?",
     "faq3A": "Füge es für 29 € hinzu — 40 % Rabatt gegenüber dem ersten Haus. Jedes Haus ist unabhängig; die Zahlung schaltet genau dieses Haus für alle Mitglieder frei."
+  },
+  "blog": {
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Ratgeber zum Hauskauf",
+      "subtitle": "Klare, praktische Artikel zu jeder Nebenkostenposition und jedem Schritt des Kaufs.",
+      "featuredLabel": "Empfohlen",
+      "readMore": "Artikel lesen",
+      "noArticles": "Weitere Artikel folgen in Kürze.",
+      "backToHome": "Zurück zur Startseite"
+    },
+    "article": {
+      "backToBlog": "Alle Artikel",
+      "readingTime": "{{count}} Min. Lesezeit",
+      "publishedOn": "Veröffentlicht am {{date}}",
+      "updatedOn": "Aktualisiert am {{date}}",
+      "author": "CasaTab Team",
+      "tableOfContents": "Auf dieser Seite",
+      "relatedArticles": "Weiterlesen",
+      "share": "Teilen",
+      "copyLink": "Link kopieren",
+      "copied": "Kopiert",
+      "readingProgress": "Lesefortschritt",
+      "ctaTitle": "Alle Kosten im Blick. Alle Unterlagen griffbereit.",
+      "ctaSubtitle": "Ausgaben, Belege, Rechnungen, Verträge, Hypothekenraten — alles an einem Ort, sauber geordnet. Kostenlos starten.",
+      "ctaButton": "Kostenlos starten"
+    },
+    "categories": {
+      "all": "Alle",
+      "costs": "Kosten",
+      "mortgage": "Hypothek",
+      "renovation": "Renovierung",
+      "legal": "Rechtliches",
+      "moving": "Umzug"
+    }
   }
 }

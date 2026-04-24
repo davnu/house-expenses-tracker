@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@plugin "@tailwindcss/typography";
+
 @theme {
   --color-background: #ffffff;
   --color-foreground: #0a0a0a;
@@ -41,6 +43,23 @@
     @apply bg-background text-foreground;
     font-family: system-ui, -apple-system, sans-serif;
     margin: 0;
+  }
+
+  /* Brand-coloured article prose. Scoped via .prose class from
+     @tailwindcss/typography — has no effect outside <article> bodies. */
+  .prose a {
+    color: var(--color-brand);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .prose a:hover {
+    color: var(--color-brand-hover);
+  }
+  /* Offset sticky header when a TOC anchor lands on an in-article heading. */
+  .prose h2,
+  .prose h3 {
+    scroll-margin-top: 5rem;
   }
 }
 

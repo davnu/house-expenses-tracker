@@ -42,11 +42,23 @@ down_payment, notary, taxes, financial_advisor, renovations, furniture, moving, 
 ## i18n & SEO
 - **6 languages**: en, es, fr, de, nl, pt — locale files in `src/locales/*.json`
 - **Landing page**: pre-rendered in all 6 languages for SEO (`/`, `/es/`, `/fr/`, `/de/`, `/nl/`, `/pt/`)
-- **Build pipeline**: `tsc → vite build → scripts/generate-seo-pages.mjs` — the SEO script generates pre-rendered HTML per language with translated meta tags, hreflang, JSON-LD, and full page content
+- **Build pipeline**: `tsc → vite build → scripts/generate-hero-variants.mjs → scripts/generate-seo-pages.mjs → scripts/validate-seo-pages.mjs` — the SEO script generates pre-rendered HTML per language with translated meta tags, hreflang, JSON-LD, sitemap, RSS + JSON feeds, and full page content
 - **React Router**: has explicit routes for `/es`, `/fr`, `/de`, `/nl`, `/pt` in App.tsx so the catch-all doesn't redirect language pages
 - **Language detection**: i18next checks `localStorage` first, then `navigator`. Language pages set `localStorage('i18nextLng')` via inline script before React loads
 - **SEO meta descriptions & keywords**: hand-crafted per language in `scripts/generate-seo-pages.mjs` (separate from UI copy for search optimization)
 - **When changing locale copy**: rebuild to regenerate SEO pages. Landing page content in `landing.*` keys is duplicated as pre-rendered HTML by the build script — if the landing page structure changes significantly, update the `prerenderedContent()` function in the script
+
+## Blog
+- **Content**: `src/content/blog/posts/{canonicalSlug}/{lang}.md` — one folder per article, 6 localized files (en/es/fr/de/nl/pt) with YAML frontmatter + markdown body.
+- **Slug convention**: `slug` is **localized per language** for native-market SEO (e.g. Spanish `coste-real-de-comprar-casa`). `canonicalSlug` is **identical across all 6 files** and is the language-agnostic ID used by `resolveAlternateUrls()` + hreflang.
+- **Runtime**: `src/lib/blog.ts` uses a Vite plugin (`vite-plugin-blog-articles.ts`) to pre-render markdown at build time — `marked` and `isomorphic-dompurify` do NOT ship to the browser. Metadata is eager; per-article body is lazy-loaded via code-split chunks.
+- **SSG**: every article gets pre-rendered HTML at `dist/blog/{slug}/index.html` (and `/{lang}/blog/{slug}/index.html`) with Article JSON-LD, BreadcrumbList, per-article OG/Twitter tags, hreflang, and feed-discovery links. Sitemap + RSS + JSON Feed are all auto-generated per language.
+- **Creating a new article**: run `/new-article` (or `/new-article <topic hint>`) — the slash command at `.claude/commands/new-article.md` executes the full workflow (topic selection, SERP originality check, PAA capture, EN draft, 5 localizations, hero-image prompt).
+- **Hero images**: realistic editorial photography (not flat-vector). Two paths:
+  - **With Gemini API key** (`GEMINI_API_KEY` in `.env`): `/new-article` calls Gemini 3 Pro Image directly, saves the raw PNG to `public/blog/`, auto-processes into 1600×900 WebP + 800w/1200w variants, and adds `heroImage` + `heroImageAlt` to all 6 frontmatter files. End-to-end, no manual steps. Watermark-free (API outputs carry only invisible SynthID).
+  - **Without key**: Claude prints the prompts, you generate in gemini.google.com, drop the raw export into `public/blog/<canonicalSlug>-hero.<ext>`, run `npm run process-heroes`, and add `heroImage` + `heroImageAlt` to frontmatter yourself.
+- The sharp-based processing script (`scripts/generate-hero-variants.mjs`) center-crops to 16:9, resizes to 1600×900, encodes as WebP q82 (main) / q78 (1200w) / q76 (800w) with `effort=6` + `smartSubsample`. Outputs land in `public/blog/` and are committed. `heroImage` frontmatter must be all-or-nothing across the 6 language files — never mix.
+- **Full operator runbook**: `docs/BLOG.md` — frontmatter reference, slug rules, troubleshooting, common tasks (update article, add named author, remove article), anti-patterns.
 
 ## Dev
 - `npm run dev` — localhost:5173, connects to real Firebase (no SEO pages in dev — those are build-time only)

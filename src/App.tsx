@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
+import { lazy, Suspense, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ExpenseProvider } from '@/context/ExpenseContext'
@@ -14,6 +14,10 @@ import { ExpensesPage } from '@/pages/ExpensesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { LandingPage } from '@/pages/LandingPage'
+// Blog pages are code-split. They only load once a visitor hits /blog or
+// /{lang}/blog — the landing bundle stays small and fast for first paint.
+const BlogListPage = lazy(() => import('@/pages/BlogListPage').then(m => ({ default: m.BlogListPage })))
+const BlogArticlePage = lazy(() => import('@/pages/BlogArticlePage').then(m => ({ default: m.BlogArticlePage })))
 import { OnboardingPage } from '@/pages/OnboardingPage'
 import { InvitePage } from '@/pages/InvitePage'
 import { InviteLandingPage } from '@/pages/InviteLandingPage'
@@ -211,10 +215,51 @@ function LanguageLanding() {
 
 /* ── Root ── */
 
+/**
+ * Resets scroll position on client-side route transitions.
+ *
+ * Without this, React Router preserves the previous page's scroll — so
+ * jumping from the "Learn" section at the bottom of the landing page to
+ * /blog lands the reader at the bottom of the blog index, which feels
+ * broken. This hook runs once on every location change:
+ *
+ *   - PUSH / REPLACE  → scroll to top (new navigation)
+ *   - POP (back/fwd)  → no-op, let the browser restore the stored position
+ *   - #hash present   → scroll that element into view (landing-page anchors)
+ *
+ * Mounted once inside <BrowserRouter> but outside <Routes> so every route
+ * benefits. In-page smooth-scroll buttons on the landing page (`scrollTo()`)
+ * don't touch router state, so they're unaffected.
+ */
+function ScrollToTop() {
+  const { pathname, hash } = useLocation()
+  const navigationType = useNavigationType()
+
+  useEffect(() => {
+    if (navigationType === 'POP') return
+
+    if (hash) {
+      // Defer one frame so the target route's DOM has mounted before we seek.
+      requestAnimationFrame(() => {
+        const id = decodeURIComponent(hash.replace(/^#/, ''))
+        const el = id ? document.getElementById(id) : null
+        if (el) el.scrollIntoView({ block: 'start' })
+        else window.scrollTo(0, 0)
+      })
+      return
+    }
+
+    window.scrollTo(0, 0)
+  }, [pathname, hash, navigationType])
+
+  return null
+}
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           {/* Public routes */}
           <Route index element={<LandingPage />} />
@@ -234,6 +279,31 @@ function App() {
           {/* SEO language landing pages (/es, /fr, /de, /nl, /pt) */}
           {SEO_LANGUAGES.map(lang => (
             <Route key={lang} path={`/${lang}`} element={<LanguageLanding />} />
+          ))}
+
+          {/* Blog — lazy-loaded. Suspense fallback is PageSkeleton so the
+              header bar appears instantly even before the blog chunk lands. */}
+          <Route
+            path="/blog"
+            element={<Suspense fallback={<PageSkeleton />}><BlogListPage lang="en" /></Suspense>}
+          />
+          <Route
+            path="/blog/:slug"
+            element={<Suspense fallback={<PageSkeleton />}><BlogArticlePage lang="en" /></Suspense>}
+          />
+          {SEO_LANGUAGES.map(lang => (
+            <Route
+              key={`${lang}-blog`}
+              path={`/${lang}/blog`}
+              element={<Suspense fallback={<PageSkeleton />}><BlogListPage lang={lang} /></Suspense>}
+            />
+          ))}
+          {SEO_LANGUAGES.map(lang => (
+            <Route
+              key={`${lang}-blog-article`}
+              path={`/${lang}/blog/:slug`}
+              element={<Suspense fallback={<PageSkeleton />}><BlogArticlePage lang={lang} /></Suspense>}
+            />
           ))}
 
           {/* Legacy redirects (old bookmarks) */}

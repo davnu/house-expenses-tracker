@@ -750,6 +750,7 @@
       "features": "Funcionalidades",
       "howItWorks": "Como funciona",
       "faq": "Perguntas frequentes",
+      "blog": "Blog",
       "logIn": "Entrar",
       "getStarted": "Começar",
       "openApp": "Abrir app"
@@ -851,6 +852,10 @@
       "a5": "Sim. Crie várias casas e alterne entre elas. Cada imóvel tem as suas próprias despesas, crédito e membros.",
       "q6": "Que países são suportados?",
       "a6": "34+ países na Europa, América do Norte, Ásia-Pacífico e mais. Cada país inclui a moeda correta e, para créditos, as taxas de referência relevantes (Euribor, SOFR, etc.)."
+    },
+    "learn": {
+      "eyebrow": "Do blog",
+      "viewAll": "Ver todos os artigos"
     },
     "cta": {
       "title": "Comece a acompanhar os custos de compra da sua casa hoje",
@@ -1064,5 +1069,40 @@
     "faq2A": "Começa grátis. Regista despesas, anexa recibos, usa a calculadora básica de hipoteca. Atualiza só quando convidares o teu parceiro ou precisares das ferramentas avançadas.",
     "faq3Q": "E se comprar uma segunda casa?",
     "faq3A": "Adiciona-a por 29 € — 40% de desconto face à primeira. Cada casa é independente; o pagamento desbloqueia essa casa específica para todos os membros do agregado."
+  },
+  "blog": {
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Guias para comprar a sua casa",
+      "subtitle": "Conteúdo claro e prático sobre cada despesa, taxa e passo da compra.",
+      "featuredLabel": "Em destaque",
+      "readMore": "Ler artigo",
+      "noArticles": "Mais artigos em breve.",
+      "backToHome": "Voltar ao início"
+    },
+    "article": {
+      "backToBlog": "Todos os artigos",
+      "readingTime": "{{count}} min de leitura",
+      "publishedOn": "Publicado a {{date}}",
+      "updatedOn": "Atualizado a {{date}}",
+      "author": "Equipa CasaTab",
+      "tableOfContents": "Nesta página",
+      "relatedArticles": "Continuar a ler",
+      "share": "Partilhar",
+      "copyLink": "Copiar link",
+      "copied": "Copiado",
+      "readingProgress": "Progresso da leitura",
+      "ctaTitle": "Controle cada custo. Organize cada documento.",
+      "ctaSubtitle": "Despesas, recibos, faturas, contratos e prestações — tudo num só sítio, bem organizado. Comece grátis.",
+      "ctaButton": "Começar grátis"
+    },
+    "categories": {
+      "all": "Todas",
+      "costs": "Custos",
+      "mortgage": "Crédito",
+      "renovation": "Obras",
+      "legal": "Jurídico",
+      "moving": "Mudança"
+    }
   }
 }

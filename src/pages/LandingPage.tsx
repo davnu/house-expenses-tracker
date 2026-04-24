@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { SUPPORTED_LANGUAGES } from '@/i18n'
@@ -9,6 +9,8 @@ import { useAnalytics } from '@/hooks/useAnalytics'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { landingTitle } from '@/lib/page-titles'
 import { PrivacyShield } from '@/components/marketing/PrivacyShield'
+import { getAllArticles, blogUrl, BLOG_LANGUAGES, type BlogLang } from '@/lib/blog'
+import { ArticleCard } from '@/components/blog/ArticleCard'
 import {
   LayoutDashboard, BarChart3, Landmark, Users, FolderOpen, Globe,
   Shield, Download, Trash2, Ban, ChevronDown, ChevronUp, ArrowRight, Menu, X,
@@ -210,6 +212,15 @@ export function LandingPage() {
   useDocumentTitle(landingTitle(i18n.language))
   useAnalytics()
 
+  // Top 3 articles for the "Learn" section. Derived from the URL-declared
+  // language, falling back to 'en' if the language code isn't in our blog
+  // corpus (navigator language detection can produce values we don't cover).
+  const blogLang = useMemo<BlogLang>(() => {
+    const code = (i18n.language?.split('-')[0] ?? 'en') as BlogLang
+    return BLOG_LANGUAGES.includes(code) ? code : 'en'
+  }, [i18n.language])
+  const blogArticles = useMemo(() => getAllArticles(blogLang).slice(0, 3), [blogLang])
+
   // One locale_view per page load with page + browser locales. The URL path
   // tells us which translated version was served; navigator.language tells us
   // what the visitor actually speaks — useful for checking whether SEO is
@@ -324,6 +335,7 @@ export function LandingPage() {
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('features')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.features')}</button>
             <button onClick={() => scrollTo('how-it-works')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.howItWorks')}</button>
+            <Link to={i18n.language.startsWith('en') ? '/blog' : `/${i18n.language.split('-')[0]}/blog`} className="hover:text-foreground transition-colors">{t('landing.nav.blog')}</Link>
             <button onClick={() => scrollTo('faq')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.faq')}</button>
           </nav>
 
@@ -399,6 +411,7 @@ export function LandingPage() {
           <nav className="flex-1 flex flex-col items-center justify-center gap-6 text-lg">
             <button onClick={() => scrollTo('features')} className="cursor-pointer">{t('landing.nav.features')}</button>
             <button onClick={() => scrollTo('how-it-works')} className="cursor-pointer">{t('landing.nav.howItWorks')}</button>
+            <Link to={i18n.language.startsWith('en') ? '/blog' : `/${i18n.language.split('-')[0]}/blog`} onClick={() => setMobileMenu(false)} className="">{t('landing.nav.blog')}</Link>
             <button onClick={() => scrollTo('faq')} className="cursor-pointer">{t('landing.nav.faq')}</button>
             <Link
               to="/login"
@@ -662,6 +675,55 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ════════════════════════ LEARN / FROM THE BLOG ════════════════════════ */}
+      {/* Deep-linked homepage → blog articles. Googlebot + readers both land
+          here after seeing product + trust; the pattern pushes authority from
+          the homepage into every featured article and signals topical breadth
+          to Google. Hidden if the blog corpus is empty in the current
+          language (rare, but valid — keeps the layout clean). */}
+      {blogArticles.length > 0 && (
+        <section className="py-20 sm:py-28 bg-muted/20 scroll-mt-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <Reveal>
+              <div className="text-center mb-14">
+                <p className="text-sm font-semibold text-brand uppercase tracking-widest mb-3">
+                  {t('landing.learn.eyebrow')}
+                </p>
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-balance">
+                  {t('blog.index.title')}
+                </h2>
+                <p className="mt-4 text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                  {t('blog.index.subtitle')}
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={100}>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {blogArticles.map((article) => (
+                  <ArticleCard
+                    key={article.slug}
+                    article={article}
+                    onClick={() => track('cta_click', { cta_location: 'landing_learn', cta_label: 'article_card', slug: article.slug })}
+                  />
+                ))}
+              </div>
+            </Reveal>
+            <Reveal delay={200}>
+              <div className="text-center mt-12">
+                <Link
+                  to={blogUrl(blogLang)}
+                  onClick={() => track('cta_click', { cta_location: 'landing_learn', cta_label: 'view_all' })}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:underline"
+                >
+                  {t('landing.learn.viewAll')}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
       {/* ════════════════════════ FAQ ════════════════════════ */}
       <section id="faq" className="py-20 sm:py-28 bg-muted/20 scroll-mt-20">
         <div className="mx-auto max-w-2xl px-4 sm:px-6">
@@ -742,6 +804,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><button onClick={() => scrollTo('features')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.features')}</button></li>
                 <li><button onClick={() => scrollTo('how-it-works')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.howItWorks')}</button></li>
+                <li><Link to={i18n.language.startsWith('en') ? '/blog' : `/${i18n.language.split('-')[0]}/blog`} className="hover:text-foreground transition-colors">{t('landing.nav.blog')}</Link></li>
                 <li><button onClick={() => scrollTo('faq')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.faq')}</button></li>
               </ul>
             </div>

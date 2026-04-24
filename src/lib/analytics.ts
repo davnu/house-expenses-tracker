@@ -1,7 +1,7 @@
 /**
  * Analytics — cookieless, self-hosted Umami. Marketing surface only.
  *
- * Scope: public landing, /login, /privacy, /invite/:id.
+ * Scope: public landing, /login, /privacy, /invite/:id, /blog/**.
  * Never fires events while the user is inside /app/*, regardless of state.
  *
  * Privacy: Umami sets zero cookies, zero persistent identifiers, and zero
@@ -10,6 +10,40 @@
  * (not Google, not Cloudflare, not anyone else) — nobody else sees visits.
  *
  * See: https://umami.is/docs/tracker-configuration
+ *
+ * ─────────────────────────── Event taxonomy ───────────────────────────
+ *
+ * All public events follow a single convention so dashboards are consistent.
+ * Any new event must match one of these shapes — no ad-hoc naming.
+ *
+ *   page_view              (fired automatically by useAnalytics on nav)
+ *   locale_view            { page_locale, browser_locale }
+ *   language_switch        { from, to }
+ *
+ *   cta_click              { cta_location, cta_label, slug? }
+ *                          One event for every call-to-action click, landing
+ *                          *and* blog. `cta_location` namespaces the click
+ *                          source: `header`, `hero`, `closing_cta`,
+ *                          `blog_header`, `blog_hero`, `blog_article_end`,
+ *                          `blog_index_cta`, `blog_mobile_menu`, …
+ *                          Optional `slug` on blog-article CTAs so we can
+ *                          attribute conversions to specific articles.
+ *
+ *   faq_expand             { question_id }
+ *   signup_start           (landing auth flow)
+ *   login_start            (landing auth flow)
+ *   sign_up                (account creation)
+ *   login                  (successful login)
+ *   invite_landed          (invite-link arrival)
+ *
+ *   blog_index_view        { lang }
+ *   blog_article_view      { slug, lang, category }
+ *   blog_article_complete  { slug, lang }       — fires once, ~end of article
+ *   blog_related_click     { from_slug, to_slug }
+ *   blog_share             { slug, platform }   — platform: 'native' | 'clipboard'
+ *
+ * Convention: underscored_snake_case for event names AND property keys, to
+ * match Umami's URL-encoded query-string convention.
  */
 
 declare global {

@@ -3,6 +3,7 @@
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "trailingSlash": true,
+    "predeploy": ["npm --prefix \"$PROJECT_DIR\" run build"],
     "headers": [
       {
         "source": "**/*.@(js|css|svg|png|jpg|webp|woff2)",
@@ -16,6 +17,27 @@
           { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=3600" },
           { "key": "X-Content-Type-Options", "value": "nosniff" }
         ]
+      },
+      {
+        "source": "/sitemap.xml",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" },
+          { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
+        ]
+      },
+      {
+        "source": "**/feed.xml",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=1800, s-maxage=3600" },
+          { "key": "Content-Type", "value": "application/rss+xml; charset=utf-8" }
+        ]
+      },
+      {
+        "source": "**/feed.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=1800, s-maxage=3600" },
+          { "key": "Content-Type", "value": "application/feed+json; charset=utf-8" }
+        ]
       }
     ],
     "redirects": [
@@ -27,6 +49,16 @@
       {
         "source": "/en/",
         "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/en/blog",
+        "destination": "/blog",
+        "type": 301
+      },
+      {
+        "source": "/en/blog/**",
+        "destination": "/blog/:1",
         "type": 301
       }
     ],

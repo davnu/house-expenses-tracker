@@ -138,7 +138,14 @@ export function validateExpenseAttachments(
   incoming: Iterable<File>,
   opts: Omit<AttachmentValidationOptions, 'maxFiles'>,
 ): AttachmentValidationResult {
-  return validateAttachmentFiles(incoming, { ...opts, maxFiles: MAX_FILES_PER_EXPENSE })
+  // Cast preserves the caller's discriminant (`skipHouseholdQuota`) through
+  // the spread. TypeScript widens literal-union members to `boolean` across
+  // `{ ...opts }`, which no longer matches either branch of the discriminated
+  // union — the cast restores the tag without changing runtime behavior.
+  return validateAttachmentFiles(
+    incoming,
+    { ...opts, maxFiles: MAX_FILES_PER_EXPENSE } as AttachmentValidationOptions,
+  )
 }
 
 /**
@@ -150,7 +157,10 @@ export function validateDocumentFiles(
   incoming: Iterable<File>,
   opts: Omit<AttachmentValidationOptions, 'maxFiles' | 'dedupe'>,
 ): AttachmentValidationResult {
-  return validateAttachmentFiles(incoming, { ...opts, dedupe: false })
+  return validateAttachmentFiles(
+    incoming,
+    { ...opts, dedupe: false } as AttachmentValidationOptions,
+  )
 }
 
 /**

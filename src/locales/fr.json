@@ -750,6 +750,7 @@
       "features": "Fonctionnalités",
       "howItWorks": "Comment ça marche",
       "faq": "FAQ",
+      "blog": "Blog",
       "logIn": "Se connecter",
       "getStarted": "Commencer",
       "openApp": "Ouvrir l'app"
@@ -851,6 +852,10 @@
       "a5": "Oui. Créez plusieurs maisons et basculez entre elles. Chaque bien a ses propres dépenses, son prêt et ses membres.",
       "q6": "Quels pays sont supportés ?",
       "a6": "34+ pays en Europe, Amérique du Nord, Asie-Pacifique et plus. Chaque pays dispose de la bonne devise et, pour les prêts, des taux de référence pertinents (Euribor, SOFR, etc.)."
+    },
+    "learn": {
+      "eyebrow": "Depuis le blog",
+      "viewAll": "Voir tous les articles"
     },
     "cta": {
       "title": "Commencez à suivre les frais d'achat de votre logement aujourd'hui",
@@ -1064,5 +1069,40 @@
     "faq2A": "Commencez gratuitement. Enregistrez vos dépenses, joignez des reçus, utilisez la calculatrice de base. Passez Pro uniquement quand vous invitez votre partenaire ou avez besoin des outils avancés.",
     "faq3Q": "Et si j'achète une deuxième maison ?",
     "faq3A": "Ajoutez-la pour 29 € — 40 % de réduction par rapport au prix de la première. Chaque maison est indépendante ; le paiement débloque cette maison pour tous les membres du foyer."
+  },
+  "blog": {
+    "index": {
+      "eyebrow": "Blog",
+      "title": "Guides pour acheter votre maison",
+      "subtitle": "Des articles clairs et pratiques sur chaque frais, démarche et étape de l'achat.",
+      "featuredLabel": "À la une",
+      "readMore": "Lire l'article",
+      "noArticles": "D'autres articles arrivent bientôt.",
+      "backToHome": "Retour à l'accueil"
+    },
+    "article": {
+      "backToBlog": "Tous les articles",
+      "readingTime": "Lecture : {{count}} min",
+      "publishedOn": "Publié le {{date}}",
+      "updatedOn": "Mis à jour le {{date}}",
+      "author": "Équipe CasaTab",
+      "tableOfContents": "Sur cette page",
+      "relatedArticles": "Continuer la lecture",
+      "share": "Partager",
+      "copyLink": "Copier le lien",
+      "copied": "Copié",
+      "readingProgress": "Progression de lecture",
+      "ctaTitle": "Suivez chaque coût. Classez chaque document.",
+      "ctaSubtitle": "Dépenses, reçus, factures, contrats et mensualités — tout au même endroit, bien rangé. Gratuit pour commencer.",
+      "ctaButton": "Commencer gratuitement"
+    },
+    "categories": {
+      "all": "Tous",
+      "costs": "Coûts",
+      "mortgage": "Prêt",
+      "renovation": "Travaux",
+      "legal": "Juridique",
+      "moving": "Déménagement"
+    }
   }
 }
