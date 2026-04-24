@@ -854,17 +854,17 @@
     "faq": {
       "title": "Preguntas y Respuestas",
       "q1": "¿Cuánto cuesta CasaTab?",
-      "a1": "CasaTab ofrece un plan gratuito para empezar. Próximamente habrá planes premium con funcionalidades adicionales.",
-      "q2": "¿Están seguros mis datos financieros?",
-      "a2": "Tus datos se almacenan en Google Firebase con cifrado de nivel empresarial — AES-256 en reposo y TLS en tránsito. Solo los miembros que invitas a tu hogar pueden verlos a través de la app, y nunca vendemos tus datos ni los compartimos para marketing o publicidad.",
-      "q3": "¿Puede usarlo también mi pareja?",
-      "a3": "Por supuesto. Crea tu casa y comparte un enlace de invitación. Ambos podéis añadir gastos, ver el panel y controlar quién pagó qué — todo en tiempo real.",
-      "q4": "¿Es una app de presupuesto mensual?",
-      "a4": "No. Está diseñada específicamente para los costes de compra de vivienda. Entrada, notario, impuestos, reformas, muebles — gastos puntuales del proceso de compra.",
-      "q5": "¿Puedo controlar varias propiedades?",
-      "a5": "Sí. Crea varias casas y cambia entre ellas. Cada propiedad tiene sus propios gastos, hipoteca y miembros.",
-      "q6": "¿Qué países están soportados?",
-      "a6": "Más de 34 países en Europa, Norteamérica, Asia-Pacífico y más. Cada país incluye la moneda correcta y, para hipotecas, los tipos de referencia relevantes (Euríbor, SOFR, etc.)."
+      "a1": "CasaTab es gratis para empezar — lleva el control de tu primera casa con las funciones esenciales sin pagar nada, durante el tiempo que necesites. Cuando quieras invitar a tu pareja, desbloquear la hipoteca completa, generar informes listos para imprimir y ampliar el almacenamiento más allá de los 50 MB gratuitos para todos tus documentos y facturas, son 49 € un único pago por esa casa. Cada propiedad adicional cuesta 29 €. Nunca una suscripción — pagas una vez y es tuyo para siempre.",
+      "q2": "¿Qué nivel de seguridad tienen mis datos financieros?",
+      "a2": "Máxima. Todo se guarda en Google Cloud con cifrado AES-256 en reposo y TLS en tránsito — la misma infraestructura que usan bancos y sistemas sanitarios. Las reglas de la base de datos blindan cada hogar: solo las personas a las que invitas explícitamente pueden ver algo. Dentro de la app no hay rastreadores ni publicidad de terceros. Tus datos no se venden, no se comparten y no se usan para entrenar modelos de IA.",
+      "q3": "¿Puedo compartirla con mi pareja o familia?",
+      "a3": "Sí — CasaTab está pensada justamente para comprar en común. Envías un enlace de invitación, se unen en segundos y, desde ese momento, cada gasto, documento y cambio en la hipoteca se sincroniza en vivo para todos. Veis el mismo panel, el mismo reparto de quién pagó qué y el mismo total real. Se acabaron los Excel descuadrados y los PDFs reenviados por WhatsApp.",
+      "q4": "¿En qué se diferencia de una hoja de cálculo o de una app de gastos genérica?",
+      "a4": "Comprar una casa no es un presupuesto mensual: es un proyecto con decenas de piezas móviles. CasaTab te da 14 categorías pensadas para la compra (entrada, notario, impuestos, reformas, muebles, mudanza y más), un motor de hipoteca serio, y un único sitio donde guardar cada contrato, recibo y factura relacionados, justo al lado del gasto al que pertenecen. Un solo panel, el coste real de la compra, y se acabó tener todo esparcido por cinco apps distintas.",
+      "q5": "¿Qué puede hacer realmente el seguimiento de hipoteca?",
+      "a5": "Todo lo que te plantea una hipoteca de verdad. Tipo fijo, variable o mixto. Cuadros de amortización completos (método francés o italiano) exportables a CSV. Períodos de tipo para los clásicos fijo-a-variable. Amortizaciones anticipadas que reducen plazo o cuota mensual. Correcciones de saldo para cuadrar con el extracto del banco. Comparador de escenarios lado a lado. Y tipos de referencia por región: Euríbor, SOFR, BoE, Prime. No es una calculadora de juguete — es una herramienta con la que puedes planificar de verdad.",
+      "q6": "¿CasaTab funciona en mi país y puedo gestionar más de una propiedad?",
+      "a6": "CasaTab funciona en toda Europa, Reino Unido, Estados Unidos y Canadá, con la moneda correcta y los tipos de referencia hipotecarios de cada región. La interfaz está disponible en español, inglés, francés, alemán, neerlandés y portugués. Y puedes añadir todas las propiedades que necesites — segunda vivienda, inversión, proyecto familiar — cada una con sus propios gastos, hipoteca, miembros y documentos."
     },
     "learn": {
       "eyebrow": "Desde el blog",

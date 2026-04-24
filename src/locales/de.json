@@ -854,17 +854,17 @@
     "faq": {
       "title": "Fragen & Antworten",
       "q1": "Was kostet CasaTab?",
-      "a1": "CasaTab bietet einen kostenlosen Plan für den Einstieg. Premium-Pläne mit zusätzlichen Funktionen sind in Kürze verfügbar.",
-      "q2": "Sind meine Finanzdaten sicher?",
-      "a2": "Ihre Daten werden in Google Firebase mit Enterprise-Verschlüsselung gespeichert — AES-256 im Ruhezustand und TLS bei der Übertragung. Nur Mitglieder, die Sie in Ihren Haushalt einladen, können sie über die App sehen, und wir verkaufen Ihre Daten nie und teilen sie nie für Marketing- oder Werbezwecke.",
-      "q3": "Kann mein Partner es auch nutzen?",
-      "a3": "Absolut. Erstellen Sie Ihr Haus und teilen Sie einen Einladungslink. Sie können beide Ausgaben hinzufügen, das Dashboard ansehen und verfolgen, wer was bezahlt hat — alles in Echtzeit.",
-      "q4": "Ist das eine monatliche Budget-App?",
-      "a4": "Nein. Dies ist speziell für die Kosten beim Hauskauf. Anzahlung, Notar, Steuern, Renovierung, Möbel — einmalige Kosten während des Kaufprozesses.",
-      "q5": "Kann ich mehrere Immobilien verfolgen?",
-      "a5": "Ja. Erstellen Sie mehrere Häuser und wechseln Sie zwischen ihnen. Jede Immobilie hat eigene Ausgaben, Hypothek und Mitglieder.",
-      "q6": "Welche Länder werden unterstützt?",
-      "a6": "34+ Länder in Europa, Nordamerika, Asien-Pazifik und mehr. Jedes Land kommt mit der richtigen Währung und, für Hypotheken, den relevanten Referenzzinssätzen (Euribor, SOFR, etc.)."
+      "a1": "CasaTab ist kostenlos für den Einstieg — verfolgen Sie Ihre erste Immobilie mit den Kernfunktionen, ohne etwas zu zahlen, so lange Sie möchten. Wenn Sie Ihren Partner einladen, die vollständige Hypothekenverwaltung und druckfertige Berichte freischalten und den Speicherplatz für all Ihre Dokumente und Rechnungen über die kostenlosen 50 MB hinaus erweitern möchten, zahlen Sie einmalig 49 € für diese Immobilie. Jede weitere Immobilie kostet 29 €. Niemals ein Abo — Sie zahlen einmal und es gehört Ihnen.",
+      "q2": "Wie sicher sind meine Finanzdaten?",
+      "a2": "Kompromisslos sicher. Alles liegt auf Google Cloud mit AES-256-Verschlüsselung im Ruhezustand und TLS bei der Übertragung — dieselbe Infrastruktur, der Banken und Krankenhäuser vertrauen. Datenbankregeln schotten jeden Haushalt ab: Nur Personen, die Sie ausdrücklich einladen, sehen überhaupt etwas. Keine Drittanbieter-Tracker, keine Werbung in der App. Ihre Daten werden nie verkauft, nie weitergegeben und nie zum Trainieren von KI-Modellen verwendet.",
+      "q3": "Kann ich es mit meinem Partner oder meiner Familie teilen?",
+      "a3": "Ja — CasaTab ist für den gemeinsamen Kauf gebaut. Sie senden einen Einladungslink, der Empfänger tritt dem Haushalt in Sekunden bei, und ab diesem Moment synchronisieren sich jede Ausgabe, jedes Dokument und jede Änderung an der Hypothek in Echtzeit für alle. Alle sehen dasselbe Dashboard, dieselbe Aufteilung von Wer-hat-was-bezahlt und dieselbe reale Summe. Schluss mit abweichenden Excel-Tabellen und weitergeleiteten PDFs per WhatsApp.",
+      "q4": "Worin unterscheidet es sich von einer Tabelle oder einer normalen Ausgaben-App?",
+      "a4": "Ein Hauskauf ist kein Monatsbudget — er ist ein Projekt mit Dutzenden beweglichen Teilen. CasaTab bietet Ihnen 14 auf den Kauf zugeschnittene Kategorien (Anzahlung, Notar, Steuern, Renovierung, Möbel, Umzug und mehr), eine ernstzunehmende Hypotheken-Engine und einen einzigen Ort, an dem jeder zugehörige Vertrag, jede Rechnung und jede Quittung direkt neben der passenden Ausgabe abgelegt ist. Ein Dashboard, die tatsächlichen Gesamtkosten, und nichts mehr, das auf fünf verschiedene Apps verstreut ist.",
+      "q5": "Was kann die Hypothekenverwaltung wirklich?",
+      "a5": "Alles, was eine echte Hypothek mit sich bringt. Fester, variabler oder gemischter Zins. Vollständige Tilgungspläne (französische oder italienische Methode), exportierbar als CSV. Zinsperioden für die klassische Fix-dann-Variabel-Phase. Sondertilgungen, die wahlweise die Laufzeit verkürzen oder die Monatsrate senken. Saldokorrekturen, um mit dem Kontoauszug übereinzustimmen. Szenarienvergleich nebeneinander. Und regionale Referenzzinssätze: Euribor, SOFR, BoE Base Rate, Prime. Kein Spielzeug-Rechner — ein Werkzeug, mit dem Sie wirklich planen können.",
+      "q6": "Funktioniert CasaTab in meinem Land, und kann ich mehrere Immobilien verfolgen?",
+      "a6": "CasaTab funktioniert in ganz Europa, im Vereinigten Königreich, in den USA und in Kanada — mit der passenden Währung und den regionalen Hypotheken-Referenzzinssätzen für jede Region. Die Oberfläche ist auf Deutsch, Englisch, Spanisch, Französisch, Niederländisch und Portugiesisch verfügbar. Und Sie können so viele Immobilien anlegen, wie Sie brauchen — Zweitwohnsitz, Kapitalanlage, Familienprojekt — jede mit eigenen Ausgaben, Hypothek, Mitgliedern und Dokumenten."
     },
     "learn": {
       "eyebrow": "Aus dem Blog",

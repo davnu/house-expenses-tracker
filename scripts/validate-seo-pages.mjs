@@ -139,8 +139,13 @@ function validateLandingPage(html, lang) {
     assert(html.includes(`hreflang="${l}"`), `[${context}] hreflang="${l}"`)
   }
 
-  // Landing JSON-LD: SoftwareApplication + FAQPage + WebPage
-  validateJsonLdBlocks(html, 3, ['SoftwareApplication', 'FAQPage', 'WebPage'], context)
+  // Landing JSON-LD: SoftwareApplication + FAQPage + BreadcrumbList + WebPage
+  validateJsonLdBlocks(
+    html,
+    4,
+    ['SoftwareApplication', 'FAQPage', 'BreadcrumbList', 'WebPage'],
+    context,
+  )
 
   const h1Count = (html.match(/<h1[\s>]/g) || []).length
   assert(h1Count === 1, `[${context}] exactly 1 <h1> (got ${h1Count})`)

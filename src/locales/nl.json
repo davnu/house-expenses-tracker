@@ -854,17 +854,17 @@
     "faq": {
       "title": "Vragen & Antwoorden",
       "q1": "Wat kost CasaTab?",
-      "a1": "CasaTab biedt een gratis abonnement om te beginnen. Premiumplannen met extra functies zijn binnenkort beschikbaar.",
-      "q2": "Zijn mijn financiële gegevens veilig?",
-      "a2": "Je gegevens worden opgeslagen in Google Firebase met enterprise-versleuteling — AES-256 in rust en TLS tijdens transport. Alleen leden die je uitnodigt in je huishouden kunnen ze zien via de app, en we verkopen je gegevens nooit en delen ze nooit voor marketing of advertenties.",
-      "q3": "Kan mijn partner het ook gebruiken?",
-      "a3": "Absoluut. Maak je huis aan en deel een uitnodigingslink. Jullie kunnen allebei uitgaven toevoegen, het dashboard bekijken en bijhouden wie wat betaalde — alles in realtime.",
-      "q4": "Is dit een maandelijkse budget-app?",
-      "a4": "Nee. Dit is specifiek voor de kosten van het kopen van een huis. Aanbetaling, notaris, belastingen, verbouwing, meubels — eenmalige kosten tijdens het aankoopproces.",
-      "q5": "Kan ik meerdere woningen bijhouden?",
-      "a5": "Ja. Maak meerdere huizen aan en wissel ertussen. Elke woning heeft eigen uitgaven, hypotheek en leden.",
-      "q6": "Welke landen worden ondersteund?",
-      "a6": "34+ landen in Europa, Noord-Amerika, Azië-Pacific en meer. Elk land heeft de juiste valuta en, voor hypotheken, de relevante referentierentes (Euribor, SOFR, etc.)."
+      "a1": "CasaTab is gratis om te beginnen — volg je eerste woning met de kernfuncties zonder iets te betalen, zo lang als je nodig hebt. Wanneer je je partner wilt uitnodigen, de volledige hypotheektool en printklare rapporten wilt ontgrendelen, en je opslagruimte wilt uitbreiden voorbij de gratis 50 MB voor al je documenten en facturen, is het eenmalig € 49 voor die woning. Elke extra woning kost € 29. Nooit een abonnement — één keer betalen en het is van jou.",
+      "q2": "Hoe veilig zijn mijn financiële gegevens?",
+      "a2": "Bankwaardig veilig. Alles staat op Google Cloud met AES-256-versleuteling in rust en TLS tijdens transport — dezelfde infrastructuur waarop banken en ziekenhuizen bouwen. Databaseregels grendelen elk huishouden af: alleen de mensen die jij expliciet uitnodigt zien überhaupt iets. Geen externe trackers, geen advertenties in de app. Je gegevens worden nooit verkocht, nooit gedeeld en nooit gebruikt om AI-modellen te trainen.",
+      "q3": "Kan ik het delen met mijn partner of familie?",
+      "a3": "Ja — CasaTab is juist gemaakt voor samen kopen. Stuur een uitnodigingslink, ze sluiten binnen seconden aan, en vanaf dat moment synchroniseren alle uitgaven, documenten en hypotheekwijzigingen live voor iedereen. Jullie zien allemaal hetzelfde dashboard, dezelfde wie-betaalde-wat verdeling en hetzelfde echte totaalbedrag. Geen rondzwervende Excels of doorgestuurde pdf's meer.",
+      "q4": "Waarin verschilt dit van een spreadsheet of een gewone uitgaven-app?",
+      "a4": "Een huis kopen is geen maandbudget — het is een project met tientallen bewegende onderdelen. CasaTab geeft je 14 categorieën die speciaal voor de aankoop zijn gemaakt (aanbetaling, notaris, belastingen, verbouwing, meubels, verhuizing en meer), een volwaardige hypotheekmotor, en één plek om elk bijbehorend contract, elke factuur en elk bonnetje direct naast de uitgave te bewaren waar het bij hoort. Eén dashboard, de werkelijke totale kosten, en niets meer verspreid over vijf verschillende apps.",
+      "q5": "Wat kan de hypotheekmodule echt?",
+      "a5": "Alles wat een echte hypotheek met zich meebrengt. Vaste, variabele of gemengde rente. Volledige aflossingsschema's (Franse of Italiaanse methode), exporteerbaar als CSV. Renteperiodes om een vast-dan-variabel scenario te modelleren. Extra aflossingen die de looptijd verkorten of de maandlast verlagen. Saldocorrecties om precies met je bankafschrift te kloppen. Scenariovergelijkingen naast elkaar. En referentierentes per regio: Euribor, SOFR, BoE Base Rate, Prime. Geen speelgoedcalculator — een tool waarmee je écht kunt plannen.",
+      "q6": "Werkt CasaTab in mijn land, en kan ik meerdere woningen bijhouden?",
+      "a6": "CasaTab werkt in heel Europa, het Verenigd Koninkrijk, de Verenigde Staten en Canada, met de juiste valuta en de juiste hypotheekreferentierentes per regio. De interface is beschikbaar in het Nederlands, Engels, Spaans, Frans, Duits en Portugees. En je kunt zo veel woningen toevoegen als je nodig hebt — een tweede huis, een belegging, een familieproject — elk met eigen uitgaven, hypotheek, leden en documenten."
     },
     "learn": {
       "eyebrow": "Vanuit het blog",

@@ -854,17 +854,17 @@
     "faq": {
       "title": "Perguntas e Respostas",
       "q1": "Quanto custa o CasaTab?",
-      "a1": "O CasaTab oferece um plano gratuito para começar. Planos premium com funcionalidades adicionais estarão disponíveis em breve.",
-      "q2": "Os meus dados financeiros estão seguros?",
-      "a2": "Os seus dados são armazenados no Google Firebase com encriptação de nível empresarial — AES-256 em repouso e TLS em trânsito. Só os membros que convida para a sua casa os podem ver através da aplicação, e nunca vendemos os seus dados nem os partilhamos para marketing ou publicidade.",
-      "q3": "O meu parceiro também pode usar?",
-      "a3": "Com certeza. Crie a sua casa e partilhe um link de convite. Ambos podem adicionar despesas, ver o painel e acompanhar quem pagou o quê — tudo em tempo real.",
-      "q4": "É uma app de orçamento mensal?",
-      "a4": "Não. É especificamente para os custos de compra de casa. Entrada, notário, impostos, obras, móveis — despesas pontuais durante o processo de compra.",
-      "q5": "Posso acompanhar vários imóveis?",
-      "a5": "Sim. Crie várias casas e alterne entre elas. Cada imóvel tem as suas próprias despesas, crédito e membros.",
-      "q6": "Que países são suportados?",
-      "a6": "34+ países na Europa, América do Norte, Ásia-Pacífico e mais. Cada país inclui a moeda correta e, para créditos, as taxas de referência relevantes (Euribor, SOFR, etc.)."
+      "a1": "O CasaTab é gratuito para começar — acompanhe a sua primeira casa com as funcionalidades essenciais sem pagar nada, durante o tempo que precisar. Quando quiser convidar o seu parceiro, desbloquear a ferramenta completa de crédito habitação, gerar relatórios prontos a imprimir e expandir o armazenamento para além dos 50 MB gratuitos para todos os seus documentos e faturas, é um pagamento único de 49 € para essa casa. Cada imóvel adicional custa 29 €. Nunca uma subscrição — paga uma vez e fica seu para sempre.",
+      "q2": "Quão seguros estão os meus dados financeiros?",
+      "a2": "A sério. Tudo fica no Google Cloud com encriptação AES-256 em repouso e TLS em trânsito — a mesma infraestrutura em que bancos e hospitais confiam. As regras da base de dados isolam cada agregado: só as pessoas que convida explicitamente conseguem ver seja o que for. Zero rastreadores de terceiros e zero publicidade dentro da aplicação. Os seus dados nunca são vendidos, nunca são partilhados e nunca são usados para treinar modelos de IA.",
+      "q3": "Posso partilhar com o meu parceiro ou família?",
+      "a3": "Sim — o CasaTab foi feito para comprar em conjunto. Envia um link de convite, entram em segundos e, a partir desse momento, cada despesa, documento e alteração no crédito sincroniza em direto para todos. Vêem todos o mesmo painel, a mesma divisão de quem pagou o quê e o mesmo total real. Acabaram-se os Excels que não batem certo e os PDFs reencaminhados por WhatsApp.",
+      "q4": "Em que é diferente de uma folha de cálculo ou de uma app de despesas genérica?",
+      "a4": "Comprar casa não é um orçamento mensal — é um projeto com dezenas de peças em movimento. O CasaTab oferece-lhe 14 categorias pensadas para a compra (entrada, notário, impostos, obras, mobiliário, mudanças e mais), um motor sério de crédito habitação, e um único lugar para guardar cada contrato, recibo e fatura relacionados, mesmo ao lado da despesa a que pertencem. Um painel, o custo real da compra, e acabou-se ter tudo espalhado por cinco aplicações diferentes.",
+      "q5": "O que faz realmente o acompanhamento de crédito habitação?",
+      "a5": "Tudo o que um crédito verdadeiro lhe impõe. Taxa fixa, variável ou mista. Quadros de amortização completos (método francês ou italiano), exportáveis para CSV. Períodos de taxa para modelar o clássico fixa-depois-variável. Amortizações antecipadas que encurtam o prazo ou reduzem a prestação. Correções de saldo para bater certo com o extrato do banco. Comparação de cenários lado a lado. E taxas de referência por região: Euribor, SOFR, BoE Base Rate, Prime. Não é uma calculadora de brincar — é uma ferramenta com que realmente se planeia.",
+      "q6": "O CasaTab funciona no meu país e posso acompanhar mais do que um imóvel?",
+      "a6": "O CasaTab funciona em toda a Europa, no Reino Unido, nos Estados Unidos e no Canadá, com a moeda correta e as taxas de referência de crédito adequadas a cada região. A interface está disponível em português, inglês, espanhol, francês, alemão e neerlandês. E pode adicionar tantos imóveis quantos precisar — segunda casa, investimento, projeto familiar — cada um com as suas próprias despesas, crédito, membros e documentos."
     },
     "learn": {
       "eyebrow": "Do blog",

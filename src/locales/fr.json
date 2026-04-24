@@ -854,17 +854,17 @@
     "faq": {
       "title": "Questions & Réponses",
       "q1": "Combien coûte CasaTab ?",
-      "a1": "CasaTab propose un plan gratuit pour démarrer. Des plans premium avec des fonctionnalités supplémentaires seront bientôt disponibles.",
-      "q2": "Mes données financières sont-elles sécurisées ?",
-      "a2": "Vos données sont stockées dans Google Firebase avec un chiffrement de niveau entreprise — AES-256 au repos et TLS en transit. Seuls les membres que vous invitez dans votre foyer peuvent les voir via l'application, et nous ne vendons jamais vos données ni ne les partageons à des fins marketing ou publicitaires.",
-      "q3": "Mon conjoint peut-il l'utiliser aussi ?",
-      "a3": "Absolument. Créez votre maison et partagez un lien d'invitation. Vous pouvez tous les deux ajouter des dépenses, consulter le tableau de bord et suivre qui a payé quoi — en temps réel.",
-      "q4": "C'est une application de budget mensuel ?",
-      "a4": "Non. C'est spécifiquement pour les frais d'achat immobilier. Apport, notaire, taxes, travaux, meubles — les dépenses ponctuelles du processus d'achat.",
-      "q5": "Puis-je suivre plusieurs biens ?",
-      "a5": "Oui. Créez plusieurs maisons et basculez entre elles. Chaque bien a ses propres dépenses, son prêt et ses membres.",
-      "q6": "Quels pays sont supportés ?",
-      "a6": "34+ pays en Europe, Amérique du Nord, Asie-Pacifique et plus. Chaque pays dispose de la bonne devise et, pour les prêts, des taux de référence pertinents (Euribor, SOFR, etc.)."
+      "a1": "CasaTab est gratuit pour démarrer — suivez votre premier bien avec les fonctions essentielles sans rien payer, aussi longtemps que nécessaire. Quand vous souhaitez inviter votre conjoint, débloquer l'outil complet de prêt immobilier, obtenir des rapports prêts à imprimer et étendre votre stockage au-delà des 50 Mo gratuits pour tous vos documents et factures, c'est 49 € en paiement unique pour ce bien. Chaque bien supplémentaire coûte 29 €. Jamais d'abonnement — vous payez une fois, c'est à vous pour toujours.",
+      "q2": "Mes données financières sont-elles bien protégées ?",
+      "a2": "Sérieusement. Tout est hébergé sur Google Cloud avec un chiffrement AES-256 au repos et TLS en transit — la même infrastructure qu'utilisent les banques et les hôpitaux. Les règles de la base de données verrouillent chaque foyer : seules les personnes que vous invitez explicitement peuvent voir quoi que ce soit. Aucun traceur tiers, aucune publicité dans l'application. Vos données ne sont jamais vendues, jamais partagées et jamais utilisées pour entraîner des modèles d'IA.",
+      "q3": "Puis-je la partager avec mon conjoint ou ma famille ?",
+      "a3": "Oui — CasaTab est pensé pour l'achat à plusieurs. Envoyez un lien d'invitation, ils rejoignent le foyer en quelques secondes, et dès ce moment chaque dépense, chaque document, chaque évolution de prêt se synchronise en direct pour tout le monde. Vous voyez tous le même tableau de bord, la même répartition de qui a payé quoi, le même total réel. Fini les tableurs qui ne concordent plus et les PDF renvoyés par mail.",
+      "q4": "En quoi est-ce différent d'un tableur ou d'une application de dépenses classique ?",
+      "a4": "Acheter un logement n'est pas un budget mensuel — c'est un projet avec des dizaines de pièces mobiles. CasaTab vous donne 14 catégories pensées pour l'achat (apport, notaire, taxes, travaux, meubles, déménagement et plus), un vrai moteur de calcul de prêt, et un seul endroit pour ranger chaque contrat, chaque facture et chaque justificatif liés, juste à côté de la dépense à laquelle ils appartiennent. Un tableau de bord, le coût réel de l'achat, fini l'éparpillement dans cinq applications différentes.",
+      "q5": "Que fait réellement le suivi de prêt immobilier ?",
+      "a5": "Tout ce qu'un vrai prêt vous impose. Taux fixe, variable ou mixte. Tableaux d'amortissement complets (méthode française ou italienne) exportables en CSV. Périodes de taux pour modéliser les formules fixe puis variable. Remboursements anticipés qui réduisent la durée ou la mensualité. Corrections de solde pour coller à votre relevé bancaire. Comparaison de scénarios côte à côte. Et des taux de référence selon votre région : Euribor, SOFR, taux BoE, Prime Rate. Pas une calculatrice-jouet — un outil avec lequel on peut vraiment planifier.",
+      "q6": "CasaTab fonctionne-t-il dans mon pays, et puis-je suivre plusieurs biens ?",
+      "a6": "CasaTab fonctionne dans toute l'Europe, au Royaume-Uni, aux États-Unis et au Canada, avec la bonne devise et les taux de référence immobiliers adaptés à chaque région. L'interface est disponible en français, anglais, espagnol, allemand, néerlandais et portugais. Et vous pouvez ajouter autant de biens que nécessaire — résidence secondaire, investissement locatif, projet familial — chacun avec ses propres dépenses, son prêt, ses membres et ses documents."
     },
     "learn": {
       "eyebrow": "Depuis le blog",

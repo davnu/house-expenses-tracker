@@ -155,7 +155,8 @@
       "Bash(identify /Users/david/projects/house-expenses/public/favicon.ico)",
       "Bash(xxd -l 100 /Users/david/projects/house-expenses/public/favicon.ico)",
       "Bash(git -C /Users/david/projects/house-expenses log --oneline --all)",
-      "Bash(git -C /Users/david/projects/house-expenses show 547faee --stat)"
+      "Bash(git -C /Users/david/projects/house-expenses show 547faee --stat)",
+      "Bash(xargs -I {} bash -c 'echo \"=== {} ===\"; head -2 {}')"
     ]
   }
 }
