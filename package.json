@@ -8,7 +8,7 @@
     "process-heroes": "node scripts/generate-hero-variants.mjs",
     "generate-hero": "node --env-file-if-exists=.env scripts/generate-hero-image.mjs",
     "sync-hero-frontmatter": "node scripts/sync-hero-frontmatter.mjs",
-    "build": "tsc -b && node scripts/generate-hero-variants.mjs && vite build && node scripts/generate-seo-pages.mjs && node scripts/validate-seo-pages.mjs",
+    "build": "tsc -b && node scripts/generate-favicon.mjs && node scripts/generate-hero-variants.mjs && vite build && node scripts/generate-seo-pages.mjs && node scripts/validate-seo-pages.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
