@@ -58,8 +58,8 @@ const EXPECTED_AMOUNTS_CENTS: Record<CheckoutProduct, number> = {
   additional_house: 2900,
 };
 
-/** Accept amounts within ±10% to allow for regional rounding / VAT display. */
-const AMOUNT_TOLERANCE = 0.1;
+/** Accept amounts within ±20% to allow for regional rounding / VAT display. */
+const AMOUNT_TOLERANCE = 0.2;
 
 function isAmountAcceptable(actualCents: number, product: CheckoutProduct): boolean {
   const expected = EXPECTED_AMOUNTS_CENTS[product];

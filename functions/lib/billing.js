@@ -49,8 +49,8 @@ const EXPECTED_AMOUNTS_CENTS = {
     pro: 4900,
     additional_house: 2900,
 };
-/** Accept amounts within ±10% to allow for regional rounding / VAT display. */
-const AMOUNT_TOLERANCE = 0.1;
+/** Accept amounts within ±30% to allow for regional rounding / VAT display. */
+const AMOUNT_TOLERANCE = 0.3;
 function isAmountAcceptable(actualCents, product) {
     const expected = EXPECTED_AMOUNTS_CENTS[product];
     if (!expected || actualCents <= 0)

@@ -152,6 +152,30 @@ export function PrivacyPage() {
               </p>
             </section>
 
+            <section>
+              <h2 className="text-lg font-semibold">{t('privacy.payments')}</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {t('privacy.paymentsIntro')}
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li><strong>{t('privacy.paymentsContact').replace(/<\/?0>/g, '').split(' — ')[0]}</strong> — {t('privacy.paymentsContact').replace(/<\/?0>/g, '').split(' — ')[1]}</li>
+                <li><strong>{t('privacy.paymentsBilling').replace(/<\/?0>/g, '').split(' — ')[0]}</strong> — {t('privacy.paymentsBilling').replace(/<\/?0>/g, '').split(' — ')[1]}</li>
+                <li><strong>{t('privacy.paymentsCard').replace(/<\/?0>/g, '').split(' — ')[0]}</strong> — {t('privacy.paymentsCard').replace(/<\/?0>/g, '').split(' — ')[1]}</li>
+              </ul>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                {t('privacy.paymentsGDPR')}{' '}
+                <a
+                  href="https://polar.sh/legal/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  polar.sh/legal/privacy
+                </a>
+                .
+              </p>
+            </section>
+
             {/* Analytics disclosure — plain prose, tucked below the main content */}
             <section>
               <h2 className="text-lg font-semibold">{t('privacy.websiteSection')}</h2>
