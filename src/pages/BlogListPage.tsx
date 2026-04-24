@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, Navigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/context/AuthContext'
 import { useAnalytics } from '@/hooks/useAnalytics'
@@ -11,26 +11,60 @@ import {
   BLOG_CATEGORIES,
   BLOG_LANGUAGES,
   fullBlogUrl,
+  blogUrl,
   type BlogCategory,
   type BlogLang,
 } from '@/lib/blog'
 import { BlogHeader } from '@/components/blog/BlogHeader'
 import { BlogFooter } from '@/components/blog/BlogFooter'
 import { ArticleCard } from '@/components/blog/ArticleCard'
-import { ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 
-export function BlogListPage({ lang: propLang }: { lang?: BlogLang }) {
+export function BlogListPage({
+  lang: propLang,
+  category: propCategory,
+}: {
+  lang?: BlogLang
+  /**
+   * When set (via the `/blog/category/{cat}` route), the page renders a
+   * dedicated archive for that one category. The filter chips still work
+   * for client-side exploration, but the H1, title, subtitle and SEO
+   * signals all anchor the page to the locked category — turning the
+   * route into a canonical topic hub that Google can cluster on.
+   */
+  category?: BlogCategory
+}) {
   const params = useParams()
   // `propLang` is set when routed from `<Route path="/blog" element={<BlogListPage lang="en" />}/>`
   // On the localised routes we read `:lang` from params.
   const lang = (propLang ?? (params.lang as BlogLang)) ?? 'en'
+
+  // The category routes (`/blog/category/:category`) pass it via URL. An
+  // unknown category would otherwise silently render the full blog index,
+  // which creates infinite low-value URLs for Googlebot to crawl (classic
+  // thin-content penalty). Detect the mismatch here so we can redirect
+  // below — keeping /blog/category/* strictly mapped to real categories.
+  const paramCategory = params.category as string | undefined
+  const isKnownCategory =
+    paramCategory !== undefined &&
+    (BLOG_CATEGORIES as readonly string[]).includes(paramCategory)
+  const hasInvalidCategoryParam = paramCategory !== undefined && !isKnownCategory
+  const resolvedLockedCategory: BlogCategory | undefined =
+    propCategory ?? (isKnownCategory ? (paramCategory as BlogCategory) : undefined)
 
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
   useAnalytics()
 
   const articles = useMemo(() => getAllArticles(lang), [lang])
-  const [filter, setFilter] = useState<BlogCategory | 'all'>('all')
+  const [filter, setFilter] = useState<BlogCategory | 'all'>(resolvedLockedCategory ?? 'all')
+
+  // Invalid /blog/category/{bogus} → bounce to /blog. Keeps crawl surface
+  // clean and avoids duplicate content showing the full index under a junk
+  // path. `replace` so the bad URL doesn't stay in history.
+  if (hasInvalidCategoryParam) {
+    return <Navigate to={blogUrl(lang)} replace />
+  }
 
   // Per-language blog-index URLs for the header's language switcher. Without
   // this, clicking a language in the globe dropdown would only flip the i18n
@@ -52,7 +86,13 @@ export function BlogListPage({ lang: propLang }: { lang?: BlogLang }) {
   const featured = filter === 'all' ? articles[0] : undefined
   const rest = featured ? filtered.filter((a) => a.slug !== featured.slug) : filtered
 
-  useDocumentTitle(articles.length > 0 ? `${t('blog.index.title')} — CasaTab` : 'CasaTab Blog')
+  const categoryLabel = resolvedLockedCategory ? t(`blog.categories.${resolvedLockedCategory}`) : ''
+  const pageTitle = resolvedLockedCategory
+    ? `${categoryLabel} — ${t('blog.index.title')} — CasaTab`
+    : articles.length > 0
+      ? `${t('blog.index.title')} — CasaTab`
+      : 'CasaTab Blog'
+  useDocumentTitle(pageTitle)
 
   // Sync i18n with the URL-declared language (pre-rendered HTML sets localStorage
   // before React mounts, but direct SPA navigation into /es/blog needs us to
@@ -79,14 +119,30 @@ export function BlogListPage({ lang: propLang }: { lang?: BlogLang }) {
       <main className="pt-28 pb-16">
         {/* Hero */}
         <section className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
+          {resolvedLockedCategory && (
+            <Link
+              to={blogUrl(lang)}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {t('blog.category.backToAll')}
+            </Link>
+          )}
           <p className="text-sm font-semibold text-brand uppercase tracking-widest mb-3">
-            {t('blog.index.eyebrow')}
+            {resolvedLockedCategory ? categoryLabel : t('blog.index.eyebrow')}
           </p>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-balance">
-            {t('blog.index.title')}
+            {resolvedLockedCategory ? categoryLabel : t('blog.index.title')}
           </h1>
           <p className="mt-4 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-            {t('blog.index.subtitle')}
+            {resolvedLockedCategory
+              ? t('blog.category.subtitle', {
+                  // German nouns stay capitalised; romance languages read
+                  // better with the lowercased form. Branch on the BCP-47
+                  // language tag so interpolation feels native everywhere.
+                  category: lang === 'de' ? categoryLabel : categoryLabel.toLowerCase(),
+                })
+              : t('blog.index.subtitle')}
           </p>
         </section>
 

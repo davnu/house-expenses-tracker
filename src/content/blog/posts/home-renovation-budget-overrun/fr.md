@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "renovation"
 heroImage: "/blog/home-renovation-budget-overrun-hero.webp"
 heroImageAlt: "A small suburban European kitchen in the middle of a renovation — partially-installed cabinets, a sawhorse with a circular saw in the foreground, a canvas dust sheet, a stepladder against the wall, and exposed brick where plaster has been stripped, under overcast daylight from a back window."
+author: "David C."
 ---
 
-Vous aviez demandé trois devis pour la cuisine. Vous avez choisi celui du milieu : 25 000 €, forfait, six semaines. À la huitième semaine, le carreleur a trouvé de l'humidité derrière les anciens meubles, le plan de travail que vous aviez commandé est en rupture et vous êtes passé au modèle au-dessus, et votre conjoint a décidé — raisonnablement — que tant que le mur est ouvert, autant déplacer la prise. Vous en êtes à 33 000 €, la cuisine est toujours un trou, et personne ne sait vraiment quand ça va se terminer.
-
-C'est la forme classique du "dépassement de rénovation" que tout propriétaire finit par rencontrer. Et le Houzz 2026 Home Study le confirme : **37 % des propriétaires qui ont rénové en 2025 ont dépassé leur budget. Seulement 3 % sont passés en dessous** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)).
-
-Le dépassement n'est pas aléatoire. Il vient de quatre endroits précis, dans un ordre relativement prévisible. Une fois qu'on sait les nommer, on peut les budgéter — et arrêter d'attribuer aux "imprévus" ce qui allait forcément arriver.
+**37 % des propriétaires qui ont rénové en 2025 ont dépassé leur budget ; seulement 3 % sont passés en dessous** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)). Le dépassement n'est pas aléatoire : il vient de quatre sources précises, dans un ordre relativement prévisible — élargissement du chantier pendant la dépose, montée en gamme des matériaux en cours de route, mauvaises surprises derrière les murs, et la "taxe décisionnelle" qui s'ajoute à chaque ordre de modification. Une fois qu'on sait les nommer, on peut les budgéter — et arrêter d'attribuer aux « imprévus » ce qui allait forcément arriver.
 
 ## De combien parle-t-on vraiment ?
 

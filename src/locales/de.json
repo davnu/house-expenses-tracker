@@ -755,11 +755,18 @@
     "nav": {
       "features": "Funktionen",
       "howItWorks": "So funktioniert's",
+      "pricing": "Preise",
       "faq": "Häufige Fragen",
       "blog": "Blog",
       "logIn": "Anmelden",
       "getStarted": "Loslegen",
       "openApp": "App öffnen"
+    },
+    "founderStory": {
+      "eyebrow": "Warum es CasaTab gibt",
+      "quote": "Ich habe CasaTab beim Kauf meines eigenen Hauses gebaut — ertrunken in Excel-Tabellen. Jede Kategorie, jede Finanzierungsoption, jedes Belegfeld ist da, weil ich es gebraucht habe — und weil nichts am Markt einen Hauskauf von Anfang bis Ende abgebildet hat.",
+      "author": "David C.",
+      "role": "Gründer"
     },
     "hero": {
       "title": "Wissen Sie genau, was Ihr Hauskauf wirklich kostet",
@@ -1109,6 +1116,10 @@
       "renovation": "Renovierung",
       "legal": "Rechtliches",
       "moving": "Umzug"
+    },
+    "category": {
+      "backToAll": "Alle Artikel",
+      "subtitle": "Jeder CasaTab-Artikel zum Thema {{category}}, an einem Ort."
     }
   }
 }

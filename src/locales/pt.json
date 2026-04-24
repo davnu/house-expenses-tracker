@@ -755,11 +755,18 @@
     "nav": {
       "features": "Funcionalidades",
       "howItWorks": "Como funciona",
+      "pricing": "Preços",
       "faq": "Perguntas frequentes",
       "blog": "Blog",
       "logIn": "Entrar",
       "getStarted": "Começar",
       "openApp": "Abrir app"
+    },
+    "founderStory": {
+      "eyebrow": "Porque a CasaTab existe",
+      "quote": "Construí a CasaTab enquanto comprava a minha própria casa, afogado em folhas de cálculo. Cada categoria, cada opção de crédito, cada espaço para um recibo existe porque precisei dele — e porque nada no mercado acompanhava uma compra de casa do princípio ao fim.",
+      "author": "David C.",
+      "role": "Fundador"
     },
     "hero": {
       "title": "Saiba exatamente quanto custa comprar a sua casa",
@@ -1109,6 +1116,10 @@
       "renovation": "Obras",
       "legal": "Jurídico",
       "moving": "Mudança"
+    },
+    "category": {
+      "backToAll": "Todos os artigos",
+      "subtitle": "Cada artigo da CasaTab sobre {{category}}, num só sítio."
     }
   }
 }

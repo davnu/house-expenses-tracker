@@ -9,11 +9,10 @@ updatedAt: "2026-04-23"
 category: "mortgage"
 heroImage: "/blog/overpay-your-mortgage-hero.webp"
 heroImageAlt: "The interior of a modern European bank branch early in the morning before opening — a row of teller counter stations with frosted-glass dividers, a glass-walled consultation office visible in the background, a low waiting bench and queue stanchion in the foreground, and cool morning daylight through tall windows."
+author: "David C."
 ---
 
-Je hebt €10.000 op een spaarrekening tegen 2%. Je hypotheek staat op 3,5%. De vuistregel zegt: extra aflossen. Dan bel je de bank en hoor je dat je per kalenderjaar 10% van de oorspronkelijke hoofdsom boetevrij mag aflossen, dat álles daarboven *boeterente* triggert wanneer de marktrente onder je contractrente ligt, en dat je afhankelijk van de keuze "looptijd verkorten" of "maandlast verlagen" bijna driemaal zo veel rente kunt besparen.
-
-Dit is hoe de beslissing er echt uitziet — en waar de meeste huizenbezitters hem net verkeerd nemen. Of extra aflossen op je hypotheek in 2026 loont, hangt af van twee getallen die in nauwelijks één artikel samen op de pagina staan: het verschil tussen je hypotheekrente en het nettorendement op je beste alternatief voor het geld, en de boeterente-formule die je bank hanteert wanneer je meer aflost dan de vrije 10%.
+**Los alleen extra af op je hypotheek als je hypotheekrente (na belasting) duidelijk hoger ligt dan het nettorendement op je beste spaaralternatief, ÉN als je binnen de 10 %-boetevrije ruimte per kalenderjaar blijft — of als de vergelijkingsrente van je bank inmiddels zo hoog is dat boeterente sowieso niet meer geldt.** In april 2026 voldoen de meeste euro-hypotheken aan beide voorwaarden. Let op: "looptijd verkorten" versus "maandlast verlagen" kan verdubbelen hoeveel rente je werkelijk bespaart.
 
 **In het kort:**
 

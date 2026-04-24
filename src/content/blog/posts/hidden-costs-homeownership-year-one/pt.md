@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "moving"
 heroImage: "/blog/hidden-costs-homeownership-year-one-hero.webp"
 heroImageAlt: "A modest European apartment living room about two weeks after a move-in — a slightly worn grey-blue fabric couch, several cardboard moving boxes (one open), a throw blanket half-folded on the couch, a picture frame leaning against the wall, and warm morning sun pouring in from a window on the left."
+author: "David C."
 ---
 
-Faz escritura numa terça. Os empregados das mudanças chegam na sexta. Na quinta seguinte já pagou: o camião, duas cauções a fornecedores, um serralheiro para mudar os bombins, uma máquina de lavar nova porque o vendedor levou a dele, um canalizador de urgência por uma fuga que ninguém viu na inspeção, e um caixote de vinho para os vizinhos que ajudaram a subir o sofá.
-
-É o nono dia. Gastou 4.800 € que não estavam orçamentados. Ninguém o avisou desta parte.
-
-É esta a forma típica dos **custos ocultos de ter casa** — a parte que começa no dia da entrega das chaves e dura doze meses. A análise da Zillow de 2025 coloca o número americano em **15.979 $ por ano em cima do crédito**, contra 14.155 $ há apenas dois anos ([Zillow research, novembro 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). O equivalente em Portugal ronda os **4.000–7.500 €** consoante a zona, a idade do prédio e o tipo de aquecimento.
+**O primeiro ano com casa própria custa 4.000 a 7.500 € para além do crédito** em Portugal — seguro, IMI, energia, água, internet, instalação e a primeira reparação imprevista que aparece quase sempre. A análise da Zillow de 2025 coloca o número americano em **15.979 $ por ano em cima do crédito** (contra 14.155 $ há apenas dois anos) ([Zillow research, novembro 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). Em Portugal a banda depende da zona, da idade do prédio e do tipo de aquecimento. A seguir, a decomposição real e o orçamento que aguenta.
 
 ## Em resumo
 

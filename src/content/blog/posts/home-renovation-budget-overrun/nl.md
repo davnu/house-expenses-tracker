@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "renovation"
 heroImage: "/blog/home-renovation-budget-overrun-hero.webp"
 heroImageAlt: "A small suburban European kitchen in the middle of a renovation — partially-installed cabinets, a sawhorse with a circular saw in the foreground, a canvas dust sheet, a stepladder against the wall, and exposed brick where plaster has been stripped, under overcast daylight from a back window."
+author: "David C."
 ---
 
-Je vroeg drie offertes voor de keuken op. Je koos de middelste: €25.000, vaste prijs, zes weken. Na acht weken heeft de tegelzetter vocht achter de oude kastjes gevonden, het gekozen aanrechtblad is niet meer leverbaar dus je bent een niveau hoger gegaan, en je partner besloot — terecht — dat je die stekker net zo goed kon verplaatsen nu de muur toch open ligt. Je zit op €33.000, de keuken is nog steeds een gat en niemand weet precies wanneer het klaar is.
-
-Dit is de klassieke vorm van de *verbouwingsuitloop* die elke huiseigenaar uiteindelijk tegenkomt. De Houzz 2026 Home Study bevestigt het: **37 % van de huiseigenaren die in 2025 verbouwden gaf meer uit dan gepland. Slechts 3 % bleef eronder** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)).
-
-De uitloop komt niet uit de lucht vallen. Hij komt uit vier specifieke hoeken, in een redelijk voorspelbare volgorde. Als je ze kunt benoemen, kun je ze ook begroten — en stop je met "onvoorzien" de schuld geven voor iets wat sowieso ging gebeuren.
+**37 % van de huiseigenaren die in 2025 verbouwden ging over budget; slechts 3 % bleef eronder** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)). De uitloop is niet willekeurig: hij komt uit vier specifieke hoeken, in een voorspelbare volgorde — scope-verschuiving tijdens de sloop, upgrade van materialen halverwege, verborgen problemen achter de muren, en de besluitvormingsbelasting die met elke meerwerkopdracht meegroeit. Wanneer je ze kunt benoemen, kun je ze begroten — en stop je met "onvoorzien" de schuld geven voor iets wat sowieso ging gebeuren.
 
 ## Over hoeveel geld praten we eigenlijk?
 

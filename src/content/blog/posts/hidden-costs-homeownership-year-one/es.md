@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "moving"
 heroImage: "/blog/hidden-costs-homeownership-year-one-hero.webp"
 heroImageAlt: "A modest European apartment living room about two weeks after a move-in — a slightly worn grey-blue fabric couch, several cardboard moving boxes (one open), a throw blanket half-folded on the couch, a picture frame leaning against the wall, and warm morning sun pouring in from a window on the left."
+author: "David C."
 ---
 
-Firmas un martes. La mudanza llega el viernes. Para el jueves siguiente ya has pagado: la empresa de mudanzas, dos fianzas de suministros, un cerrajero para cambiar la cerradura, una lavadora nueva porque el vendedor se llevó la suya, un fontanero de urgencia por una fuga que no vio el tasador, y una caja de vino para los vecinos que te ayudaron a subir el sofá.
-
-Es el día nueve. Llevas 4.800 € gastados que no tenías presupuestados. Nadie te avisó de esta parte.
-
-Esta es la forma típica de los **costes ocultos de tener una casa** — la parte que empieza el día que te dan las llaves y dura doce meses. El estudio de Zillow de 2025 pone la cifra estadounidense en **15.979 $ al año por encima de la hipoteca**, frente a 14.155 $ hace solo dos años ([Zillow research, noviembre 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). El equivalente en España ronda los **4.500–9.000 €** dependiendo de la zona, la antigüedad del edificio y el tipo de calefacción.
+**El primer año con casa en propiedad cuesta entre 4.500 € y 9.000 € por encima de la hipoteca** en España — seguro, IBI, suministros, comunidad, gastos de instalación y la primera reparación imprevista que casi siempre llega. El estudio de Zillow de 2025 sitúa la cifra estadounidense en **15.979 $ al año por encima de la hipoteca**, frente a 14.155 $ hace solo dos años ([Zillow research, noviembre 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). En España la horquilla depende de la comunidad autónoma, la antigüedad del edificio y el sistema de calefacción. A continuación, el desglose real y el presupuesto que sí aguanta.
 
 ## Lo esencial
 

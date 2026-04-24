@@ -9,11 +9,10 @@ updatedAt: "2026-04-23"
 category: "mortgage"
 heroImage: "/blog/overpay-your-mortgage-hero.webp"
 heroImageAlt: "The interior of a modern European bank branch early in the morning before opening — a row of teller counter stations with frosted-glass dividers, a glass-walled consultation office visible in the background, a low waiting bench and queue stanchion in the foreground, and cool morning daylight through tall windows."
+author: "David C."
 ---
 
-Tem 10 000 € num depósito a prazo a 2%. O seu crédito habitação está a 3,5%. A regra diz para amortizar. Liga ao banco e lembram-lhe que desde **1 de janeiro de 2026 voltou a pagar 0,5%** de comissão por amortização antecipada no variável — porque a isenção que vigorou entre 2022 e 2025 terminou sem renovação — e que conforme escolha "reduzir prazo" ou "reduzir prestação", a poupança real de juros quase triplica.
-
-É esta a forma da decisão que a maior parte das pessoas toma ligeiramente mal. Se vale a pena amortizar crédito habitação em 2026 depende de dois números que quase nenhum artigo coloca na mesma página: o diferencial entre a taxa do seu crédito e o rendimento líquido da melhor alternativa para esse dinheiro, e a comissão de amortização antecipada que o seu banco pode cobrar ao abrigo do Decreto-Lei 74-A/2017 — agora que a isenção terminou.
+**Amortize o seu crédito habitação apenas quando a taxa (líquida de fiscalidade) superar claramente o rendimento líquido da sua melhor alternativa E a comissão de amortização antecipada do DL 74-A/2017 — 0,5 % no variável e 2 % no fixo desde 1 de janeiro de 2026, após o fim da isenção 2022–2025 — ainda deixe a poupança de juros positiva em termos líquidos.** Em abril de 2026 ambas as condições cumprem-se para quase todos os mutuários da zona euro. Atenção ao mecanismo: escolher "reduzir prazo" em vez de "reduzir prestação" pode poupar mais do dobro dos juros.
 
 **Em resumo:**
 

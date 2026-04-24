@@ -282,9 +282,16 @@ function App() {
           ))}
 
           {/* Blog — lazy-loaded. Suspense fallback is PageSkeleton so the
-              header bar appears instantly even before the blog chunk lands. */}
+              header bar appears instantly even before the blog chunk lands.
+              Category routes must be declared BEFORE `/blog/:slug` so the
+              more specific `/blog/category/:category` wins over the catch-all
+              slug match. */}
           <Route
             path="/blog"
+            element={<Suspense fallback={<PageSkeleton />}><BlogListPage lang="en" /></Suspense>}
+          />
+          <Route
+            path="/blog/category/:category"
             element={<Suspense fallback={<PageSkeleton />}><BlogListPage lang="en" /></Suspense>}
           />
           <Route
@@ -295,6 +302,13 @@ function App() {
             <Route
               key={`${lang}-blog`}
               path={`/${lang}/blog`}
+              element={<Suspense fallback={<PageSkeleton />}><BlogListPage lang={lang} /></Suspense>}
+            />
+          ))}
+          {SEO_LANGUAGES.map(lang => (
+            <Route
+              key={`${lang}-blog-category`}
+              path={`/${lang}/blog/category/:category`}
               element={<Suspense fallback={<PageSkeleton />}><BlogListPage lang={lang} /></Suspense>}
             />
           ))}

@@ -9,11 +9,10 @@ updatedAt: "2026-04-23"
 category: "mortgage"
 heroImage: "/blog/overpay-your-mortgage-hero.webp"
 heroImageAlt: "The interior of a modern European bank branch early in the morning before opening — a row of teller counter stations with frosted-glass dividers, a glass-walled consultation office visible in the background, a low waiting bench and queue stanchion in the foreground, and cool morning daylight through tall windows."
+author: "David C."
 ---
 
-Sie haben 10.000 € auf einem Tagesgeldkonto zu 2% liegen. Ihre Baufinanzierung läuft mit 3,5%. Die Faustregel sagt: sondertilgen. Dann fragen Sie bei der Bank nach und erfahren, dass Ihr Vertrag nur 5% Sondertilgung pro Jahr erlaubt, dass jeder Euro darüber eine Vorfälligkeitsentschädigung auslöst — und dass, je nachdem ob Sie "Restschuld kürzen" oder "Laufzeit kürzen" wählen, die tatsächliche Zinsersparnis sich fast verdreifacht.
-
-So sieht die Entscheidung aus, die die meisten knapp daneben treffen. Ob sich eine Sondertilgung der Hypothek 2026 lohnt, hängt von zwei Zahlen ab, die kein Standardratgeber auf dieselbe Seite bringt: dem Gefälle zwischen Ihrem Sollzins und der Nettorendite Ihrer besten Alternative für das Geld, und der Obergrenze, bis zu der Ihre Bank per Vertrag überhaupt gebührenfreie Rückzahlungen akzeptiert.
+**Sondertilgen Sie Ihre Baufinanzierung nur dann, wenn Ihr Sollzins (nach Steuern) klar über der Nettorendite Ihrer besten Sparalternative liegt UND der vertragliche Rahmen (meist 5 %, teils 10 % pro Kalenderjahr, zusammen mit dem §489-Kündigungsrecht nach 10 Jahren Volllaufzeit) ausreicht, damit der Zinsgewinn netto bleibt.** Im April 2026 treffen beide Bedingungen auf fast jeden Euro-Kreditnehmer zu. Entscheidend ist der Mechaniker: "Laufzeit kürzen" statt "Rate senken" kann die tatsächliche Zinsersparnis mehr als verdoppeln.
 
 **Das Wesentliche:**
 

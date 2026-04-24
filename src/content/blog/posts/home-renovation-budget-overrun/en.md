@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "renovation"
 heroImage: "/blog/home-renovation-budget-overrun-hero.webp"
 heroImageAlt: "A small suburban European kitchen in the middle of a renovation — partially-installed cabinets, a sawhorse with a circular saw in the foreground, a canvas dust sheet, a stepladder against the wall, and exposed brick where plaster has been stripped, under overcast daylight from a back window."
+author: "David C."
 ---
 
-You got three quotes for the kitchen. You picked the middle one: €25,000, fixed price, six weeks. Eight weeks in, the tiler found damp behind the old units, the countertop you ordered is out of stock so you went to the next level up, and your partner decided — reasonably — that while the wall is open you might as well move the socket. You're at €33,000, the kitchen is still a hole, and nobody is quite sure when it will end.
-
-This is the shape of the "renovation overrun" that every homeowner eventually meets. And the Houzz 2026 Home Study confirms it's the rule, not the exception: **37% of homeowners who renovated in 2025 spent more than they planned. Only 3% came in under.** ([Houzz 2026 U.S. Houzz & Home Study](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)).
-
-The overrun isn't random. It comes from four specific places, in a predictable order. Once you can name them, you can budget for them — and stop blaming "unexpected costs" for something that was always going to happen.
+**37 % of homeowners who renovated in 2025 spent more than they planned; only 3 % came in under** ([Houzz 2026 U.S. Houzz & Home Study](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)). The overrun isn't random: it comes from four specific sources, in a predictable order — scope creep during demo, material upgrades mid-project, hidden conditions behind the walls, and the decision-tax that compounds on every change order. Once you can name them, you can budget for them — and stop blaming "unexpected costs" for something that was always going to happen.
 
 ## How much are we actually talking about?
 

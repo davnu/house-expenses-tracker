@@ -755,11 +755,18 @@
     "nav": {
       "features": "Features",
       "howItWorks": "How It Works",
+      "pricing": "Pricing",
       "faq": "FAQ",
       "blog": "Blog",
       "logIn": "Log In",
       "getStarted": "Get Started",
       "openApp": "Open App"
+    },
+    "founderStory": {
+      "eyebrow": "Why this exists",
+      "quote": "I built CasaTab while buying my own home and drowning in spreadsheets. Every category, every mortgage option, every receipt slot is there because I needed it — and because nothing on the market tracked a house purchase end to end.",
+      "author": "David C.",
+      "role": "Founder"
     },
     "hero": {
       "title": "Know exactly what buying your home really costs",
@@ -1109,6 +1116,10 @@
       "renovation": "Renovation",
       "legal": "Legal",
       "moving": "Moving"
+    },
+    "category": {
+      "backToAll": "All articles",
+      "subtitle": "Every CasaTab article about {{category}}, in one place."
     }
   }
 }

@@ -9,11 +9,10 @@ updatedAt: "2026-04-23"
 category: "mortgage"
 heroImage: "/blog/overpay-your-mortgage-hero.webp"
 heroImageAlt: "The interior of a modern European bank branch early in the morning before opening — a row of teller counter stations with frosted-glass dividers, a glass-walled consultation office visible in the background, a low waiting bench and queue stanchion in the foreground, and cool morning daylight through tall windows."
+author: "David C."
 ---
 
-You have €10,000 sitting in a savings account earning 2%. Your mortgage charges 3.5%. The rule of thumb says overpay. Then you call the bank and learn that the early-repayment commission on your variable-rate loan came back into force this January, your contract caps you at 10% of the balance per year anyway, and the real interest saving — if you pick the right mechanic — is almost triple what the overpayment calculator on your bank's app showed.
-
-This is the shape of the decision most people get slightly wrong. Whether you should overpay your mortgage in 2026 depends on two numbers nobody ever puts in the same article: the rate differential between your mortgage and your next-best use of the cash, and the legal cap your country places on what a lender can charge when you hand them money back early.
+**Overpay your mortgage when your rate (after tax) clearly beats the return on your next-best use of the cash, AND when your country's legal cap on early-repayment fees keeps the commission small enough for the interest savings to win net.** In April 2026 both conditions hold across most of the eurozone — but the mechanic matters: choosing "shorten the term" over "reduce the payment" can more than double what you actually save.
 
 **The short version:**
 

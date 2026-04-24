@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "costs"
 heroImage: "/blog/true-cost-of-buying-a-house-hero.webp"
 heroImageAlt: "A bright empty European apartment living room on handover day — hardwood floor, a tall window casting a warm afternoon sunbeam across the floor, and a single cardboard moving box in the middle with a set of brass house keys resting on top."
+author: "David C."
 ---
 
-Sie haben das Haus gefunden. Sie haben die Anzahlung zusammen. Die Bank hat Ihnen eine Finanzierungszusage gegeben. Sie sind bereit zu unterschreiben.
-
-Dann kommt die Schlussabrechnung vom Notar, und der Gesamtbetrag liegt acht bis fünfzehn Prozent über dem, was Sie kalkuliert hatten. Grunderwerbsteuer. Notarkosten. Grundbucheintrag. Maklerprovision. Bereitstellungszinsen. Und die Gebäudeversicherung, die die Bank ab Kaufvertragsabschluss verlangt.
-
-Jeder Erstkäufer durchläuft irgendeine Version dieses Szenarios. Die gute Nachricht: Keine dieser Kosten ist ein Geheimnis. Sie stehen nur nie an einer einzigen Stelle, und so entdeckt man sie einzeln — immer als teure Überraschung. Hier ist jede Kostenkategorie, die Sie vor dem Notartermin im Kopf haben sollten.
+**Planen Sie 8 bis 15 % Kaufnebenkosten zusätzlich zum Kaufpreis ein.** Im Detail: Notar und Grundbucheintrag zusammen rund 1,5–2 %, Grunderwerbsteuer 3,5–6,5 % je nach Bundesland, Maklerprovision seit 2020 geteilt mit dem Verkäufer (für den Käufer meist 3,57 %), Bankgebühren und Bereitstellungszinsen 1–2 %, Gebäudeversicherung ab Kaufvertragsabschluss. Keine dieser Kosten ist ein Geheimnis — sie stehen nur nie an einer Stelle. Hier ist jede Position zwischen Angebot und Schlüsselübergabe.
 
 ## Eigenkapital / Anzahlung
 

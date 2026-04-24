@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "moving"
 heroImage: "/blog/hidden-costs-homeownership-year-one-hero.webp"
 heroImageAlt: "A modest European apartment living room about two weeks after a move-in — a slightly worn grey-blue fabric couch, several cardboard moving boxes (one open), a throw blanket half-folded on the couch, a picture frame leaning against the wall, and warm morning sun pouring in from a window on the left."
+author: "David C."
 ---
 
-Je passeert op dinsdag. De verhuizers komen vrijdag. Tegen de volgende donderdag heb je betaald voor: een verhuiswagen, twee borgen voor energie en water, een slotenmaker om de cilinders te vervangen, een nieuwe wasmachine omdat de vorige eigenaar de zijne heeft meegenomen, een spoedloodgieter voor een lekkage die niemand bij de bouwtechnische keuring zag, en een kist wijn voor de buren die hielpen met de bank naar boven.
-
-Dag negen. Je hebt €4.800 uitgegeven die je niet had begroot. Niemand vertelde je dit stuk.
-
-Dit is de klassieke vorm van de **verborgen kosten van een huis kopen** — het deel dat begint op de dag van de sleuteloverdracht en twaalf maanden doorloopt. Zillow's analyse van 2025 zet het Amerikaanse getal op **$15.979 per jaar bovenop de hypotheek**, tegen $14.155 twee jaar eerder ([Zillow research, november 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). De Nederlandse tegenhanger loopt op tot **€5.000–€10.000** afhankelijk van bouwjaar, ligging en type verwarming.
+**Het eerste jaar in je eigen huis kost €5.000 tot €10.000 bovenop de hypotheek** in Nederland — opstal- en inboedelverzekering, OZB, energie, inrichting, en die eerste onverwachte reparatie die bijna altijd komt. Zillow's analyse van 2025 zet het Amerikaanse getal op **$15.979 per jaar bovenop de hypotheek** (tegen $14.155 twee jaar eerder) ([Zillow research, november 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). De Nederlandse bandbreedte hangt af van bouwjaar, ligging en type verwarming. Hieronder de echte opbouw — en het budget dat daadwerkelijk houdt.
 
 ## In het kort
 

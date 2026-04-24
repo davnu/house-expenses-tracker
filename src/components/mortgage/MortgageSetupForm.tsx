@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { formatCurrency, cn } from '@/lib/utils'
 import { calculateMonthlyPayment } from '@/lib/mortgage-utils'
-import { getRegion, getReferenceRatesForCountry, REFERENCE_RATES, computeEffectiveRate } from '@/lib/mortgage-country'
+import { getRegion, getReferenceRatesForCountry, REFERENCE_RATES, computeEffectiveRate, getDefaultAmortization } from '@/lib/mortgage-country'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useHousehold } from '@/context/HouseholdContext'
 import type { MortgageConfig, VariableRateConfig, VariableRateSubtype, MixedRateConfig, RateType, AmortizationType } from '@/types/mortgage'
@@ -50,6 +50,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
   const { house } = useHousehold()
   const region = house?.country ? getRegion(house.country) : undefined
   const availableRates = house?.country ? getReferenceRatesForCountry(house.country) : []
+  const defaultAmortization = getDefaultAmortization(house?.country)
   const vr = defaultValues?.variableRate
   const mr = defaultValues?.mixedRate
 
@@ -62,7 +63,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
       startDate: defaultValues.startDate,
       rateType: defaultValues.rateType,
       annualRate: String(defaultValues.annualRate),
-      amortizationType: defaultValues.amortizationType ?? 'french',
+      amortizationType: defaultValues.amortizationType ?? defaultAmortization,
       fixedPeriodYears: mr ? String(mr.fixedPeriodYears) : '',
       referenceRateId: vr?.referenceRateId ?? mr?.referenceRateId ?? '',
       currentReferenceRate: vr ? String(vr.currentReferenceRate) : mr ? String(mr.currentReferenceRate) : '',
@@ -78,7 +79,7 @@ export function MortgageSetupForm({ defaultValues, isEditing = false, onSubmit }
       useCustomPayment: defaultValues.monthlyPaymentOverride,
     } : {
       principal: '', propertyValue: '', termYears: '30', startDate: '',
-      rateType: 'fixed', annualRate: '', amortizationType: 'french',
+      rateType: 'fixed', annualRate: '', amortizationType: defaultAmortization,
       fixedPeriodYears: '10',
       referenceRateId: availableRates[0]?.id ?? '',
       currentReferenceRate: '', spread: '',

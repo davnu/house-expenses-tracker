@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "moving"
 heroImage: "/blog/hidden-costs-homeownership-year-one-hero.webp"
 heroImageAlt: "A modest European apartment living room about two weeks after a move-in — a slightly worn grey-blue fabric couch, several cardboard moving boxes (one open), a throw blanket half-folded on the couch, a picture frame leaning against the wall, and warm morning sun pouring in from a window on the left."
+author: "David C."
 ---
 
-Sie schließen am Dienstag. Das Umzugsunternehmen kommt Freitag. Bis zum darauffolgenden Donnerstag haben Sie bezahlt für: den Umzugs-LKW, zwei Versorger-Kautionen, einen Schlüsseldienst zum Zylindertausch, eine neue Waschmaschine weil der Vorbesitzer seine mitgenommen hat, einen Notfall-Klempner wegen eines Lecks das kein Gutachter gesehen hatte, und eine Kiste Wein für die Nachbarn die beim Sofatragen geholfen haben.
-
-Tag neun. Sie haben 4.800 € ausgegeben, die im Budget nicht vorgesehen waren. Keiner hatte Sie auf diesen Teil vorbereitet.
-
-Das ist die typische Gestalt der **versteckten Kosten beim Eigenheim** — der Teil der am Tag der Schlüsselübergabe beginnt und zwölf Monate läuft. Zillows Analyse von 2025 beziffert die US-Zahl auf **15.979 $ pro Jahr zusätzlich zur Hypothek**, nach 14.155 $ vor nur zwei Jahren ([Zillow research, November 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). Die deutsche Entsprechung liegt bei **5.000–9.000 €** je nach Region, Baujahr und Heizungsart.
+**Das erste Jahr im Eigenheim kostet 5.000 bis 9.000 € zusätzlich zur Hypothek** in Deutschland — Wohngebäude- und Hausratversicherung, Grundsteuer, Energie, Einzugs-Ausgaben und die erste unvorhergesehene Reparatur, die fast immer im ersten Jahr auftritt. Zillows Analyse von 2025 beziffert die US-Zahl auf **15.979 $ pro Jahr zusätzlich zur Hypothek** (nach 14.155 $ vor nur zwei Jahren) ([Zillow research, November 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). Die deutsche Spanne variiert stark nach Bundesland, Baujahr und Heizungsart. Hier ist die realistische Aufschlüsselung — und das Budget, das tatsächlich hält.
 
 ## Das Wesentliche
 

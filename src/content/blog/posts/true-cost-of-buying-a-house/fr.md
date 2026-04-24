@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "costs"
 heroImage: "/blog/true-cost-of-buying-a-house-hero.webp"
 heroImageAlt: "A bright empty European apartment living room on handover day — hardwood floor, a tall window casting a warm afternoon sunbeam across the floor, and a single cardboard moving box in the middle with a set of brass house keys resting on top."
+author: "David C."
 ---
 
-Vous avez trouvé la maison. Vous avez l'apport. Votre banque a donné son accord de principe. Vous êtes prêt à signer.
-
-Puis arrive le décompte final chez le notaire, et le total est 8 à 15 % plus élevé que prévu. Frais de notaire. Frais d'agence. Frais de dossier. Garantie. Assurance emprunteur. Diagnostics obligatoires. Des frais dont personne ne vous a jamais vraiment parlé en une seule fois.
-
-Tous les primo-accédants vivent une version de ce scénario. La bonne nouvelle : aucun de ces frais n'est secret. Simplement, ils ne figurent jamais au même endroit, et on les découvre un à un, sous forme de mauvaises surprises. Voici chaque catégorie à prévoir avant de signer.
+**Comptez 8 à 15 % de frais en plus du prix d'achat.** Les « frais de notaire » (7–8 % dans l'ancien, 2–3 % dans le neuf) incluent surtout les droits de mutation ; la rémunération réelle du notaire ne représente qu'environ 1 %. Ajoutez les frais d'agence (3–6 %, souvent à la charge de l'acheteur), les frais de dossier bancaire et la garantie (1–2 %), l'assurance emprunteur, l'expertise et les diagnostics. Aucun de ces frais n'est caché — ils n'apparaissent simplement jamais au même endroit. Voici le détail, ligne par ligne, avant la signature.
 
 ## L'apport personnel
 

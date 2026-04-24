@@ -9,11 +9,10 @@ updatedAt: "2026-04-23"
 category: "mortgage"
 heroImage: "/blog/overpay-your-mortgage-hero.webp"
 heroImageAlt: "The interior of a modern European bank branch early in the morning before opening — a row of teller counter stations with frosted-glass dividers, a glass-walled consultation office visible in the background, a low waiting bench and queue stanchion in the foreground, and cool morning daylight through tall windows."
+author: "David C."
 ---
 
-Vous avez 10 000 € sur un livret à 2%. Votre prêt immobilier est à 3,5%. La règle veut qu'on rembourse par anticipation. Puis votre banquier vous rappelle que votre contrat autorise une indemnité de remboursement anticipé plafonnée à six mois d'intérêts ou 3% du capital restant dû — c'est-à-dire le plus faible des deux — et que selon que vous choisissez "réduire la mensualité" ou "réduire la durée", l'économie d'intérêts réelle peut presque tripler.
-
-C'est la forme de la décision que la plupart des gens prennent un peu de travers. Savoir si un remboursement anticipé de prêt immobilier vaut le coup en 2026 dépend de deux chiffres que presque aucun article ne pose sur la même page : l'écart entre votre taux hypothécaire et le rendement net de votre meilleure alternative d'épargne, et le plafond fixé par l'article R313-25 du Code de la consommation sur ce que votre banque peut vous facturer pour rendre du capital en avance.
+**Remboursez votre prêt immobilier par anticipation uniquement quand votre taux (net de fiscalité) dépasse clairement le rendement net de votre meilleure alternative d'épargne, ET que l'indemnité de remboursement anticipé (IRA), plafonnée par l'article R313-25 à six mois d'intérêts OU 3 % du capital restant dû, laisse l'économie d'intérêts positive nette.** En avril 2026, les deux conditions sont réunies dans presque toute la zone euro. Le piège : choisir « réduire la durée » plutôt que « réduire la mensualité » peut plus que doubler l'économie réelle.
 
 **L'essentiel :**
 

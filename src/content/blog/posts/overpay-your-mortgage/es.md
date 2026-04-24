@@ -9,11 +9,10 @@ updatedAt: "2026-04-23"
 category: "mortgage"
 heroImage: "/blog/overpay-your-mortgage-hero.webp"
 heroImageAlt: "The interior of a modern European bank branch early in the morning before opening — a row of teller counter stations with frosted-glass dividers, a glass-walled consultation office visible in the background, a low waiting bench and queue stanchion in the foreground, and cool morning daylight through tall windows."
+author: "David C."
 ---
 
-Tienes 10.000 € en una cuenta remunerada al 2%. Tu hipoteca está al 3,5%. La regla dice que amortices. Luego llamas al banco y te recuerdan que tu hipoteca variable tiene una comisión por amortización anticipada del 0,25% los primeros tres años, que el contrato solo te deja mover el 25% del capital por año natural sin consulta previa, y que si eliges "reducción de plazo" en lugar de "reducción de cuota", el ahorro real de intereses casi se triplica.
-
-Esta es la forma de la decisión que casi todo el mundo toma un poco mal. Si te conviene amortizar hipoteca anticipadamente en 2026 depende de dos cifras que casi ninguna guía pone en la misma página: el diferencial entre el tipo de tu hipoteca y la rentabilidad neta de la alternativa a ese dinero, y el tope legal que la Ley 5/2019 impone a las comisiones que el banco te puede cobrar por devolver capital antes de tiempo.
+**Amortiza tu hipoteca anticipadamente solo cuando el tipo (neto de fiscalidad) supere claramente la rentabilidad de tu mejor alternativa para ese dinero, Y el tope legal de la comisión por amortización anticipada (Ley 5/2019) permita que el ahorro real de intereses siga siendo positivo.** En abril de 2026 ambas condiciones se cumplen para casi cualquier hipotecado en euros. Y ojo al mecánico: elegir "reducción de plazo" en lugar de "reducción de cuota" puede duplicar con creces el ahorro real.
 
 **Lo esencial:**
 

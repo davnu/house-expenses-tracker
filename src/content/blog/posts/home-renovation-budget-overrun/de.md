@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "renovation"
 heroImage: "/blog/home-renovation-budget-overrun-hero.webp"
 heroImageAlt: "A small suburban European kitchen in the middle of a renovation — partially-installed cabinets, a sawhorse with a circular saw in the foreground, a canvas dust sheet, a stepladder against the wall, and exposed brick where plaster has been stripped, under overcast daylight from a back window."
+author: "David C."
 ---
 
-Sie haben drei Angebote für die Küche eingeholt. Sie haben das mittlere genommen: 25.000 € Festpreis, sechs Wochen. Nach acht Wochen hat der Fliesenleger Feuchtigkeit hinter den alten Schränken gefunden, die bestellte Arbeitsplatte ist nicht mehr lieferbar und Sie sind auf die nächste Stufe umgestiegen, und Ihr Partner hat entschieden — nachvollziehbar — dass man bei offener Wand die Steckdose auch verlegen könnte. Sie sind bei 33.000 €, die Küche ist immer noch ein Loch, und niemand weiß so recht, wann es fertig wird.
-
-Das ist die typische Gestalt der *Kostenexplosion*, die jeder Sanierer irgendwann erlebt. Die Houzz 2026 Home Study bestätigt: **37 % der Eigentümer, die 2025 saniert haben, haben mehr ausgegeben als geplant. Nur 3 % blieben darunter** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)).
-
-Die Überschreitung kommt nicht aus dem Nichts. Sie stammt aus vier konkreten Quellen, in einer relativ vorhersehbaren Reihenfolge. Wer sie benennen kann, kann sie einplanen — und aufhören, "unerwartete Kosten" für etwas verantwortlich zu machen, das ohnehin gekommen wäre.
+**37 % der Eigentümer, die 2025 saniert haben, haben ihr Budget überschritten; nur 3 % blieben darunter** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)). Die Überschreitung ist nicht zufällig: Sie stammt aus vier konkreten Quellen, in einer vorhersehbaren Reihenfolge — Ausweitung des Gewerks während der Demontage, Materialupgrades mitten im Projekt, böse Überraschungen hinter der Wand, und die stille Nebenkostenspirale aus jedem Änderungsauftrag. Wer sie benennen kann, kann sie einplanen — und hört auf, "unerwartete Kosten" für etwas verantwortlich zu machen, das ohnehin gekommen wäre.
 
 ## Über welche Beträge sprechen wir eigentlich?
 

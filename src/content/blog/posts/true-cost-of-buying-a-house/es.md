@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "costs"
 heroImage: "/blog/true-cost-of-buying-a-house-hero.webp"
 heroImageAlt: "A bright empty European apartment living room on handover day — hardwood floor, a tall window casting a warm afternoon sunbeam across the floor, and a single cardboard moving box in the middle with a set of brass house keys resting on top."
+author: "David C."
 ---
 
-Encontraste la casa. Tienes la entrada ahorrada. Tienes la preaprobación del banco. Estás listo para firmar.
-
-Y entonces llega el desglose final de la notaría, y el total es entre un ocho y un quince por ciento más alto de lo que habías presupuestado. ITP. Notario. Registro. Comisión de apertura. Una tasación. Seguro de hogar obligatorio. Gastos que nadie te había mencionado del todo.
-
-Todos los compradores primerizos pasan por alguna versión de esto. La buena noticia: ninguno de estos gastos es secreto. Simplemente no aparecen nunca en un mismo sitio, así que se descubren uno a uno, en forma de sorpresa cara. Aquí tienes cada categoría que deberías tener en cuenta antes de firmar.
+**Calcula entre un 8 % y un 15 % por encima del precio de compra solo en gastos.** A grandes rasgos: notaría y registro 0,5–2 %, ITP del 6 al 10 % según la comunidad autónoma (o IVA del 10 % más AJD del 1–1,5 % en obra nueva), gastos hipotecarios 1–2 %, tasación 300–600 €, seguro de hogar obligatorio y la mudanza. Ningún gasto es secreto, pero como nunca aparecen en el mismo sitio, se descubren uno a uno. Aquí tienes cada partida entre la oferta y la entrega de llaves.
 
 ## La entrada
 

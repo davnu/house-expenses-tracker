@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "costs"
 heroImage: "/blog/true-cost-of-buying-a-house-hero.webp"
 heroImageAlt: "A bright empty European apartment living room on handover day — hardwood floor, a tall window casting a warm afternoon sunbeam across the floor, and a single cardboard moving box in the middle with a set of brass house keys resting on top."
+author: "David C."
 ---
 
-You found the house. You saved the down payment. You got pre-approved. You're ready to sign.
-
-Then the closing statement shows up, and the real number is eight to fifteen percent higher than you planned for. Notary. Transfer tax. Title insurance. Loan origination. A survey you didn't know you needed. Movers. An unexpected boiler replacement the inspector flagged in week two.
-
-Every first-time buyer goes through some version of this. The good news: none of these costs are secret. They just never live in one place, so people discover them one expensive surprise at a time. Here's every category you should budget for before you sign.
+**Expect to add 8–15 % on top of the purchase price in fees when you buy a home.** Roughly: notary or conveyancing 0.5–2 %, transfer tax 1–13 % (it varies enormously by country), mortgage fees 1–2 %, inspection and valuation €400–€1,200 each, plus insurance and moving. Every first-time buyer runs into this — none of the costs are secret, they just never live in one place. Here's every line item that shows up between the offer and the keys.
 
 ## The down payment
 

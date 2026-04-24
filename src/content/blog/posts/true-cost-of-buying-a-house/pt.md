@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "costs"
 heroImage: "/blog/true-cost-of-buying-a-house-hero.webp"
 heroImageAlt: "A bright empty European apartment living room on handover day — hardwood floor, a tall window casting a warm afternoon sunbeam across the floor, and a single cardboard moving box in the middle with a set of brass house keys resting on top."
+author: "David C."
 ---
 
-Encontrou a casa. Tem a entrada poupada. Tem a aprovação do crédito habitação. Está pronto para assinar.
-
-Depois chega a conta final do notário, e o total é oito a quinze por cento mais alto do que tinha contado. IMT. Imposto do Selo. Notário. Registo predial. Comissão de abertura. Avaliação. Seguros obrigatórios. Custos que ninguém lhe tinha apresentado todos de uma vez.
-
-Todos os compradores de primeira casa passam por uma versão deste cenário. A boa notícia: nenhuma destas despesas é secreta. Simplesmente nunca aparecem num só sítio, por isso descobrem-se uma a uma, como surpresas caras. Aqui está cada categoria que deve prever antes de assinar.
+**Conte com 8 a 15 % de despesas sobre o preço da casa.** Linha a linha: IMT progressivo até 8 % (com isenção parcial para habitação própria permanente dentro dos escalões), Imposto do Selo de 0,8 % sobre a escritura e 0,6 % sobre o crédito, notário e registo predial 500–1 000 €, comissões bancárias 1–2 %, avaliação 250–400 €, seguros multirriscos e de vida obrigatórios. Nenhuma destas despesas é secreta — apenas nunca aparecem num só sítio. Em seguida, o detalhe de cada linha entre a proposta e a entrega das chaves.
 
 ## A entrada
 

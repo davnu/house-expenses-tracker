@@ -34,6 +34,17 @@ const DIST = join(ROOT, 'dist')
 
 const DOMAIN = 'https://casatab.com'
 const LANGUAGES = ['en', 'es', 'fr', 'de', 'nl', 'pt']
+// Endonym (name of the language in the language itself). Used inside
+// BreadcrumbList schema on localized landings so the crumb trail reads
+// naturally to a speaker of that language, not to a Google Translator.
+const LANGUAGE_NAMES = {
+  en: 'English',
+  es: 'Español',
+  fr: 'Français',
+  de: 'Deutsch',
+  nl: 'Nederlands',
+  pt: 'Português',
+}
 const DEFAULT_LANG = 'en'
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -172,6 +183,41 @@ function generateJsonLd(t, lang) {
     })),
   }
 
+  // BreadcrumbList. For the English root the chain is just "Home".
+  // For localized landings (/es/, /fr/, …) we expose Home → <Language>
+  // so search results can render a language-aware crumb trail. This also
+  // gives AI answer engines a stable hierarchy anchor: they cite pages
+  // more reliably when breadcrumb schema is present, even when the chain
+  // is short.
+  const breadcrumbs = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    '@id': `${url}#breadcrumb`,
+    itemListElement: lang === 'en'
+      ? [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'CasaTab',
+            item: DOMAIN + '/',
+          },
+        ]
+      : [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'CasaTab',
+            item: DOMAIN + '/',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: LANGUAGE_NAMES[lang] ?? lang.toUpperCase(),
+            item: url,
+          },
+        ],
+  }
+
   // WebPage (tells Google this is a specific language version)
   const webPage = {
     '@context': 'https://schema.org',
@@ -185,11 +231,15 @@ function generateJsonLd(t, lang) {
       name: 'CasaTab',
       url: DOMAIN,
     },
+    breadcrumb: {
+      '@id': `${url}#breadcrumb`,
+    },
   }
 
   return [
     `    <script type="application/ld+json">\n    ${JSON.stringify(app)}\n    </script>`,
     `    <script type="application/ld+json">\n    ${JSON.stringify(faq)}\n    </script>`,
+    `    <script type="application/ld+json">\n    ${JSON.stringify(breadcrumbs)}\n    </script>`,
     `    <script type="application/ld+json">\n    ${JSON.stringify(webPage)}\n    </script>`,
   ].join('\n')
 }
@@ -592,6 +642,12 @@ function blogIndexUrl(lang) {
 
 function blogArticleUrl(lang, slug) {
   return lang === DEFAULT_LANG ? `${DOMAIN}/blog/${slug}/` : `${DOMAIN}/${lang}/blog/${slug}/`
+}
+
+function blogCategoryUrl(lang, category) {
+  return lang === DEFAULT_LANG
+    ? `${DOMAIN}/blog/category/${category}/`
+    : `${DOMAIN}/${lang}/blog/category/${category}/`
 }
 
 function blogIndexHreflang() {
@@ -1193,6 +1249,43 @@ ${blogIndexHreflangBlock}
     </url>`,
   ).join('')
 
+  // Category archive pages (/blog/category/{cat}/) — one <url> per
+  // (category, lang) pair that actually has at least one article in that
+  // language. Cross-hreflang'd so Google recognises them as translations
+  // of the same cluster. Priority sits between articles (0.7) and the
+  // blog index (0.8), matching their role as topic hubs.
+  const categoriesByLang = new Map() // lang -> Set<category>
+  for (const a of articles) {
+    if (!categoriesByLang.has(a.lang)) categoriesByLang.set(a.lang, new Set())
+    categoriesByLang.get(a.lang).add(a.category)
+  }
+  const allCategories = new Set()
+  for (const set of categoriesByLang.values()) for (const c of set) allCategories.add(c)
+
+  const categoryUrls = []
+  for (const category of allCategories) {
+    const langsWithCategory = LANGUAGES.filter(
+      (lang) => categoriesByLang.get(lang)?.has(category),
+    )
+    const hreflang = langsWithCategory
+      .map((lang) => `      <xhtml:link rel="alternate" hreflang="${lang}" href="${blogCategoryUrl(lang, category)}" />`)
+      .concat(
+        langsWithCategory.includes(DEFAULT_LANG)
+          ? `      <xhtml:link rel="alternate" hreflang="x-default" href="${blogCategoryUrl(DEFAULT_LANG, category)}" />`
+          : [],
+      )
+      .join('\n')
+    for (const lang of langsWithCategory) {
+      categoryUrls.push(`
+    <url>
+      <loc>${blogCategoryUrl(lang, category)}</loc>
+      <changefreq>weekly</changefreq>
+      <priority>0.75</priority>
+${hreflang}
+    </url>`)
+    }
+  }
+
   // Articles: one <url> per (canonicalSlug, lang) with hreflang linking to all translated variants.
   const canonicals = Array.from(new Set(articles.map((a) => a.canonicalSlug)))
   const articlesByLang = new Map()
@@ -1230,6 +1323,7 @@ ${hreflangBlock}
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${landingUrls}
 ${blogIndexUrls}
+${categoryUrls.join('')}
 ${articleUrls.join('')}
 
     <url>

@@ -755,11 +755,18 @@
     "nav": {
       "features": "Fonctionnalités",
       "howItWorks": "Comment ça marche",
+      "pricing": "Tarifs",
       "faq": "FAQ",
       "blog": "Blog",
       "logIn": "Se connecter",
       "getStarted": "Commencer",
       "openApp": "Ouvrir l'app"
+    },
+    "founderStory": {
+      "eyebrow": "Pourquoi CasaTab existe",
+      "quote": "J'ai créé CasaTab en achetant ma propre maison, noyé dans les tableurs. Chaque catégorie, chaque option de prêt, chaque emplacement de justificatif est là parce que j'en avais besoin — et parce qu'aucun outil ne suivait un achat immobilier de bout en bout.",
+      "author": "David C.",
+      "role": "Fondateur"
     },
     "hero": {
       "title": "Sachez exactement combien coûte vraiment l'achat de votre maison",
@@ -1109,6 +1116,10 @@
       "renovation": "Travaux",
       "legal": "Juridique",
       "moving": "Déménagement"
+    },
+    "category": {
+      "backToAll": "Tous les articles",
+      "subtitle": "Tous les articles CasaTab sur le thème « {{category}} », au même endroit."
     }
   }
 }

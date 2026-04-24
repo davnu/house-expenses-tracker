@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "moving"
 heroImage: "/blog/hidden-costs-homeownership-year-one-hero.webp"
 heroImageAlt: "A modest European apartment living room about two weeks after a move-in — a slightly worn grey-blue fabric couch, several cardboard moving boxes (one open), a throw blanket half-folded on the couch, a picture frame leaning against the wall, and warm morning sun pouring in from a window on the left."
+author: "David C."
 ---
 
-Vous signez un mardi. Le déménageur arrive vendredi. Dès le jeudi suivant, vous avez déjà payé : le camion, deux cautions de fournisseurs d'énergie, un serrurier pour refaire les barillets, un lave-linge neuf parce que le vendeur a embarqué le sien, un plombier en urgence pour une fuite que personne n'avait vue au diagnostic, et un carton de vin pour les voisins qui vous ont aidé à monter le canapé.
-
-C'est le neuvième jour. Vous avez dépensé 4 800 € que vous n'aviez pas budgétés. Personne ne vous avait prévenu de cette partie.
-
-C'est la forme classique des **coûts cachés de la propriété** — la partie qui commence le jour de la remise des clés et dure douze mois. L'analyse Zillow 2025 chiffre le total américain à **15 979 $ par an en plus du crédit**, contre 14 155 $ il y a deux ans à peine ([Zillow research, novembre 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). L'équivalent français tourne autour de **5 000–9 000 €** selon la région, l'âge du bâti et le type de chauffage.
+**La première année de propriété coûte 5 000 à 9 000 € en plus du crédit** en France — assurance habitation, taxe foncière, énergie, installation, et la première réparation imprévue qui finit presque toujours par arriver. L'analyse Zillow 2025 chiffre le total américain à **15 979 $ par an au-delà du crédit**, contre 14 155 $ il y a deux ans à peine ([Zillow research, novembre 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). En France, la fourchette dépend de la région, de l'âge du bâti et du type de chauffage. Voici le détail, et le budget qui tient réellement.
 
 ## L'essentiel
 

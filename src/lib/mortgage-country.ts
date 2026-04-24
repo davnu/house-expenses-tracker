@@ -1,6 +1,7 @@
 import { addMonths, format } from 'date-fns'
 
 export type Region = 'europe' | 'uk' | 'usa' | 'canada'
+export type AmortizationDefault = 'french' | 'italian'
 
 export interface CountryConfig {
   code: string
@@ -8,6 +9,16 @@ export interface CountryConfig {
   region: Region
   currency: string
   referenceRates: string[]
+  /**
+   * Amortization style used by default for new mortgages in this country.
+   * French = constant monthly payment, varying principal/interest split
+   *   (used across Spain, France, Portugal, Germany, Netherlands, UK,
+   *   Ireland, US, Canada — the vast majority of markets CasaTab serves).
+   * Italian = constant principal portion, varying payment
+   *   (still dominant in Italy for new originations).
+   * Users can override in the setup form.
+   */
+  defaultAmortization: AmortizationDefault
 }
 
 export interface ReferenceRateConfig {
@@ -18,23 +29,23 @@ export interface ReferenceRateConfig {
 
 export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   // Europe
-  { code: 'ES', name: 'Spain', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'FR', name: 'France', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'PT', name: 'Portugal', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'IT', name: 'Italy', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'DE', name: 'Germany', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'NL', name: 'Netherlands', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'BE', name: 'Belgium', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'IE', name: 'Ireland', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'AT', name: 'Austria', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'FI', name: 'Finland', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
-  { code: 'GR', name: 'Greece', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'] },
+  { code: 'ES', name: 'Spain', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'FR', name: 'France', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'PT', name: 'Portugal', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'IT', name: 'Italy', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'italian' },
+  { code: 'DE', name: 'Germany', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'NL', name: 'Netherlands', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'BE', name: 'Belgium', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'IE', name: 'Ireland', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'AT', name: 'Austria', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'FI', name: 'Finland', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
+  { code: 'GR', name: 'Greece', region: 'europe', currency: 'EUR', referenceRates: ['euribor_12m', 'euribor_6m'], defaultAmortization: 'french' },
   // UK
-  { code: 'GB', name: 'United Kingdom', region: 'uk', currency: 'GBP', referenceRates: ['boe_base_rate', 'svr'] },
+  { code: 'GB', name: 'United Kingdom', region: 'uk', currency: 'GBP', referenceRates: ['boe_base_rate', 'svr'], defaultAmortization: 'french' },
   // USA
-  { code: 'US', name: 'United States', region: 'usa', currency: 'USD', referenceRates: ['sofr', 'treasury_1y'] },
+  { code: 'US', name: 'United States', region: 'usa', currency: 'USD', referenceRates: ['sofr', 'treasury_1y'], defaultAmortization: 'french' },
   // Canada
-  { code: 'CA', name: 'Canada', region: 'canada', currency: 'CAD', referenceRates: ['prime_rate'] },
+  { code: 'CA', name: 'Canada', region: 'canada', currency: 'CAD', referenceRates: ['prime_rate'], defaultAmortization: 'french' },
 ]
 
 export const REFERENCE_RATES: Record<string, ReferenceRateConfig> = {
@@ -53,6 +64,11 @@ export function getCountryConfig(code: string): CountryConfig | undefined {
 
 export function getRegion(countryCode: string): Region | undefined {
   return getCountryConfig(countryCode)?.region
+}
+
+export function getDefaultAmortization(countryCode: string | undefined): AmortizationDefault {
+  if (!countryCode) return 'french'
+  return getCountryConfig(countryCode)?.defaultAmortization ?? 'french'
 }
 
 export function getReferenceRatesForCountry(countryCode: string): ReferenceRateConfig[] {

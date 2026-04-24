@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "renovation"
 heroImage: "/blog/home-renovation-budget-overrun-hero.webp"
 heroImageAlt: "A small suburban European kitchen in the middle of a renovation — partially-installed cabinets, a sawhorse with a circular saw in the foreground, a canvas dust sheet, a stepladder against the wall, and exposed brick where plaster has been stripped, under overcast daylight from a back window."
+author: "David C."
 ---
 
-Pediste tres presupuestos para la cocina. Elegiste el del medio: 25.000 €, precio cerrado, seis semanas. A las ocho semanas, el alicatador ha encontrado humedad detrás de los muebles antiguos, la encimera que pediste está agotada y has saltado al siguiente nivel, y tu pareja ha decidido — con razón — que ya que la pared está abierta podrías mover el enchufe. Llevas gastados 33.000 €, la cocina sigue siendo un agujero y nadie sabe muy bien cuándo acabará.
-
-Esta es la forma típica del "sobrecoste de reforma" que todo propietario se acaba encontrando. Y el Houzz 2026 Home Study lo confirma: **el 37 % de los propietarios que reformaron en 2025 gastó más de lo previsto. Solo un 3 % quedó por debajo** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)).
-
-El sobrecoste no es aleatorio. Viene de cuatro sitios concretos, en un orden bastante previsible. Una vez los identificas, puedes presupuestarlos — y dejar de echar la culpa a los "imprevistos" por algo que siempre iba a pasar.
+**El 37 % de los propietarios que reformaron en 2025 se pasó del presupuesto; solo un 3 % quedó por debajo** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)). El sobrecoste no es aleatorio: viene de cuatro sitios concretos, en un orden previsible — ampliación del alcance durante la demolición, subida de calidades a mitad de obra, sorpresas detrás de la pared, y el "impuesto silencioso" de cada modificación que firmas después. Cuando los nombras, los puedes presupuestar — y dejas de echar la culpa a los "imprevistos" por algo que iba a ocurrir igualmente.
 
 ## ¿De cuánto dinero hablamos realmente?
 

@@ -124,11 +124,45 @@ export function initAnalytics(): void {
   script.setAttribute('data-website-id', id)
   script.setAttribute('data-auto-track', 'false')
   script.setAttribute('data-host-url', host)
-  // Don't send query strings — `?mode=signup`, verification tokens, etc.
-  script.setAttribute('data-exclude-search', 'true')
+  // NOTE: we do NOT set data-exclude-search here. Stripping every query
+  // string also kills UTM attribution, which makes paid/social campaigns
+  // invisible. Instead, the caller sanitizes the URL before handing it to
+  // trackPageView — see sanitizeTrackedUrl below (allowlists utm_*, ref,
+  // src, gclid, fbclid, msclkid and drops everything else, including
+  // verification tokens).
   script.addEventListener('load', flushPending)
   script.addEventListener('error', abortAnalytics)
   document.head.appendChild(script)
+}
+
+/**
+ * Allowlist of query params we're willing to keep in tracked URLs.
+ * Everything else is dropped. This preserves attribution (UTMs, click
+ * IDs, referral tags) while keeping sensitive tokens like Firebase
+ * `oobCode`, invite codes, and signup mode out of analytics storage.
+ */
+const TRACKED_QUERY_ALLOWLIST = new Set([
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term',
+  'ref',
+  'src',
+  'gclid',
+  'fbclid',
+  'msclkid',
+])
+
+export function sanitizeTrackedUrl(pathname: string, search: string): string {
+  if (!search || search === '?') return pathname
+  const params = new URLSearchParams(search)
+  const kept = new URLSearchParams()
+  for (const [key, value] of params.entries()) {
+    if (TRACKED_QUERY_ALLOWLIST.has(key.toLowerCase())) kept.append(key, value)
+  }
+  const rendered = kept.toString()
+  return rendered ? `${pathname}?${rendered}` : pathname
 }
 
 export function isAnalyticsEnabled(): boolean {

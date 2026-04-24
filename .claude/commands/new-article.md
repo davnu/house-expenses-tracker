@@ -71,17 +71,19 @@ The Zod schema lives in `src/lib/blog.ts`. Every file must satisfy it. Beyond th
 - `category`: one of the enum values exactly.
 - `heroImage`: **optional — omit entirely if the image hasn't been generated yet**. If you include a path that doesn't exist, every reader sees a broken-image icon until the file lands. All-or-nothing across all 6 language files when you do add it.
 
-### Article opener structure (above the first H2)
+### Article opener structure (above the first H2) — answer-first, always
 
-Every article opens in exactly this order:
+Every article opens in exactly this order. **The #1 rule: the answer comes first.** 44.2 % of LLM citations (ChatGPT, Perplexity, Google AI Overviews) are drawn from the first 30 % of a page — Kevin Indig's analysis of 1.2 M citations, Feb 2026. If the answer arrives in paragraph 3, the model quits before reaching it, and a human skimmer on mobile does the same. Open with the number.
 
 1. **H1** — auto-rendered from the `title` frontmatter. Do not write an H1 in the body.
 2. **Excerpt** — auto-rendered from the `excerpt` frontmatter.
-3. **Narrative hook** — 2–4 sentences. A specific, concrete scenario the reader recognizes. This is what makes the article feel human.
-4. **TL;DR / Key takeaways block** — a bulleted list of **3–5 single-sentence** takeaways, immediately after the hook. Label it in-language ("The short version:" / "Lo esencial:" / "L'essentiel :" / "Das Wesentliche:" / "In het kort:" / "Em resumo:"). This is what appears as a featured snippet on Google AND what a skimming mobile reader reads before deciding to scroll. Skip it and you leave featured-snippet placement on the table.
-5. **Load-bearing headline stat** — one bolded sentence presenting the article's core number with inline source attribution. Appears right before the first H2, above the fold on most viewports.
+3. **Answer-first lead paragraph** — the single highest-leverage block in the article. Exactly **one bolded sentence** at the start of paragraph 1 that directly answers the primary question the article exists to answer — with the number, percentage, or named mechanism inside it. Follow that bolded sentence with 1–3 unbolded sentences of essential context (country ranges, typical breakdown, key caveat). Total block ≤ 80 words. Include one authoritative inline citation if the core number comes from an external source. Do **not** lead with a narrative hook, a "you found the house" scenario, or "you've been saving for years…" storytelling — those delay the answer and are actively penalized by LLM citation and by 2026 Google answer-engine ranking.
+4. **TL;DR / Key takeaways block** — a bulleted list of **3–5 single-sentence** takeaways, immediately after the answer-first lead. Label it in-language ("The short version:" / "Lo esencial:" / "L'essentiel :" / "Das Wesentliche:" / "In het kort:" / "Em resumo:"). This is what Google lifts as a featured snippet AND what a skimming mobile reader reads before deciding to scroll.
+5. **Narrative scene (optional, max 2 sentences)** — only if it genuinely adds experiential credibility (E-E-A-T). Goes *after* the TL;DR, not before. If the article already feels practitioner-authored without it, skip it entirely.
 
 Only then does the first H2 begin.
+
+**Why this order (not the older "hook first" pattern):** the old narrative-hook-first structure is a legacy of long-form magazine writing, where attention was captive. In 2026, the reader — human *or* LLM — has already decided by sentence 2 whether to keep going. The answer-first lead is the single biggest change that lifts both AI citation rate and Google AI Overview inclusion. Every existing CasaTab article has been rewritten to follow this shape; new articles must match.
 
 ### Keyword placement (non-negotiable)
 

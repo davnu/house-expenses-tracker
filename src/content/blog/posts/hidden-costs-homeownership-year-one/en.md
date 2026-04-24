@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "moving"
 heroImage: "/blog/hidden-costs-homeownership-year-one-hero.webp"
 heroImageAlt: "A modest European apartment living room about two weeks after a move-in — a slightly worn grey-blue fabric couch, several cardboard moving boxes (one open), a throw blanket half-folded on the couch, a picture frame leaning against the wall, and warm morning sun pouring in from a window on the left."
+author: "David C."
 ---
 
-You close on a Tuesday. The movers come Friday. By the following Thursday you've paid for: a moving truck, two utility deposits, a locksmith to re-key the front door, a new washer because the seller took theirs, an emergency plumber for a leak nobody saw at inspection, and a case of wine for the neighbours who helped you haul in the couch.
-
-It's day nine. You've spent €4,800 you hadn't planned for. Nobody mentioned this part.
-
-This is the shape of the **hidden costs of homeownership** — the part that starts the day you get the keys and keeps running for twelve months. The Zillow 2025 analysis puts the US figure at **$15,979 per year on top of the mortgage** — up from $14,155 just two years earlier ([Zillow research, November 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). EU equivalents run €8,000–€14,000 depending on country, building age, and heating type.
+**Year one of homeownership costs €8,000–€16,000 on top of the mortgage** — insurance, property tax, utilities, the settling-in spend, and the first unplanned repair that almost always arrives. The Zillow 2025 analysis puts the US figure at **$15,979 per year beyond the mortgage**, up from $14,155 just two years earlier ([Zillow research, November 2025](https://zillow.mediaroom.com/2025-11-13-Hidden-costs-of-homeownership-reach-16K-per-year)). EU equivalents run €8,000–€14,000 depending on country, building age, and heating type. Here's the shape of it, and the budget that actually holds.
 
 ## The short version
 

@@ -331,12 +331,17 @@ export function LandingPage() {
             <span className="font-bold text-[15px] tracking-tight hidden sm:block">CasaTab</span>
           </Link>
 
-          {/* Desktop nav */}
+          {/* Desktop nav — Pricing sits at the right edge of the nav (but
+              before the auth CTAs). SaaS nav convention: site content on
+              the left, commercial intent on the right, so the eye flows
+              "what is this → how does it work → blog → FAQ → what does it
+              cost → start" without a double-take. */}
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <button onClick={() => scrollTo('features')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.features')}</button>
             <button onClick={() => scrollTo('how-it-works')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.howItWorks')}</button>
             <Link to={i18n.language.startsWith('en') ? '/blog' : `/${i18n.language.split('-')[0]}/blog`} className="hover:text-foreground transition-colors">{t('landing.nav.blog')}</Link>
             <button onClick={() => scrollTo('faq')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.faq')}</button>
+            <Link to="/pricing" onClick={() => handleCta('header', 'pricing')} className="hover:text-foreground transition-colors">{t('landing.nav.pricing')}</Link>
           </nav>
 
           {/* Right side */}
@@ -413,6 +418,7 @@ export function LandingPage() {
             <button onClick={() => scrollTo('how-it-works')} className="cursor-pointer">{t('landing.nav.howItWorks')}</button>
             <Link to={i18n.language.startsWith('en') ? '/blog' : `/${i18n.language.split('-')[0]}/blog`} onClick={() => setMobileMenu(false)} className="">{t('landing.nav.blog')}</Link>
             <button onClick={() => scrollTo('faq')} className="cursor-pointer">{t('landing.nav.faq')}</button>
+            <Link to="/pricing" onClick={() => { handleCta('mobile_menu', 'pricing'); setMobileMenu(false) }} className="">{t('landing.nav.pricing')}</Link>
             <Link
               to="/login"
               onClick={() => handleCta('mobile_menu', 'log_in')}
@@ -675,6 +681,41 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ════════════════════════ FOUNDER STORY ════════════════════════ */}
+      {/* Single first-person block from the founder. We intentionally do NOT
+          ship fabricated user testimonials here — the EU UCPD directive and
+          2024 CMA / DGCCRF / LCU guidance explicitly prohibit undisclosed
+          invented reviews, and the fines are material for consumer apps.
+          When real user quotes land (with written consent + verifiable
+          context), expand this section into a 3-quote grid alongside the
+          founder voice. Until then, the founder story is the authentic,
+          legally safe trust signal. */}
+      <section className="py-20 sm:py-28">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <Reveal>
+            <p className="text-sm font-semibold text-brand text-center uppercase tracking-widest mb-6">
+              {t('landing.founderStory.eyebrow')}
+            </p>
+            <figure className="text-center">
+              <blockquote className="text-xl sm:text-2xl leading-relaxed font-medium text-foreground/90 text-balance">
+                <span aria-hidden="true" className="text-brand/40 mr-1">“</span>
+                {t('landing.founderStory.quote')}
+                <span aria-hidden="true" className="text-brand/40 ml-1">”</span>
+              </blockquote>
+              <figcaption className="mt-6 flex items-center justify-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-brand/10 text-brand flex items-center justify-center font-bold text-sm">
+                  D
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-sm">{t('landing.founderStory.author')}</p>
+                  <p className="text-xs text-muted-foreground">{t('landing.founderStory.role')}</p>
+                </div>
+              </figcaption>
+            </figure>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ════════════════════════ LEARN / FROM THE BLOG ════════════════════════ */}
       {/* Deep-linked homepage → blog articles. Googlebot + readers both land
           here after seeing product + trust; the pattern pushes authority from
@@ -804,6 +845,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><button onClick={() => scrollTo('features')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.features')}</button></li>
                 <li><button onClick={() => scrollTo('how-it-works')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.howItWorks')}</button></li>
+                <li><Link to="/pricing" className="hover:text-foreground transition-colors">{t('landing.nav.pricing')}</Link></li>
                 <li><Link to={i18n.language.startsWith('en') ? '/blog' : `/${i18n.language.split('-')[0]}/blog`} className="hover:text-foreground transition-colors">{t('landing.nav.blog')}</Link></li>
                 <li><button onClick={() => scrollTo('faq')} className="hover:text-foreground transition-colors cursor-pointer">{t('landing.nav.faq')}</button></li>
               </ul>

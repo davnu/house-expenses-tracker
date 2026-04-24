@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "costs"
 heroImage: "/blog/true-cost-of-buying-a-house-hero.webp"
 heroImageAlt: "A bright empty European apartment living room on handover day — hardwood floor, a tall window casting a warm afternoon sunbeam across the floor, and a single cardboard moving box in the middle with a set of brass house keys resting on top."
+author: "David C."
 ---
 
-Je hebt het huis gevonden. Je hebt het eigen geld. Je hebt een hypotheekofferte in de hand. Je staat klaar om te tekenen.
-
-Dan komt de eindafrekening van de notaris, en het totaal ligt acht tot vijftien procent hoger dan je dacht. Overdrachtsbelasting. Notariskosten. Taxatierapport. Hypotheekadvies. Bankgarantie. Opstalverzekering. Kosten die niemand je ooit in één keer heeft opgesomd.
-
-Elke starter maakt een versie van dit scenario mee. Het goede nieuws: geen van deze kosten zijn geheim. Ze staan alleen nooit op één plek, dus je ontdekt ze één voor één als dure verrassing. Hier is elke categorie die je moet inplannen vóór je tekent.
+**Reken op 4 tot 12 % "kosten koper" bovenop de koopsom.** De opbouw: 2 % overdrachtsbelasting als je onder de 35 bent en het je eerste eigen woning is, anders 10,4 %; notariskosten €1.500–€2.500 voor akte en hypotheek; hypotheekadvies en bemiddeling €2.000–€3.500; bouwkundige keuring €400–€800; taxatie €400–€650; opstalverzekering vanaf de sleuteldatum. Geen van deze kosten is geheim — ze staan alleen nooit op één plek. Hieronder staat elke post tussen bod en sleuteloverdracht.
 
 ## Eigen geld / inbreng
 

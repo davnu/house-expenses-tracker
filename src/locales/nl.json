@@ -755,11 +755,18 @@
     "nav": {
       "features": "Functies",
       "howItWorks": "Hoe het werkt",
+      "pricing": "Prijzen",
       "faq": "Veelgestelde vragen",
       "blog": "Blog",
       "logIn": "Inloggen",
       "getStarted": "Aan de slag",
       "openApp": "Open app"
+    },
+    "founderStory": {
+      "eyebrow": "Waarom CasaTab bestaat",
+      "quote": "Ik heb CasaTab gebouwd tijdens de aankoop van mijn eigen huis, terwijl ik verdronk in spreadsheets. Elke categorie, elke hypotheekoptie, elke plek voor een bonnetje zit erin omdat ik het nodig had — en omdat niets op de markt een woningaankoop van begin tot eind volgde.",
+      "author": "David C.",
+      "role": "Oprichter"
     },
     "hero": {
       "title": "Weet precies wat het kopen van je huis echt kost",
@@ -1109,6 +1116,10 @@
       "renovation": "Verbouwing",
       "legal": "Juridisch",
       "moving": "Verhuizing"
+    },
+    "category": {
+      "backToAll": "Alle artikelen",
+      "subtitle": "Elk CasaTab-artikel over {{category}}, op één plek."
     }
   }
 }

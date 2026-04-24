@@ -9,13 +9,10 @@ updatedAt: "2026-04-23"
 category: "renovation"
 heroImage: "/blog/home-renovation-budget-overrun-hero.webp"
 heroImageAlt: "A small suburban European kitchen in the middle of a renovation — partially-installed cabinets, a sawhorse with a circular saw in the foreground, a canvas dust sheet, a stepladder against the wall, and exposed brick where plaster has been stripped, under overcast daylight from a back window."
+author: "David C."
 ---
 
-Pediu três orçamentos para a cozinha. Escolheu o do meio: 25.000 €, preço fechado, seis semanas. Às oito semanas, o ladrilhador encontrou humidade atrás dos móveis antigos, a bancada que encomendou está esgotada e passou para o nível seguinte, e a sua esposa decidiu — com razão — que já que a parede está aberta, mais valia mudar a tomada. Está nos 33.000 €, a cozinha continua a ser um buraco, e ninguém sabe ao certo quando acaba.
-
-É assim que se vê a "derrapagem" clássica de uma remodelação, que todo o proprietário acaba por conhecer. O Houzz 2026 Home Study confirma-o: **37 % dos proprietários que remodelaram em 2025 gastaram mais do que o previsto. Apenas 3 % ficaram abaixo** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)).
-
-A derrapagem não é aleatória. Vem de quatro sítios concretos, numa ordem razoavelmente previsível. Quando se consegue nomear cada um, consegue-se orçamentá-los — e deixa de se atribuir aos "imprevistos" aquilo que sempre ia acontecer.
+**37 % dos proprietários que remodelaram em 2025 ultrapassaram o orçamento; apenas 3 % ficaram abaixo** ([Houzz 2025 U.S. & Home Renovation Trends](https://www.houzz.com/magazine/2025-u-s-houzz-and-home-renovation-trends-stsetivw-vs~181188659)). A derrapagem não é aleatória: vem de quatro sítios concretos, numa ordem previsível — ampliação do âmbito durante a demolição, subida de gama dos materiais a meio da obra, surpresas atrás da parede, e o "imposto silencioso" de cada ordem de alteração. Quando se conseguem nomear, conseguem-se orçamentar — e deixa de se atribuir aos "imprevistos" aquilo que sempre ia acontecer.
 
 ## De quanto dinheiro estamos a falar realmente?
 

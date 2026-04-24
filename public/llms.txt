@@ -1,0 +1,55 @@
+# CasaTab
+
+> CasaTab is a cost tracker built for the specific problem of buying a home. It records every expense that shows up during a purchase — down payment, notary, transfer tax, mortgage fees, renovations, furniture, moving — alongside a mortgage engine that handles French and Italian amortization, fixed / variable / mixed rates, rate-period changes, ARM caps, and extra repayments. Households are multi-user: one person creates the house, invites their partner or co-buyer, and both see the same data in real time. One-time pricing, no subscription.
+
+CasaTab is designed for first-time and repeat home buyers in Europe, the UK, the US, and Canada. It is not a general monthly-budget app — every feature is scoped to the house-purchase window and the mortgage that follows. Amounts are stored as integer cents, attachments live in Firebase Storage, and the app runs in six languages (English, Spanish, French, German, Dutch, Portuguese).
+
+## Product
+
+- [Home](https://casatab.com/): Product overview, features, pricing entry point.
+- [Pricing](https://casatab.com/pricing): Free plan vs. €49 one-time Pro unlock per house (€29 for each additional house). No subscription.
+- [Privacy](https://casatab.com/privacy): Data handling, storage, and deletion policy. Umami analytics (cookieless); data stored in Google Firebase with AES-256 at rest and TLS in transit.
+- [Sign up / log in](https://casatab.com/login): Email / password and Google sign-in.
+
+## Localized landing pages
+
+- [Español](https://casatab.com/es/)
+- [Français](https://casatab.com/fr/)
+- [Deutsch](https://casatab.com/de/)
+- [Nederlands](https://casatab.com/nl/)
+- [Português](https://casatab.com/pt/)
+
+## Blog — home-buying guides
+
+Long-form articles with real cost data, worked examples, and country-specific figures.
+
+- [The True Cost of Buying a House: Every Fee Explained](https://casatab.com/blog/true-cost-of-buying-a-house): Full breakdown of purchase-time fees — down payment, notary, transfer tax, mortgage fees, inspection — with a worked example of the cash actually required to close.
+- [Hidden Costs of Homeownership: What Year One Actually Costs](https://casatab.com/blog/hidden-costs-homeownership-year-one): Year-one post-closing expenses — insurance, utilities, maintenance, settling-in spend — with country-by-country figures.
+- [Should You Overpay Your Mortgage? A Country-by-Country Take](https://casatab.com/blog/overpay-your-mortgage): When prepayment beats investing, prepayment caps by country, and the math of reduce-term vs reduce-payment extra payments.
+- [Why Home Renovations Go Over Budget — and How to Stop It](https://casatab.com/blog/home-renovation-budget-overrun): The 37% overrun rate, why it happens, contingency frameworks, and a working renovation budget template.
+
+## Feeds
+
+- [RSS (English)](https://casatab.com/feed.xml)
+- [JSON Feed (English)](https://casatab.com/feed.json)
+- [Sitemap](https://casatab.com/sitemap.xml)
+
+## What CasaTab handles well
+
+- End-to-end expense tracking across the 14 house-buying categories (down payment, notary / legal, transfer tax, real estate agent, financial advisor, valuation, home inspection, title registry, mortgage fees, insurance, renovations, furniture, moving, other).
+- Mortgage modeling with French and Italian amortization, variable and mixed rate structures, ARM caps (initial / periodic / lifetime / floor), extra repayments with reduce-term or reduce-payment mode, rate-period history, and balance corrections.
+- Country-aware reference rates: Euribor 12M / 6M (Eurozone), BoE Base Rate + SVR (UK), SOFR + 1-Year Treasury (US), Prime Rate (Canada).
+- Multi-member households — shared and split expense attribution, per-person settlement view.
+- Document vault with folder organization, drag-and-drop upload, and unified search across expense attachments.
+- Print-friendly summary and JSON data export (Pro).
+
+## What CasaTab is not
+
+- Not a monthly budget or general personal-finance app.
+- Not a mortgage broker, not a loan originator, not a real-estate listing site.
+- Not a subscription. One-time purchase per house.
+
+## Contact
+
+- Founder: David C.
+- Site: https://casatab.com
